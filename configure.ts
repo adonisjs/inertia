@@ -28,7 +28,6 @@ const ADAPTERS_INFO: {
       { name: 'vue', isDevDependency: false },
       { name: '@vitejs/plugin-vue', isDevDependency: true },
     ],
-    ssrDependencies: [{ name: '@vue/server-renderer', isDevDependency: false }],
   },
   'React': {
     dependencies: [
