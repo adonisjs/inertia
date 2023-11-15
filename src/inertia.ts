@@ -42,9 +42,12 @@ export class Inertia {
   }
 
   /**
-   * Resolve the props that will be sent to the client
+   * Pick props to resolve based on x-inertia-partial-data header
+   *
+   * If header is not present, resolve all props except lazy props
+   * If header is present, resolve only the props that are listed in the header
    */
-  async #resolvePageProps(component: string, props: PageProps) {
+  #pickPropsToResolve(component: string, props: PageProps) {
     const partialData = this.ctx.request
       .header('x-inertia-partial-data')
       ?.split(',')
@@ -58,6 +61,15 @@ export class Inertia {
     } else {
       entriesToResolve = entriesToResolve.filter(([key]) => !this.#isLazyProps(props[key]))
     }
+
+    return entriesToResolve
+  }
+
+  /**
+   * Resolve the props that will be sent to the client
+   */
+  async #resolvePageProps(component: string, props: PageProps) {
+    const entriesToResolve = this.#pickPropsToResolve(component, props)
 
     const entries = entriesToResolve.map(async ([key, value]) => {
       if (typeof value === 'function') {
