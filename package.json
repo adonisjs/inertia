@@ -41,6 +41,7 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
+    "@adonisjs/assembler": "6.1.3-25",
     "@adonisjs/core": "6.1.5-31",
     "@adonisjs/eslint-config": "^1.1.8",
     "@adonisjs/prettier-config": "^1.1.8",
@@ -72,9 +73,15 @@
     "qs": "^6.11.2"
   },
   "peerDependencies": {
+    "@adonisjs/assembler": "6.1.3-25",
     "@adonisjs/core": "6.1.5-31",
     "@adonisjs/session": "7.0.0-13",
     "edge.js": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@adonisjs/assembler": {
+      "optional": false
+    }
   },
   "author": "Julien Ripouteau <julien@ripouteau.com>,adonisjs",
   "license": "MIT",
