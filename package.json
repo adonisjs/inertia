@@ -15,7 +15,8 @@
     "build/stubs",
     "build/services",
     "build/index.js",
-    "build/index.d.ts"
+    "build/index.d.ts",
+    "build/configure.js"
   ],
   "exports": {
     ".": "./build/index.js",
