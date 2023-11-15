@@ -40,7 +40,12 @@ export class VersionCache {
 
       return this.#cachedVersion
     } catch {
-      return ''
+      /**
+       * If the manifest file does not exist, it probably means that we are in
+       * development mode
+       */
+      this.#cachedVersion = '1'
+      return this.#cachedVersion
     }
   }
 
