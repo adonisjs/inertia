@@ -36,10 +36,9 @@ export default class InertiaProvider {
   protected async registerEdgePlugin() {
     try {
       const edgeExports = await import('edge.js')
-      let edge = edgeExports.default
+      const { edgePluginInertia } = await import('../src/plugins/edge.js')
 
-      const { edgePluginInertia } = await import('../src/edge_plugin.js')
-      edge.use(edgePluginInertia())
+      edgeExports.default.use(edgePluginInertia())
     } catch {}
   }
 

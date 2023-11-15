@@ -1,6 +1,14 @@
-import { HttpContext } from '@adonisjs/core/http'
-import { getActiveTest } from '@japa/runner'
+import type { Test } from '@japa/runner/core'
+import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { IncomingMessage, ServerResponse, createServer } from 'node:http'
+
+import { getActiveTest } from '@japa/runner'
+import { HttpContext } from '@adonisjs/core/http'
+import { ApiClient, apiClient } from '@japa/api-client'
+import { ApplicationService } from '@adonisjs/core/types'
+import { NamedReporterContract } from '@japa/runner/types'
+import { runner, syncReporter } from '@japa/runner/factories'
+import { inertiaApiClient } from '../src/plugins/api_client.js'
 
 /**
  * Create a http server that will be closed automatically
@@ -28,4 +36,24 @@ export function setupViewMacroMock() {
     // @ts-expect-error
     delete HttpContext.prototype.view
   })
+}
+
+/**
+ * Runs a japa test in isolation
+ */
+export async function runJapaTest(app: ApplicationService, callback: Parameters<Test['run']>[0]) {
+  ApiClient.clearSetupHooks()
+  ApiClient.clearTeardownHooks()
+  ApiClient.clearRequestHandlers()
+
+  await runner()
+    .configure({
+      reporters: {
+        activated: [syncReporter.name],
+        list: [syncReporter as NamedReporterContract],
+      },
+      plugins: [apiClient(), pluginAdonisJS(app), inertiaApiClient()],
+      files: [],
+    })
+    .runTest('testing japa integration', callback)
 }

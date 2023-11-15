@@ -10,7 +10,7 @@
 import { Edge } from 'edge.js'
 import { test } from '@japa/runner'
 
-import { edgePluginInertia } from '../src/edge_plugin.js'
+import { edgePluginInertia } from '../../src/plugins/edge.js'
 
 test.group('Edge plugin', () => {
   test('@inertia generate a root div with data-page', async ({ assert }) => {

@@ -22,7 +22,9 @@
     "./types": "./build/src/types.js",
     "./services/main": "./build/services/inertia.js",
     "./inertia_middleware": "./build/src/inertia_middleware.js",
-    "./inertia_provider": "./build/providers/inertia_provider.js"
+    "./inertia_provider": "./build/providers/inertia_provider.js",
+    "./plugins/edge": "./build/src/plugins/edge.js",
+    "./plugins/api_client": "./build/src/plugins/japa/api_client.js"
   },
   "scripts": {
     "clean": "del-cli build",
@@ -47,8 +49,10 @@
     "@adonisjs/prettier-config": "^1.1.8",
     "@adonisjs/session": "7.0.0-13",
     "@adonisjs/tsconfig": "^1.1.8",
+    "@japa/api-client": "^2.0.1",
     "@japa/assert": "2.0.1",
     "@japa/file-system": "^2.0.1",
+    "@japa/plugin-adonisjs": "^2.0.1",
     "@japa/runner": "3.0.5",
     "@swc/core": "^1.3.96",
     "@types/node": "^20.9.0",
@@ -59,6 +63,7 @@
     "del-cli": "^5.1.0",
     "edge.js": "^6.0.0",
     "eslint": "^8.53.0",
+    "get-port": "^7.0.0",
     "np": "^8.0.4",
     "prettier": "^3.0.3",
     "supertest": "^6.3.3",
@@ -76,10 +81,14 @@
     "@adonisjs/assembler": "6.1.3-25",
     "@adonisjs/core": "6.1.5-31",
     "@adonisjs/session": "7.0.0-13",
+    "@japa/api-client": "^2.0.1",
     "edge.js": "^6.0.0"
   },
   "peerDependenciesMeta": {
     "@adonisjs/assembler": {
+      "optional": false
+    },
+    "@japa/api-client": {
       "optional": false
     }
   },

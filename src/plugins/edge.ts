@@ -10,7 +10,7 @@
 import { encode } from 'html-entities'
 import type { PluginFn } from 'edge.js/types'
 
-import debug from './debug.js'
+import debug from '../debug.js'
 
 /**
  * Register the Inertia tags and globals within Edge
