@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { HttpContextFactory } from '@adonisjs/core/factories/http'
+import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
 import { setupViewMacroMock } from '../tests_helpers/index.js'
 import { InertiaFactory } from '../factories/inertia_factory.js'
@@ -166,5 +166,17 @@ test.group('Inertia', () => {
     const result: any = await inertia.render('foo')
 
     assert.deepEqual(result.version, '2')
+  })
+
+  test('preserve query parameters in page object url', async ({ assert }) => {
+    const request = new RequestFactory().merge({ url: '/foo?bar=baz&test[]=32&12&bla=42' }).create()
+    const inertia = new InertiaFactory()
+      .merge({ ctx: new HttpContextFactory().merge({ request }).create() })
+      .withXInertiaHeader()
+      .create()
+
+    const result: any = await inertia.render('foo')
+
+    assert.deepEqual(result.url, '/foo?bar=baz&test[]=32&12&bla=42')
   })
 })

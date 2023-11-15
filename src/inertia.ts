@@ -85,7 +85,7 @@ export class Inertia {
       component,
       version: this.version,
       props: await this.#resolvePageProps(component, { ...this.config.sharedData, ...pageProps }),
-      url: this.ctx.request.url(),
+      url: this.ctx.request.url(true),
     }
   }
 
