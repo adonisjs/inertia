@@ -175,7 +175,6 @@ test.group('Middleware', () => {
       .set('x-inertia', 'true')
       .set('x-inertia-version', '1')
 
-    console.log(r1.status)
     assert.equal(r1.status, 200)
   })
 })
