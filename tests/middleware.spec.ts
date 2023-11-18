@@ -18,7 +18,7 @@ import InertiaMiddleware from '../src/inertia_middleware.js'
 
 test.group('Middleware', () => {
   test('add inertia to http context', async ({ assert }) => {
-    const server = httpServer.create(async (req, res) => {
+    const server = httpServer.create(async (_req, res) => {
       const ctx = new HttpContextFactory().create()
 
       const middleware = new InertiaMiddleware({
