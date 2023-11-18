@@ -11,18 +11,42 @@ import supertest from 'supertest'
 import { test } from '@japa/runner'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
+import { Inertia } from '../src/inertia.js'
 import { httpServer } from '../tests_helpers/index.js'
 import { VersionCache } from '../src/version_cache.js'
 import InertiaMiddleware from '../src/inertia_middleware.js'
 
 test.group('Middleware', () => {
+  test('add inertia to http context', async ({ assert }) => {
+    const server = httpServer.create(async (req, res) => {
+      const ctx = new HttpContextFactory().create()
+
+      const middleware = new InertiaMiddleware({
+        rootView: 'root',
+        sharedData: {},
+        versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      })
+
+      await middleware.handle(ctx, () => {})
+      assert.instanceOf(ctx.inertia, Inertia)
+
+      res.end()
+    })
+
+    await supertest(server).get('/')
+  })
+
   test('set 303 http code on put/patch/delete method', async ({ assert }) => {
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const middleware = new InertiaMiddleware(new VersionCache(new URL(import.meta.url), '1'))
+      const middleware = new InertiaMiddleware({
+        rootView: 'root',
+        sharedData: {},
+        versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      })
 
       await middleware.handle(ctx, () => {
         ctx.response.redirect('/foo')
@@ -46,7 +70,11 @@ test.group('Middleware', () => {
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const middleware = new InertiaMiddleware(new VersionCache(new URL(import.meta.url), '1'))
+      const middleware = new InertiaMiddleware({
+        rootView: 'root',
+        sharedData: {},
+        versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      })
 
       await middleware.handle(ctx, () => {
         ctx.response.redirect('/foo')
@@ -70,7 +98,11 @@ test.group('Middleware', () => {
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
 
-      const middleware = new InertiaMiddleware(new VersionCache(new URL(import.meta.url), '1'))
+      const middleware = new InertiaMiddleware({
+        rootView: 'root',
+        sharedData: {},
+        versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      })
 
       await middleware.handle(ctx, () => {
         ctx.response.redirect('/foo')
@@ -92,7 +124,12 @@ test.group('Middleware', () => {
     let requestCount = 1
 
     const version = new VersionCache(new URL(import.meta.url), '1')
-    const middleware = new InertiaMiddleware(version)
+    const middleware = new InertiaMiddleware({
+      rootView: 'root',
+      sharedData: {},
+      versionCache: version,
+    })
+
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()

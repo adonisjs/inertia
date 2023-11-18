@@ -13,6 +13,7 @@ import { AppFactory } from '@adonisjs/core/factories/app'
 import { ApplicationService } from '@adonisjs/core/types'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
+import { defineConfig } from '../../index.js'
 import { VersionCache } from '../../src/version_cache.js'
 import InertiaMiddleware from '../../src/inertia_middleware.js'
 import { InertiaFactory } from '../../factories/inertia_factory.js'
@@ -22,15 +23,34 @@ const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as
 
 test.group('Japa plugin | Api Client', (group) => {
   group.setup(async () => {
+    app.useConfig({ inertia: defineConfig({ assetsVersion: '1' }) })
+
     await app.init()
     await app.boot()
   })
 
-  test('inertia() should send the x-inertia header', async ({ assert }) => {
+  test('withInertia() should send the x-inertia header', async ({ assert }) => {
     assert.plan(1)
 
     const server = httpServer.create(async (req, res) => {
       assert.deepEqual(req.headers['x-inertia'], 'true')
+      res.end()
+    })
+
+    const port = await getPort({ port: 3333 })
+    const url = `http://localhost:${port}`
+    server.listen(port)
+
+    await runJapaTest(app, async ({ client }) => {
+      await client.get(url).withInertia()
+    })
+  })
+
+  test('withInertia() should send the x-inertia-version header', async ({ assert }) => {
+    assert.plan(1)
+
+    const server = httpServer.create(async (req, res) => {
+      assert.deepEqual(req.headers['x-inertia-version'], '1')
       res.end()
     })
 
@@ -48,9 +68,13 @@ test.group('Japa plugin | Api Client', (group) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
-      const inertia = new InertiaFactory().merge({ ctx: ctx }).create()
+      const inertia = await new InertiaFactory().merge({ ctx: ctx }).create()
 
-      const middleware = new InertiaMiddleware(new VersionCache(new URL(import.meta.url), '1'))
+      const middleware = new InertiaMiddleware({
+        versionCache: new VersionCache(new URL(import.meta.url), '1'),
+        rootView: 'root',
+        sharedData: {},
+      })
 
       await middleware.handle(ctx, async () => {
         response.send(await inertia.render('Pages/Home', { username: 'foo', foo: 'bar' }))
@@ -66,6 +90,7 @@ test.group('Japa plugin | Api Client', (group) => {
     await runJapaTest(app, async ({ client }) => {
       const r1 = await client.get(url).withInertia()
 
+      r1.assertStatus(200)
       r1.assertInertiaComponent('Pages/Home')
         .assertInertiaProps({ username: 'foo', foo: 'bar' })
         .assertInertiaPropsContains({ foo: 'bar' })
@@ -83,9 +108,13 @@ test.group('Japa plugin | Api Client', (group) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
-      const inertia = new InertiaFactory().merge({ ctx: ctx }).create()
+      const inertia = await new InertiaFactory().merge({ ctx: ctx }).create()
 
-      const middleware = new InertiaMiddleware(new VersionCache(new URL(import.meta.url), '1'))
+      const middleware = new InertiaMiddleware({
+        versionCache: new VersionCache(new URL(import.meta.url), '1'),
+        rootView: 'root',
+        sharedData: {},
+      })
 
       await middleware.handle(ctx, async () => {
         response.send(await inertia.render('Pages/Home', { username: 'foo', foo: 'bar' }))
@@ -112,9 +141,13 @@ test.group('Japa plugin | Api Client', (group) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
-      const inertia = new InertiaFactory().merge({ ctx: ctx }).create()
+      const inertia = await new InertiaFactory().merge({ ctx: ctx }).create()
 
-      const middleware = new InertiaMiddleware(new VersionCache(new URL(import.meta.url), '1'))
+      const middleware = new InertiaMiddleware({
+        versionCache: new VersionCache(new URL(import.meta.url), '1'),
+        rootView: 'root',
+        sharedData: {},
+      })
 
       await middleware.handle(ctx, async () => {
         response.send(await inertia.render('Pages/Home', { username: 'foo', foo: 'bar' }))

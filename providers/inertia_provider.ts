@@ -7,22 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { HttpContext } from '@adonisjs/core/http'
+import { configProvider } from '@adonisjs/core'
+import { RuntimeException } from '@poppinss/utils'
 import type { ApplicationService } from '@adonisjs/core/types'
 
-import { Inertia } from '../src/inertia.js'
-import type { InertiaConfig } from '../src/types.js'
-import { VersionCache } from '../src/version_cache.js'
 import InertiaMiddleware from '../src/inertia_middleware.js'
-
-/**
- * HttpContext augmentations
- */
-declare module '@adonisjs/core/http' {
-  export interface HttpContext {
-    inertia: Inertia
-  }
-}
+import type { InertiaConfig, ResolvedConfig } from '../src/types.js'
 
 /**
  * Inertia provider
@@ -43,23 +33,25 @@ export default class InertiaProvider {
   }
 
   /**
-   * Register Inertia middleware, edge plugin, and add
-   * `inertia` property to the HttpContext
+   * Register Inertia bindings
    */
-  async boot() {
-    const appRoot = this.app.appRoot
-    const config = this.app.config.get<InertiaConfig>('inertia', { view: 'app' })
+  async register() {
+    const inertiaConfigProvider = this.app.config.get<InertiaConfig>('inertia')
 
-    const versionCache = await new VersionCache(appRoot, config.assetsVersion).computeVersion()
-    this.app.container.singleton(InertiaMiddleware, () => new InertiaMiddleware(versionCache))
+    /**
+     * Resolve config
+     */
+    const config = await configProvider.resolve<ResolvedConfig>(this.app, inertiaConfigProvider)
+    if (!config) {
+      throw new RuntimeException(
+        'Invalid "config/inertia.ts" file. Make sure you are using the "defineConfig" method'
+      )
+    }
 
-    HttpContext.getter(
-      'inertia',
-      function inertia(this: HttpContext) {
-        return new Inertia(this, config, versionCache.getVersion())
-      },
-      false
-    )
+    /**
+     * Register the Inertia middleware
+     */
+    this.app.container.singleton(InertiaMiddleware, () => new InertiaMiddleware(config))
 
     await this.registerEdgePlugin()
   }

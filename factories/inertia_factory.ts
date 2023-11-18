@@ -8,15 +8,17 @@
  */
 
 import { HttpContext } from '@adonisjs/core/http'
+import { AppFactory } from '@adonisjs/core/factories/app'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
+import { ApplicationService } from '@adonisjs/core/types'
 
+import { defineConfig } from '../index.js'
 import { Inertia } from '../src/inertia.js'
-import { InertiaConfig, AssetsVersion } from '../src/types.js'
+import { AssetsVersion, InertiaConfig } from '../src/types.js'
 
 type FactoryParameters = {
   ctx: HttpContext
   config?: InertiaConfig
-  version?: AssetsVersion
 }
 
 /**
@@ -26,7 +28,10 @@ type FactoryParameters = {
 export class InertiaFactory {
   #parameters: FactoryParameters = {
     ctx: new HttpContextFactory().create(),
-    version: '1',
+  }
+
+  #getApp() {
+    return new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
   }
 
   merge(parameters: Partial<FactoryParameters>) {
@@ -51,11 +56,12 @@ export class InertiaFactory {
   }
 
   withVersion(version: AssetsVersion) {
-    this.#parameters.version = version
+    this.#parameters.config = { ...this.#parameters.config, assetsVersion: version }
     return this
   }
 
-  create() {
-    return new Inertia(this.#parameters.ctx, this.#parameters.config, this.#parameters.version)
+  async create() {
+    const config = await defineConfig(this.#parameters.config || {}).resolver(this.#getApp())
+    return new Inertia(this.#parameters.ctx, config)
   }
 }

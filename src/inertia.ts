@@ -10,35 +10,27 @@
 /// <reference types="@adonisjs/core/providers/edge_provider" />
 
 import type { HttpContext } from '@adonisjs/core/http'
-import type { InertiaConfig, MaybePromise, PageProps, AssetsVersion } from './types.js'
+import type { MaybePromise, PageProps, ResolvedConfig } from './types.js'
+
+/**
+ * Symbol used to identify lazy props
+ */
+const kLazySymbol = Symbol('lazy')
 
 /**
  * Main class used to interact with Inertia
  */
 export class Inertia {
-  /**
-   * The name of the Edge view that will be used to render the page.
-   */
-  #edgeRootView: string
-
-  /**
-   * Symbol used to identify lazy props
-   */
-  #kLazySymbol = Symbol('lazy')
-
   constructor(
     protected ctx: HttpContext,
-    protected config: InertiaConfig = {},
-    protected version: AssetsVersion
-  ) {
-    this.#edgeRootView = config.rootView || 'root'
-  }
+    protected config: ResolvedConfig
+  ) {}
 
   /**
    * Check if a value is a lazy prop
    */
   #isLazyProps(value: any) {
-    return typeof value === 'object' && value && this.#kLazySymbol in value
+    return typeof value === 'object' && value && kLazySymbol in value
   }
 
   /**
@@ -77,7 +69,7 @@ export class Inertia {
       }
 
       if (this.#isLazyProps(value)) {
-        const lazyValue = (value as any)[this.#kLazySymbol]
+        const lazyValue = (value as any)[kLazySymbol]
         return [key, await lazyValue()]
       }
 
@@ -95,7 +87,7 @@ export class Inertia {
   async #buildPageObject(component: string, pageProps?: PageProps) {
     return {
       component,
-      version: this.version,
+      version: this.config.versionCache.getVersion(),
       props: await this.#resolvePageProps(component, { ...this.config.sharedData, ...pageProps }),
       url: this.ctx.request.url(true),
     }
@@ -109,7 +101,7 @@ export class Inertia {
     const isInertiaRequest = !!this.ctx.request.header('x-inertia')
 
     if (!isInertiaRequest) {
-      return this.ctx.view.render(this.#edgeRootView, { page: pageObject })
+      return this.ctx.view.render(this.config.rootView, { page: pageObject })
     }
 
     return pageObject
@@ -124,7 +116,7 @@ export class Inertia {
    * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
    */
   lazy(callback: () => MaybePromise<any>) {
-    return { [this.#kLazySymbol]: callback }
+    return { [kLazySymbol]: callback }
   }
 
   /**

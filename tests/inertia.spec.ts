@@ -17,7 +17,9 @@ test.group('Inertia', () => {
   test('location should returns x-inertia-location with 409 code', async ({ assert }) => {
     const ctx = new HttpContextFactory().create()
 
-    new InertiaFactory().merge({ ctx }).create().location('https://adonisjs.com')
+    const inertia = await new InertiaFactory().merge({ ctx }).create()
+
+    inertia.location('https://adonisjs.com')
 
     assert.equal(ctx.response.getStatus(), 409)
     assert.equal(ctx.response.getHeader('x-inertia-location'), 'https://adonisjs.com')
@@ -26,7 +28,8 @@ test.group('Inertia', () => {
   test('render root view with page props', async ({ assert }) => {
     setupViewMacroMock()
 
-    const result: any = await new InertiaFactory().create().render('foo', { foo: 'bar' })
+    const inertia = await new InertiaFactory().create()
+    const result: any = await inertia.render('foo', { foo: 'bar' })
 
     assert.deepEqual(result.view, 'root')
     assert.deepEqual(result.props.page, {
@@ -38,7 +41,7 @@ test.group('Inertia', () => {
   })
 
   test('only return page object when request is from inertia', async ({ assert }) => {
-    const inertia = new InertiaFactory().withXInertiaHeader().create()
+    const inertia = await new InertiaFactory().withXInertiaHeader().create()
     const result = await inertia.render('foo', { foo: 'bar' })
 
     assert.deepEqual(result, {
@@ -50,14 +53,14 @@ test.group('Inertia', () => {
   })
 
   test('return given component name in page object', async ({ assert }) => {
-    const inertia = new InertiaFactory().withXInertiaHeader().create()
+    const inertia = await new InertiaFactory().withXInertiaHeader().create()
     const result: any = await inertia.render('Pages/Login', { foo: 'bar' })
 
     assert.deepEqual(result.component, 'Pages/Login')
   })
 
   test('return sharedData in page object', async ({ assert }) => {
-    const inertia = new InertiaFactory()
+    const inertia = await new InertiaFactory()
       .merge({ config: { sharedData: { foo: 'bar' } } })
       .withXInertiaHeader()
       .create()
@@ -71,7 +74,7 @@ test.group('Inertia', () => {
   })
 
   test('render props take precedence over sharedData', async ({ assert }) => {
-    const inertia = new InertiaFactory()
+    const inertia = await new InertiaFactory()
       .merge({ config: { sharedData: { foo: 'bar' } } })
       .withXInertiaHeader()
       .create()
@@ -84,7 +87,7 @@ test.group('Inertia', () => {
   test('if x-inertia-partial-data header is present only return partial data', async ({
     assert,
   }) => {
-    const inertia = new InertiaFactory()
+    const inertia = await new InertiaFactory()
       .withXInertiaHeader()
       .withInertiaPartialReload('Auth/Login', ['user'])
       .create()
@@ -97,7 +100,7 @@ test.group('Inertia', () => {
   test('if x-inertia-partial-component is different from component name return all data', async ({
     assert,
   }) => {
-    const inertia = new InertiaFactory()
+    const inertia = await new InertiaFactory()
       .withXInertiaHeader()
       .withInertiaPartialReload('Auth/Login', ['user'])
       .create()
@@ -110,7 +113,7 @@ test.group('Inertia', () => {
   test("don't return lazy props on first visit", async ({ assert }) => {
     setupViewMacroMock()
 
-    const inertia = new InertiaFactory().create()
+    const inertia = await new InertiaFactory().create()
 
     const result: any = await inertia.render('Auth/Login', {
       user: 'jul',
@@ -121,7 +124,7 @@ test.group('Inertia', () => {
   })
 
   test('load lazy props when present in x-inertia-partial-data', async ({ assert }) => {
-    const inertia = new InertiaFactory()
+    const inertia = await new InertiaFactory()
       .withXInertiaHeader()
       .withInertiaPartialReload('Auth/Login', ['user', 'message', 'foo'])
       .create()
@@ -138,7 +141,7 @@ test.group('Inertia', () => {
   })
 
   test('resolve page props functions', async ({ assert }) => {
-    const inertia = new InertiaFactory().withXInertiaHeader().create()
+    const inertia = await new InertiaFactory().withXInertiaHeader().create()
 
     const result: any = await inertia.render('foo', {
       foo: 'bar',
@@ -150,7 +153,7 @@ test.group('Inertia', () => {
   })
 
   test('resolve sharedData function', async ({ assert }) => {
-    const inertia = new InertiaFactory()
+    const inertia = await new InertiaFactory()
       .merge({ config: { sharedData: { foo: () => 'bar' } } })
       .withXInertiaHeader()
       .create()
@@ -161,7 +164,7 @@ test.group('Inertia', () => {
   })
 
   test('returns version in page object', async ({ assert }) => {
-    const inertia = new InertiaFactory().withXInertiaHeader().withVersion('2').create()
+    const inertia = await new InertiaFactory().withXInertiaHeader().withVersion('2').create()
 
     const result: any = await inertia.render('foo')
 
@@ -170,7 +173,7 @@ test.group('Inertia', () => {
 
   test('preserve query parameters in page object url', async ({ assert }) => {
     const request = new RequestFactory().merge({ url: '/foo?bar=baz&test[]=32&12&bla=42' }).create()
-    const inertia = new InertiaFactory()
+    const inertia = await new InertiaFactory()
       .merge({ ctx: new HttpContextFactory().merge({ request }).create() })
       .withXInertiaHeader()
       .create()

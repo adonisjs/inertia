@@ -10,16 +10,30 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
-import type { VersionCache } from './version_cache.js'
+import { Inertia } from './inertia.js'
+import type { ResolvedConfig } from './types.js'
+
+/**
+ * HttpContext augmentations
+ */
+declare module '@adonisjs/core/http' {
+  export interface HttpContext {
+    inertia: Inertia
+  }
+}
 
 /**
  * Inertia middleware to handle the Inertia requests and
  * set appropriate headers/status
  */
 export default class InertiaMiddleware {
-  constructor(protected version: VersionCache) {}
+  constructor(protected config: ResolvedConfig) {}
 
-  async handle({ request, response }: HttpContext, next: NextFn) {
+  async handle(ctx: HttpContext, next: NextFn) {
+    const { response, request } = ctx
+
+    ctx.inertia = new Inertia(ctx, this.config)
+
     await next()
 
     const isInertiaRequest = !!request.header('x-inertia')
@@ -45,7 +59,7 @@ export default class InertiaMiddleware {
      *
      * See https://inertiajs.com/the-protocol#asset-versioning
      */
-    const version = this.version.getVersion()
+    const version = this.config.versionCache.getVersion()
     if (method === 'GET' && request.header('x-inertia-version', '') !== version) {
       response.header('x-inertia-location', request.url())
       response.status(409)

@@ -52,7 +52,7 @@ export async function runJapaTest(app: ApplicationService, callback: Parameters<
         activated: [syncReporter.name],
         list: [syncReporter as NamedReporterContract],
       },
-      plugins: [apiClient(), pluginAdonisJS(app), inertiaApiClient()],
+      plugins: [apiClient(), pluginAdonisJS(app), inertiaApiClient(app)],
       files: [],
     })
     .runTest('testing japa integration', callback)

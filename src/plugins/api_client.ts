@@ -7,10 +7,13 @@
  * file that was distributed with this source code.
  */
 
+import { configProvider } from '@adonisjs/core'
+import { RuntimeException } from '@poppinss/utils'
 import type { PluginFn } from '@japa/runner/types'
 import { ApiRequest, ApiResponse } from '@japa/api-client'
 
-import type { PageProps } from '../types.js'
+import type { PageProps, ResolvedConfig } from '../types.js'
+import type { ApplicationService } from '@adonisjs/core/types'
 
 declare module '@japa/api-client' {
   export interface ApiRequest {
@@ -64,10 +67,19 @@ function ensureIsInertiaResponse(this: ApiResponse) {
   }
 }
 
-export function inertiaApiClient(): PluginFn {
-  return () => {
+export function inertiaApiClient(app: ApplicationService): PluginFn {
+  return async () => {
+    const inertiaConfigProvider = app.config.get<any>('inertia')
+    const config = await configProvider.resolve<ResolvedConfig>(app, inertiaConfigProvider)
+    if (!config) {
+      throw new RuntimeException(
+        'Invalid "config/inertia.ts" file. Make sure you are using the "defineConfig" method'
+      )
+    }
+
     ApiRequest.macro('withInertia', function (this: ApiRequest) {
       this.header('x-inertia', 'true')
+      this.header('x-inertia-version', config.versionCache.getVersion().toString())
       return this
     })
 

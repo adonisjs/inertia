@@ -7,11 +7,24 @@
  * file that was distributed with this source code.
  */
 
-import type { InertiaConfig } from './types.js'
+import { configProvider } from '@adonisjs/core'
+import type { ConfigProvider } from '@adonisjs/core/types'
+
+import { VersionCache } from './version_cache.js'
+import type { InertiaConfig, ResolvedConfig } from './types.js'
 
 /**
  * Define the Inertia configuration
  */
-export function defineConfig(config: InertiaConfig) {
-  return config
+export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConfig> {
+  return configProvider.create(async (app) => {
+    const versionCache = new VersionCache(app.appRoot, config.assetsVersion)
+    await versionCache.computeVersion()
+
+    return {
+      rootView: config.rootView ?? 'root',
+      sharedData: config.sharedData || {},
+      versionCache,
+    }
+  })
 }

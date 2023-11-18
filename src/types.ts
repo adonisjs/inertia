@@ -8,6 +8,7 @@
  */
 
 import type { HttpContext } from '@adonisjs/core/http'
+import type { VersionCache } from './version_cache.js'
 
 export type MaybePromise<T> = T | Promise<T>
 
@@ -45,4 +46,13 @@ export interface InertiaConfig {
    * Data that should be shared with all rendered pages
    */
   sharedData?: SharedData
+}
+
+/**
+ * Resolved inertia configuration
+ */
+export interface ResolvedConfig {
+  rootView: string
+  versionCache: VersionCache
+  sharedData: SharedData
 }
