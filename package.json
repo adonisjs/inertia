@@ -8,15 +8,7 @@
   "main": "build/index.js",
   "type": "module",
   "files": [
-    "src",
-    "providers",
-    "build/src",
-    "build/providers",
-    "build/stubs",
-    "build/services",
-    "build/index.js",
-    "build/index.d.ts",
-    "build/configure.js"
+    "build"
   ],
   "exports": {
     ".": "./build/index.js",
@@ -37,7 +29,7 @@
     "pretest": "npm run lint",
     "test": "c8 npm run quick:test",
     "prebuild": "npm run lint && npm run clean",
-    "build": "tsc",
+    "build": "tsup-node",
     "postbuild": "npm run copy:templates",
     "release": "np",
     "version": "npm run build",
@@ -70,6 +62,7 @@
     "supertest": "^6.3.3",
     "tinybench": "^2.5.1",
     "ts-node": "^10.9.1",
+    "tsup": "^7.3.0",
     "typescript": "^5.2.2"
   },
   "dependencies": {
@@ -122,5 +115,21 @@
       "tests/**",
       "tests_helpers/**"
     ]
+  },
+  "tsup": {
+    "entry": [
+      "./index.ts",
+      "./src/types.ts",
+      "./services/inertia.ts",
+      "./src/inertia_middleware.ts",
+      "./providers/inertia_provider.ts",
+      "./src/plugins/edge.ts",
+      "./src/plugins/api_client.ts"
+    ],
+    "outDir": "./build",
+    "clean": true,
+    "format": "esm",
+    "dts": true,
+    "target": "esnext"
   }
 }
