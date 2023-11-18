@@ -59,7 +59,7 @@ export default class InertiaMiddleware {
      *
      * See https://inertiajs.com/the-protocol#asset-versioning
      */
-    const version = this.config.versionCache.getVersion()
+    const version = this.config.versionCache.getVersion().toString()
     if (method === 'GET' && request.header('x-inertia-version', '') !== version) {
       response.header('x-inertia-location', request.url())
       response.status(409)

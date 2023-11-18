@@ -149,4 +149,33 @@ test.group('Middleware', () => {
     assert.equal(r1.status, 409)
     assert.equal(r1.headers['x-inertia-location'], '/')
   })
+
+  test('if version is provided as integer it should compare it using a toString', async ({
+    assert,
+  }) => {
+    const version = new VersionCache(new URL(import.meta.url), 1)
+    const middleware = new InertiaMiddleware({
+      rootView: 'root',
+      sharedData: {},
+      versionCache: version,
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      await middleware.handle(ctx, () => {})
+
+      ctx.response.finish()
+    })
+
+    const r1 = await supertest(server)
+      .get('/')
+      .set('x-inertia', 'true')
+      .set('x-inertia-version', '1')
+
+    console.log(r1.status)
+    assert.equal(r1.status, 200)
+  })
 })
