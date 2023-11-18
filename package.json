@@ -25,7 +25,7 @@
     "./inertia_middleware": "./build/src/inertia_middleware.js",
     "./inertia_provider": "./build/providers/inertia_provider.js",
     "./plugins/edge": "./build/src/plugins/edge.js",
-    "./plugins/api_client": "./build/src/plugins/japa/api_client.js"
+    "./plugins/api_client": "./build/src/plugins/api_client.js"
   },
   "scripts": {
     "clean": "del-cli build",
