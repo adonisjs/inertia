@@ -37,7 +37,7 @@ declare module '@japa/api-client' {
     /**
      * The inertia response props
      */
-    inertiaProps: PageProps
+    inertiaProps: Record<string, any>
 
     /**
      * Assert component name of inertia response
