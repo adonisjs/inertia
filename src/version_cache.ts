@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import crc32 from 'crc-32'
 import { readFile } from 'node:fs/promises'
 
 import type { AssetsVersion } from './types.js'
@@ -34,6 +33,7 @@ export class VersionCache {
    */
   async #getManifestHash(): Promise<AssetsVersion> {
     try {
+      const crc32 = await import('crc-32')
       const manifestPath = new URL('public/assets/manifest.json', this.appRoot)
       const manifestFile = await readFile(manifestPath, 'utf-8')
       this.#cachedVersion = crc32.str(manifestFile)
