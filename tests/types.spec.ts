@@ -14,21 +14,38 @@ test.group('Types', () => {
   test('assign interface to render', async () => {
     const inertia = await new InertiaFactory().create()
 
-    interface Response {
+    interface MyRouteResponse {
       foo: string
     }
 
-    inertia.render<Response>('foo', null as any).catch(() => {})
+    inertia.render<MyRouteResponse>('foo', null as any).catch(() => {})
   })
 
-  test('ts error if props doesnt match generic', async () => {
+  test('no ts error if generic is not passed', async () => {
     const inertia = await new InertiaFactory().create()
 
-    interface Response {
+    inertia.render('foo', { foo: 1 }).catch(() => {})
+  })
+
+  test('ts error if page props doesnt match generic', async () => {
+    const inertia = await new InertiaFactory().create()
+
+    interface MyRouteResponse {
       foo: string
     }
 
     // @ts-expect-error props doesn't match generic
-    inertia.render<Response>('foo', { foo: 1 }).catch(() => {})
+    inertia.render<MyRouteResponse>('foo', { foo: 1 }).catch(() => {})
+  })
+
+  test('ts error if view props doesnt match generic', async () => {
+    const inertia = await new InertiaFactory().create()
+
+    interface MyViewProps {
+      metaTitle: string
+    }
+
+    // @ts-expect-error props doesn't match generic
+    inertia.render<any, MyViewProps>('foo', { foo: 1 }, { foo: 32 }).catch(() => {})
   })
 })

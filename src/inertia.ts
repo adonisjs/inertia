@@ -96,12 +96,15 @@ export class Inertia {
   /**
    * Render a page using Inertia
    */
-  async render<TPageProps extends Record<string, any>>(component: string, pageProps?: TPageProps) {
+  async render<
+    TPageProps extends Record<string, any> = PageProps,
+    TViewProps extends Record<string, any> = PageProps,
+  >(component: string, pageProps?: TPageProps, viewProps?: TViewProps) {
     const pageObject = await this.#buildPageObject(component, pageProps)
     const isInertiaRequest = !!this.ctx.request.header('x-inertia')
 
     if (!isInertiaRequest) {
-      return this.ctx.view.render(this.config.rootView, { page: pageObject })
+      return this.ctx.view.render(this.config.rootView, { ...viewProps, page: pageObject })
     }
 
     return pageObject

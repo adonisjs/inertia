@@ -8,6 +8,7 @@
  */
 
 import { test } from '@japa/runner'
+import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
 import { setupViewMacroMock } from '../tests_helpers/index.js'
@@ -181,5 +182,18 @@ test.group('Inertia', () => {
     const result: any = await inertia.render('foo')
 
     assert.deepEqual(result.url, '/foo?bar=baz&test[]=32&12&bla=42')
+  })
+
+  test('view props are passed to the root view', async ({ assert }) => {
+    // @ts-expect-error mock
+    HttpContext.getter('view', () => ({ render: (view: any, props: any) => ({ view, props }) }))
+
+    const inertia = await new InertiaFactory().create()
+    const result: any = await inertia.render('foo', { data: 42 }, { metaTitle: 'foo' })
+
+    assert.deepEqual(result.props.metaTitle, 'foo')
+
+    // @ts-expect-error mock
+    delete HttpContext.prototype.view
   })
 })
