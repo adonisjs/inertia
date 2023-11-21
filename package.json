@@ -55,6 +55,7 @@
     "c8": "^8.0.1",
     "copyfiles": "^2.4.1",
     "del-cli": "^5.1.0",
+    "edge-parser": "^9.0.0",
     "edge.js": "^6.0.0",
     "eslint": "^8.53.0",
     "get-port": "^7.0.0",
@@ -69,6 +70,7 @@
   "dependencies": {
     "@poppinss/utils": "^6.5.1",
     "crc-32": "^1.2.2",
+    "edge-error": "^4.0.0",
     "html-entities": "^2.4.0",
     "qs": "^6.11.2"
   },
