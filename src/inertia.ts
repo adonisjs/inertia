@@ -96,7 +96,7 @@ export class Inertia {
   /**
    * Render a page using Inertia
    */
-  async render<T extends PageProps>(component: string, pageProps?: T) {
+  async render<TPageProps extends Record<string, any>>(component: string, pageProps?: TPageProps) {
     const pageObject = await this.#buildPageObject(component, pageProps)
     const isInertiaRequest = !!this.ctx.request.header('x-inertia')
 
