@@ -64,7 +64,7 @@
     "tinybench": "^2.5.1",
     "ts-node": "^10.9.1",
     "tsup": "^7.3.0",
-    "typescript": "^5.2.2"
+    "typescript": "~5.2.2"
   },
   "dependencies": {
     "@poppinss/utils": "^6.5.1",
