@@ -44,6 +44,7 @@
     "@adonisjs/tsconfig": "^1.1.8",
     "@japa/api-client": "^2.0.1",
     "@japa/assert": "2.0.1",
+    "@japa/expect-type": "^2.0.0",
     "@japa/file-system": "^2.0.1",
     "@japa/plugin-adonisjs": "^2.0.1",
     "@japa/runner": "3.0.5",
