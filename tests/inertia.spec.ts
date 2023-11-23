@@ -26,6 +26,27 @@ test.group('Inertia', () => {
     assert.equal(ctx.response.getHeader('x-inertia-location'), 'https://adonisjs.com')
   })
 
+  test('location should not returns x-inertia header', async ({ assert }) => {
+    const ctx = new HttpContextFactory().create()
+
+    const inertia = await new InertiaFactory().merge({ ctx }).create()
+
+    inertia.location('https://adonisjs.com')
+
+    assert.equal(ctx.response.getHeader('x-inertia'), null)
+  })
+
+  test('render should returns x-inertia header', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const ctx = new HttpContextFactory().create()
+    const inertia = await new InertiaFactory().merge({ ctx }).withXInertiaHeader().create()
+
+    await inertia.render('foo')
+
+    assert.equal(ctx.response.getHeader('x-inertia'), 'true')
+  })
+
   test('render root view with page props', async ({ assert }) => {
     setupViewMacroMock()
 

@@ -92,7 +92,7 @@ test.group('Middleware', () => {
     assert.equal(r3.status, 302)
   })
 
-  test('set vary and x-inertia header as response if its inertia request', async ({ assert }) => {
+  test('set vary header if its inertia request', async ({ assert }) => {
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
@@ -115,9 +115,29 @@ test.group('Middleware', () => {
     const r2 = await supertest(server).get('/')
 
     assert.equal(r1.headers.vary, 'Accept')
-    assert.equal(r1.headers['x-inertia'], 'true')
     assert.isUndefined(r2.headers.vary)
-    assert.isUndefined(r2.headers['x-inertia'])
+  })
+
+  test('should not append x-inertia request if not using inertia.render', async ({ assert }) => {
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      const middleware = new InertiaMiddleware({
+        rootView: 'root',
+        sharedData: {},
+        versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      })
+
+      await middleware.handle(ctx, () => {})
+
+      ctx.response.finish()
+    })
+
+    const r1 = await supertest(server).get('/')
+
+    assert.isUndefined(r1.headers['x-inertia'])
   })
 
   test('force a full reload if version has changed', async ({ assert }) => {

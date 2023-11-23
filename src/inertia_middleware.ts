@@ -40,7 +40,6 @@ export default class InertiaMiddleware {
     if (!isInertiaRequest) return
 
     response.header('Vary', 'Accept')
-    response.header('X-Inertia', 'true')
 
     /**
      * When redirecting a PUT/PATCH/DELETE request, we need to change the

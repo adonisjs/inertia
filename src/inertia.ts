@@ -107,6 +107,7 @@ export class Inertia {
       return this.ctx.view.render(this.config.rootView, { ...viewProps, page: pageObject })
     }
 
+    this.ctx.response.header('x-inertia', 'true')
     return pageObject
   }
 
