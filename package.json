@@ -16,7 +16,7 @@
     "./services/main": "./build/services/inertia.js",
     "./inertia_middleware": "./build/src/inertia_middleware.js",
     "./inertia_provider": "./build/providers/inertia_provider.js",
-    "./plugins/edge": "./build/src/plugins/edge.js",
+    "./plugins/edge": "./build/src/plugins/edge/plugin.js",
     "./plugins/api_client": "./build/src/plugins/api_client.js"
   },
   "scripts": {
@@ -126,7 +126,7 @@
       "./services/inertia.ts",
       "./src/inertia_middleware.ts",
       "./providers/inertia_provider.ts",
-      "./src/plugins/edge.ts",
+      "./src/plugins/edge/plugin.ts",
       "./src/plugins/api_client.ts"
     ],
     "outDir": "./build",
