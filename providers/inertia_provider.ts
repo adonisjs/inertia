@@ -24,12 +24,11 @@ export default class InertiaProvider {
    * Registers edge plugin when edge is installed
    */
   protected async registerEdgePlugin() {
-    try {
-      const edgeExports = await import('edge.js')
-      const { edgePluginInertia } = await import('../src/plugins/edge/plugin.js')
+    if (!this.app.usingEdgeJS) return
 
-      edgeExports.default.use(edgePluginInertia())
-    } catch {}
+    const edgeExports = await import('edge.js')
+    const { edgePluginInertia } = await import('../src/plugins/edge/plugin.js')
+    edgeExports.default.use(edgePluginInertia())
   }
 
   /**
@@ -51,7 +50,10 @@ export default class InertiaProvider {
     /**
      * Register the Inertia middleware
      */
-    this.app.container.singleton(InertiaMiddleware, () => new InertiaMiddleware(config))
+    this.app.container.singleton(InertiaMiddleware, async () => {
+      const vite = await this.app.container.make('vite')
+      return new InertiaMiddleware(config, vite)
+    })
 
     await this.registerEdgePlugin()
   }
