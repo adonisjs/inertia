@@ -35,7 +35,7 @@ export default class InertiaProvider {
    * Register Inertia bindings
    */
   async register() {
-   this.app.container.singleton(InertiaMiddleware, async () => {
+    this.app.container.singleton(InertiaMiddleware, async () => {
       const inertiaConfigProvider = this.app.config.get<InertiaConfig>('inertia')
       const config = await configProvider.resolve<ResolvedConfig>(this.app, inertiaConfigProvider)
 
