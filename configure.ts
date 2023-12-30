@@ -8,6 +8,7 @@
  */
 
 import type Configure from '@adonisjs/core/commands/configure'
+import { stubsRoot } from './stubs/main.js'
 
 const ADAPTERS = ['Vue 3', 'React', 'Svelte'] as const
 const ADAPTERS_INFO: {
@@ -85,14 +86,14 @@ export async function configure(command: Configure) {
   /**
    * Add Inertia middleware
    */
-  codemods.registerMiddleware('router', [
+  await codemods.registerMiddleware('router', [
     { path: '@adonisjs/inertia/inertia_middleware', position: 'after' },
   ])
 
   /**
    * Publish config
    */
-  await command.publishStub('config.stub')
+  await codemods.makeUsingStub(stubsRoot, 'config.stub', {})
 
   /**
    * Install packages
@@ -103,9 +104,9 @@ export async function configure(command: Configure) {
   )
 
   if (shouldInstallPackages) {
-    command.installPackages(pkgToInstall)
+    await codemods.installPackages(pkgToInstall)
   } else {
-    command.listPackagesToInstall(pkgToInstall)
+    await codemods.listPackagesToInstall(pkgToInstall)
   }
 
   command.logger.success(
