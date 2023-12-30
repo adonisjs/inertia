@@ -35,24 +35,17 @@ export default class InertiaProvider {
    * Register Inertia bindings
    */
   async register() {
-    const inertiaConfigProvider = this.app.config.get<InertiaConfig>('inertia')
+   this.app.container.singleton(InertiaMiddleware, async () => {
+      const inertiaConfigProvider = this.app.config.get<InertiaConfig>('inertia')
+      const config = await configProvider.resolve<ResolvedConfig>(this.app, inertiaConfigProvider)
 
-    /**
-     * Resolve config
-     */
-    const config = await configProvider.resolve<ResolvedConfig>(this.app, inertiaConfigProvider)
-    if (!config) {
-      throw new RuntimeException(
-        'Invalid "config/inertia.ts" file. Make sure you are using the "defineConfig" method'
-      )
-    }
+      if (!config) {
+        throw new RuntimeException(
+          'Invalid "config/inertia.ts" file. Make sure you are using the "defineConfig" method'
+        )
+      }
 
-    /**
-     * Register the Inertia middleware
-     */
-    this.app.container.singleton(InertiaMiddleware, async () => {
-      const vite = await this.app.container.make('vite')
-      return new InertiaMiddleware(config, vite)
+      return new InertiaMiddleware(config)
     })
 
     await this.registerEdgePlugin()

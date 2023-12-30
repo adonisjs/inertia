@@ -13,7 +13,7 @@ const IMPORTER = (filePath: string) => {
 }
 
 test.group('Inertia Provider', () => {
-  test('register inertia provider', async ({ assert }) => {
+  test('register inertia middleware singleton', async ({ assert }) => {
     const ignitor = new IgnitorFactory()
       .merge({ rcFileContents: { providers: ['../../providers/inertia_provider.js'] } })
       .withCoreConfig()
