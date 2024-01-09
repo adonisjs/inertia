@@ -15,7 +15,7 @@ const IMPORTER = (filePath: string) => {
 test.group('Inertia Provider', () => {
   test('register inertia middleware singleton', async ({ assert }) => {
     const ignitor = new IgnitorFactory()
-      .merge({ rcFileContents: { providers: ['../../providers/inertia_provider.js'] } })
+      .merge({ rcFileContents: { providers: [() => import('../providers/inertia_provider.js')] } })
       .withCoreConfig()
       .withCoreProviders()
       .merge({ config: { inertia: defineConfig({ rootView: 'root' }) } })
