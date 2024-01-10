@@ -32,7 +32,7 @@ const ADAPTERS_INFO: {
   },
   'React': {
     dependencies: [
-      { name: '@inertiajs/inertia-react', isDevDependency: false },
+      { name: '@inertiajs/react', isDevDependency: false },
       { name: 'react', isDevDependency: false },
       { name: 'react-dom', isDevDependency: false },
       { name: '@vitejs/plugin-react', isDevDependency: true },
@@ -42,7 +42,7 @@ const ADAPTERS_INFO: {
   },
   'Svelte': {
     dependencies: [
-      { name: '@inertiajs/inertia-svelte', isDevDependency: false },
+      { name: '@inertiajs/svelte', isDevDependency: false },
       { name: 'svelte', isDevDependency: false },
       { name: '@sveltejs/vite-plugin-svelte', isDevDependency: true },
     ],
