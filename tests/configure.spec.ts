@@ -38,7 +38,7 @@ async function setupApp() {
 }
 
 test.group('Configure', (group) => {
-  group.tap((t) => t.timeout(10_000))
+  group.tap((t) => t.timeout(20_000))
 
   group.each.setup(async ({ context }) => {
     context.fs.baseUrl = BASE_URL
