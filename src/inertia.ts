@@ -10,7 +10,7 @@
 /// <reference types="@adonisjs/core/providers/edge_provider" />
 
 import type { HttpContext } from '@adonisjs/core/http'
-import type { MaybePromise, PageProps, ResolvedConfig } from './types.js'
+import type { Data, MaybePromise, PageProps, ResolvedConfig, SharedData } from './types.js'
 
 /**
  * Symbol used to identify lazy props
@@ -21,10 +21,14 @@ const kLazySymbol = Symbol('lazy')
  * Main class used to interact with Inertia
  */
 export class Inertia {
+  #sharedData: SharedData = {}
+
   constructor(
     protected ctx: HttpContext,
     protected config: ResolvedConfig
-  ) {}
+  ) {
+    this.#sharedData = config.sharedData
+  }
 
   /**
    * Check if a value is a lazy prop
@@ -88,9 +92,17 @@ export class Inertia {
     return {
       component,
       version: this.config.versionCache.getVersion(),
-      props: await this.#resolvePageProps(component, { ...this.config.sharedData, ...pageProps }),
+      props: await this.#resolvePageProps(component, { ...this.#sharedData, ...pageProps }),
       url: this.ctx.request.url(true),
     }
+  }
+
+  /**
+   * Share data for the current request.
+   * This data will override any shared data defined in the config.
+   */
+  share(data: Record<string, Data>) {
+    this.#sharedData = { ...this.#sharedData, ...data }
   }
 
   /**

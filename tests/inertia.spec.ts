@@ -217,4 +217,41 @@ test.group('Inertia', () => {
     // @ts-expect-error mock
     delete HttpContext.prototype.view
   })
+
+  test('share data for the current request', async ({ assert }) => {
+    const inertia = await new InertiaFactory().withXInertiaHeader().create()
+
+    inertia.share({ foo: 'bar' })
+
+    const result: any = await inertia.render('foo')
+
+    assert.deepEqual(result.props, { foo: 'bar' })
+  })
+
+  test('share() data are scoped to current instance', async ({ assert }) => {
+    const inertia = await new InertiaFactory().withXInertiaHeader().create()
+    const inertia2 = await new InertiaFactory().withXInertiaHeader().create()
+
+    inertia.share({ foo: 'bar' })
+    inertia2.share({ foo: 'baz' })
+
+    const result: any = await inertia.render('foo')
+    const result2: any = await inertia2.render('foo')
+
+    assert.deepEqual(result.props, { foo: 'bar' })
+    assert.deepEqual(result2.props, { foo: 'baz' })
+  })
+
+  test('share() data override the global shared data', async ({ assert }) => {
+    const inertia = await new InertiaFactory()
+      .merge({ config: { sharedData: { foo: 'bar' } } })
+      .withXInertiaHeader()
+      .create()
+
+    inertia.share({ foo: 'baz' })
+
+    const result: any = await inertia.render('foo')
+
+    assert.deepEqual(result.props, { foo: 'baz' })
+  })
 })
