@@ -8,11 +8,10 @@
  */
 
 import { test } from '@japa/runner'
-import { fileURLToPath } from 'node:url'
 import { IgnitorFactory } from '@adonisjs/core/factories'
 import Configure from '@adonisjs/core/commands/configure'
-
-const BASE_URL = new URL('./tmp/', import.meta.url)
+import { BASE_URL } from '../tests_helpers/index.js'
+import { FileSystem } from '@japa/file-system'
 
 async function setupApp() {
   const ignitor = new IgnitorFactory()
@@ -37,17 +36,13 @@ async function setupApp() {
   return { ace, app }
 }
 
-test.group('Configure', (group) => {
-  group.tap((t) => t.timeout(20_000))
-
-  group.each.setup(async ({ context }) => {
-    context.fs.baseUrl = BASE_URL
-    context.fs.basePath = fileURLToPath(BASE_URL)
-
-    await context.fs.create('.env', '')
-    await context.fs.createJson('tsconfig.json', {})
-    await context.fs.create('adonisrc.ts', `export default defineConfig({})`)
-    await context.fs.create(
+async function setupFakeAdonisproject(fs: FileSystem) {
+  await Promise.all([
+    fs.create('.env', ''),
+    fs.createJson('tsconfig.json', {}),
+    fs.create('adonisrc.ts', `export default defineConfig({})`),
+    fs.create('vite.config.ts', `export default { plugins: [] }`),
+    fs.create(
       'start/kernel.ts',
       `
       import router from '@adonisjs/core/services/router'
@@ -60,14 +55,18 @@ test.group('Configure', (group) => {
         () => import('@adonisjs/auth/initialize_auth_middleware'),
       ])
     `
-    )
-  })
+    ),
+  ])
+}
+
+test.group('Configure', (group) => {
+  group.tap((t) => t.timeout(20_000))
+  group.each.setup(async ({ context }) => setupFakeAdonisproject(context.fs))
 
   test('add provider, config file, and middleware', async ({ assert }) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('Vue 3')
-    ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
@@ -77,5 +76,58 @@ test.group('Configure', (group) => {
     await assert.fileExists('adonisrc.ts')
     await assert.fileContains('adonisrc.ts', '@adonisjs/inertia/inertia_provider')
     await assert.fileContains('start/kernel.ts', '@adonisjs/inertia/inertia_middleware')
+  })
+})
+
+test.group('Frameworks', (group) => {
+  group.tap((t) => t.timeout(20_000))
+  group.each.setup(async ({ context }) => setupFakeAdonisproject(context.fs))
+
+  test('Vue 3', async ({ assert, fs }) => {
+    await fs.createJson('package.json', {})
+    await fs.createJson('tsconfig.json', { compilerOptions: {} })
+
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileExists('resources/app.ts')
+    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/tsconfig.json')
+    await assert.fileContains('vite.config.ts', '@vitejs/plugin-vue')
+  })
+
+  test('React', async ({ assert }) => {
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('React')
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileExists('resources/app.tsx')
+    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/tsconfig.json')
+    await assert.fileContains('vite.config.ts', '@vitejs/plugin-react')
+  })
+
+  test('Solid', async ({ assert }) => {
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('Solid')
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileExists('resources/app.tsx')
+    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/tsconfig.json')
+    await assert.fileContains('vite.config.ts', 'vite-plugin-solid')
   })
 })

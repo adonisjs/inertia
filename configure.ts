@@ -9,28 +9,37 @@
 
 import type Configure from '@adonisjs/core/commands/configure'
 import { stubsRoot } from './stubs/main.js'
+import { Codemods } from '@adonisjs/core/ace/codemods'
 
-const ADAPTERS = ['Vue 3', 'React', 'Svelte'] as const
+const ADAPTERS = ['Vue 3', 'React', 'Svelte', 'Solid'] as const
 const ADAPTERS_INFO: {
   [K in (typeof ADAPTERS)[number]]: {
-    dependencies: {
-      name: string
-      isDevDependency: boolean
-    }[]
-    ssrDependencies?: {
-      name: string
-      isDevDependency: boolean
-    }[]
+    stubFolder: string
+    extension: string
+    dependencies: { name: string; isDevDependency: boolean }[]
+    ssrDependencies?: { name: string; isDevDependency: boolean }[]
+    viteRegister: {
+      pluginCall: Parameters<Codemods['registerVitePlugin']>[0]
+      importDeclarations: Parameters<Codemods['registerVitePlugin']>[1]
+    }
   }
 } = {
   'Vue 3': {
+    stubFolder: 'vue',
+    extension: 'ts',
     dependencies: [
       { name: '@inertiajs/vue3', isDevDependency: false },
       { name: 'vue', isDevDependency: false },
       { name: '@vitejs/plugin-vue', isDevDependency: true },
     ],
+    viteRegister: {
+      pluginCall: 'vue()',
+      importDeclarations: [{ isNamed: true, module: '@vitejs/plugin-vue', identifier: 'vue' }],
+    },
   },
   'React': {
+    stubFolder: 'react',
+    extension: 'tsx',
     dependencies: [
       { name: '@inertiajs/react', isDevDependency: false },
       { name: 'react', isDevDependency: false },
@@ -39,13 +48,38 @@ const ADAPTERS_INFO: {
       { name: '@types/react', isDevDependency: true },
       { name: '@types/react-dom', isDevDependency: true },
     ],
+    viteRegister: {
+      pluginCall: 'react()',
+      importDeclarations: [{ isNamed: true, module: '@vitejs/plugin-react', identifier: 'react' }],
+    },
   },
   'Svelte': {
+    stubFolder: 'svelte',
+    extension: 'ts',
     dependencies: [
       { name: '@inertiajs/svelte', isDevDependency: false },
       { name: 'svelte', isDevDependency: false },
       { name: '@sveltejs/vite-plugin-svelte', isDevDependency: true },
     ],
+    viteRegister: {
+      pluginCall: 'svelte()',
+      importDeclarations: [
+        { isNamed: true, module: '@sveltejs/vite-plugin-svelte', identifier: 'svelte' },
+      ],
+    },
+  },
+  'Solid': {
+    stubFolder: 'solid',
+    extension: 'tsx',
+    dependencies: [
+      { name: 'solid-js', isDevDependency: false },
+      { name: 'inertia-adapter-solid', isDevDependency: false },
+      { name: 'vite-plugin-solid', isDevDependency: true },
+    ],
+    viteRegister: {
+      pluginCall: 'solid()',
+      importDeclarations: [{ isNamed: true, module: 'vite-plugin-solid', identifier: 'solid' }],
+    },
   },
 }
 
@@ -61,19 +95,8 @@ export async function configure(command: Configure) {
     ADAPTERS,
     { name: 'adapter' }
   )
-  const pkgToInstall = ADAPTERS_INFO[adapter].dependencies
 
-  /**
-   * Prompt for SSR
-   */
-  const withSsr = await command.prompt.confirm('Do you want to enable server-side rendering?', {
-    name: 'ssr',
-  })
-
-  if (withSsr) {
-    pkgToInstall.push(...(ADAPTERS_INFO[adapter].ssrDependencies || []))
-  }
-
+  const adapterInfo = ADAPTERS_INFO[adapter]
   const codemods = await command.createCodemods()
 
   /**
@@ -91,13 +114,28 @@ export async function configure(command: Configure) {
   ])
 
   /**
-   * Publish config
+   * Publish stubs
    */
+  const extension = adapterInfo.extension
+  const stubFolder = adapterInfo.stubFolder
+
   await codemods.makeUsingStub(stubsRoot, 'config.stub', {})
+  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/root.edge.stub`, {})
+  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/tsconfig.json.stub`, {})
+  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/app.${extension}.stub`, {})
+
+  /**
+   * Update vite config
+   */
+  await codemods.registerVitePlugin(
+    adapterInfo.viteRegister.pluginCall,
+    adapterInfo.viteRegister.importDeclarations
+  )
 
   /**
    * Install packages
    */
+  const pkgToInstall = adapterInfo.dependencies
   const shouldInstallPackages = await command.prompt.confirm(
     `Do you want to install dependencies ${pkgToInstall.map((pkg) => pkg.name).join(', ')}?`,
     { name: 'install' }

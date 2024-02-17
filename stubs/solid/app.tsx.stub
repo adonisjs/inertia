@@ -1,0 +1,24 @@
+{{{
+  exports({ to: app.makePath('resources/app.tsx') })
+}}}
+import './css/app.css'
+
+import { render } from 'solid-js/web'
+import { createInertiaApp } from 'inertia-adapter-solid'
+
+const appName = import.meta.env.VITE_APP_NAME || 'AdonisJS'
+
+createInertiaApp({
+  progress: { color: '#5468FF' },
+
+  title: (title) => {{ '`${title} - ${appName}`' }},
+
+  resolve(name) {
+    const pages = import.meta.glob('./pages/**/*.tsx', { eager: true })
+    {{ 'return pages[`./pages/${name}.tsx`]' }}
+  },
+
+  setup({ el, App, props }) {
+    render(() => <App {...props} />, el)
+  },
+})
