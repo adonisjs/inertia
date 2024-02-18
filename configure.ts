@@ -37,7 +37,7 @@ const ADAPTERS_INFO: {
     ],
     viteRegister: {
       pluginCall: 'vue()',
-      importDeclarations: [{ isNamed: true, module: '@vitejs/plugin-vue', identifier: 'vue' }],
+      importDeclarations: [{ isNamed: false, module: '@vitejs/plugin-vue', identifier: 'vue' }],
     },
   },
   'React': {
@@ -54,7 +54,7 @@ const ADAPTERS_INFO: {
     ],
     viteRegister: {
       pluginCall: 'react()',
-      importDeclarations: [{ isNamed: true, module: '@vitejs/plugin-react', identifier: 'react' }],
+      importDeclarations: [{ isNamed: false, module: '@vitejs/plugin-react', identifier: 'react' }],
     },
   },
   'Svelte': {
@@ -69,7 +69,7 @@ const ADAPTERS_INFO: {
     viteRegister: {
       pluginCall: 'svelte()',
       importDeclarations: [
-        { isNamed: true, module: '@sveltejs/vite-plugin-svelte', identifier: 'svelte' },
+        { isNamed: false, module: '@sveltejs/vite-plugin-svelte', identifier: 'svelte' },
       ],
     },
   },
@@ -85,7 +85,7 @@ const ADAPTERS_INFO: {
     ],
     viteRegister: {
       pluginCall: 'solid()',
-      importDeclarations: [{ isNamed: true, module: 'vite-plugin-solid', identifier: 'solid' }],
+      importDeclarations: [{ isNamed: false, module: 'vite-plugin-solid', identifier: 'solid' }],
     },
   },
 }
