@@ -1,0 +1,21 @@
+{{{
+  exports({ to: app.makePath('resources/pages/home.tsx') })
+}}}
+import { Title } from '@solidjs/meta'
+
+export default function Home(props: { version: number }) {
+  return (
+    <>
+      <Title>Homepage</Title>
+
+      <div className="container">
+        <div className="title">AdonisJS {props.version} x Inertia x Solid.js</div>
+
+        <span>
+          Learn more about AdonisJS and Inertia.js by visiting the{' '}
+          <a href="https://docs.adonisjs.com/inertia">AdonisJS documentation</a>.
+        </span>
+      </div>
+    </>
+  )
+}

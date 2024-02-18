@@ -14,8 +14,8 @@ createInertiaApp({
   title: (title) => {{ '`${title} - ${appName}`' }},
 
   resolve: (name) => {
-    const pages = import.meta.glob('./pages/**/*.vue', { eager: true })
-    {{ 'return pages[`./pages/${name}.vue`]' }}
+    const pages = import.meta.glob('./pages/**/*.tsx', { eager: true })
+    {{ 'return pages[`./pages/${name}.tsx`]' }}
   },
 
   setup({ el, App, props }) {

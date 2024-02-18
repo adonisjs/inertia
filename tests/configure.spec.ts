@@ -14,6 +14,7 @@ import { BASE_URL } from '../tests_helpers/index.js'
 import { FileSystem } from '@japa/file-system'
 
 async function setupApp() {
+  console.log(BASE_URL)
   const ignitor = new IgnitorFactory()
     .withCoreProviders()
     .withCoreConfig()
@@ -31,7 +32,7 @@ async function setupApp() {
   await app.init().then(() => app.boot())
 
   const ace = await app.container.make('ace')
-  ace.ui.switchMode('raw')
+  // ace.ui.switchMode('raw')
 
   return { ace, app }
 }
@@ -77,6 +78,40 @@ test.group('Configure', (group) => {
     await assert.fileContains('adonisrc.ts', '@adonisjs/inertia/inertia_provider')
     await assert.fileContains('start/kernel.ts', '@adonisjs/inertia/inertia_middleware')
   })
+
+  test('add example route', async ({ assert, fs }) => {
+    await fs.createJson('tsconfig.json', { compilerOptions: {} })
+    await fs.create('start/routes.ts', '')
+
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileContains('start/routes.ts', `router.get('/inertia'`)
+  })
+
+  test('skip adding example route when already defined', async ({ assert, fs }) => {
+    await fs.createJson('tsconfig.json', { compilerOptions: {} })
+    await fs.create('start/routes.ts', `router.get('/inertia', () => {})`)
+
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    const fileContent = await fs.contents('start/routes.ts')
+    const matches = fileContent.match(/router.get\('\/inertia'/g)
+
+    assert.isArray(matches)
+    assert.lengthOf(matches!, 1)
+  })
 })
 
 test.group('Frameworks', (group) => {
@@ -99,6 +134,7 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
     await assert.fileContains('vite.config.ts', '@vitejs/plugin-vue')
+    await assert.fileExists('resources/pages/home.vue')
   })
 
   test('React', async ({ assert }) => {
@@ -114,6 +150,7 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
     await assert.fileContains('vite.config.ts', '@vitejs/plugin-react')
+    await assert.fileExists('resources/pages/home.tsx')
   })
 
   test('Solid', async ({ assert }) => {
@@ -129,5 +166,6 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
     await assert.fileContains('vite.config.ts', 'vite-plugin-solid')
+    await assert.fileExists('resources/pages/home.tsx')
   })
 })
