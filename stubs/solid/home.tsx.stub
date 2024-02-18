@@ -8,8 +8,8 @@ export default function Home(props: { version: number }) {
     <>
       <Title>Homepage</Title>
 
-      <div className="container">
-        <div className="title">AdonisJS {props.version} x Inertia x Solid.js</div>
+      <div class="container">
+        <div class="title">AdonisJS {props.version} x Inertia x Solid.js</div>
 
         <span>
           Learn more about AdonisJS and Inertia.js by visiting the{' '}
