@@ -74,6 +74,7 @@ test.group('Japa plugin | Api Client', (group) => {
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         rootView: 'root',
         sharedData: {},
+        ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
       await middleware.handle(ctx, async () => {
@@ -114,6 +115,7 @@ test.group('Japa plugin | Api Client', (group) => {
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         rootView: 'root',
         sharedData: {},
+        ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
       await middleware.handle(ctx, async () => {
@@ -147,6 +149,7 @@ test.group('Japa plugin | Api Client', (group) => {
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         rootView: 'root',
         sharedData: {},
+        ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
       await middleware.handle(ctx, async () => {

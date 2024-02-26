@@ -255,3 +255,84 @@ test.group('Inertia', () => {
     assert.deepEqual(result.props, { foo: 'baz' })
   })
 })
+
+test.group('Inertia | Ssr', () => {
+  test('if viteRuntime is available, use entrypoint file to render the page', async ({
+    assert,
+  }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory()
+      .merge({
+        config: {
+          ssr: {
+            enabled: true,
+            entrypoint: 'foo.ts',
+          },
+        },
+      })
+      .withViteRuntime({
+        async executeEntrypoint(path) {
+          return { default: () => ({ head: 'head', body: path }) }
+        },
+      })
+      .create()
+
+    const result: any = await inertia.render('foo')
+
+    assert.deepEqual(result.props.page.ssrHead, 'head')
+    assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
+  })
+
+  test('if viteRuntime is not available, use bundle file to render the page', async ({
+    assert,
+    fs,
+  }) => {
+    setupViewMacroMock()
+
+    await fs.create('foo.js', 'export default () => ({ head: "head", body: "foo.ts" })')
+
+    const inertia = await new InertiaFactory()
+      .merge({
+        config: {
+          ssr: {
+            enabled: true,
+            bundle: new URL('foo.js', fs.baseUrl).href,
+          },
+        },
+      })
+      .create()
+
+    const result: any = await inertia.render('foo')
+
+    assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
+    assert.deepEqual(result.props.page.ssrHead, 'head')
+  })
+
+  test('enable only for listed pages', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory()
+      .withViteRuntime({
+        async executeEntrypoint(path) {
+          return { default: () => ({ head: 'head', body: path }) }
+        },
+      })
+      .merge({
+        config: {
+          ssr: {
+            enabled: true,
+            entrypoint: 'foo.ts',
+            pages: ['foo'],
+          },
+        },
+      })
+      .create()
+
+    const result: any = await inertia.render('foo')
+    const result2: any = await inertia.render('bar')
+
+    assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
+    assert.notExists(result2.props.page.ssrBody)
+  })
+})

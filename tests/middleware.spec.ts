@@ -25,6 +25,7 @@ test.group('Middleware', () => {
         rootView: 'root',
         sharedData: {},
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
+        ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
       await middleware.handle(ctx, () => {})
@@ -46,6 +47,7 @@ test.group('Middleware', () => {
         rootView: 'root',
         sharedData: {},
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
+        ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
       await middleware.handle(ctx, () => {
@@ -74,6 +76,7 @@ test.group('Middleware', () => {
         rootView: 'root',
         sharedData: {},
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
+        ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
       await middleware.handle(ctx, () => {
@@ -102,6 +105,7 @@ test.group('Middleware', () => {
         rootView: 'root',
         sharedData: {},
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
+        ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
       await middleware.handle(ctx, () => {
@@ -128,6 +132,7 @@ test.group('Middleware', () => {
         rootView: 'root',
         sharedData: {},
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
+        ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
       await middleware.handle(ctx, () => {})
@@ -148,6 +153,7 @@ test.group('Middleware', () => {
       rootView: 'root',
       sharedData: {},
       versionCache: version,
+      ssr: { enabled: false, bundle: '', entrypoint: '' },
     })
 
     const server = httpServer.create(async (req, res) => {
@@ -178,6 +184,7 @@ test.group('Middleware', () => {
       rootView: 'root',
       sharedData: {},
       versionCache: version,
+      ssr: { enabled: false, bundle: '', entrypoint: '' },
     })
 
     const server = httpServer.create(async (req, res) => {

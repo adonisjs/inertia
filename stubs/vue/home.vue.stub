@@ -1,0 +1,21 @@
+{{{
+  exports({ to: app.makePath('resources/pages/home.vue') })
+}}}
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3'
+
+defineProps<{ version: number }>()
+</script>
+
+<template>
+  <Head title="Homepage" />
+
+  <div className="container">
+    <div className="title">AdonisJS \{\{ version \}\} x Inertia x Vue.js</div>
+
+    <span>
+      Learn more about AdonisJS and Inertia.js by visiting the
+      <a href="https://docs.adonisjs.com/inertia">AdonisJS documentation</a>.
+    </span>
+  </div>
+</template>

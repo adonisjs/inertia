@@ -10,6 +10,8 @@ import { NamedReporterContract } from '@japa/runner/types'
 import { runner, syncReporter } from '@japa/runner/factories'
 import { inertiaApiClient } from '../src/plugins/api_client.js'
 
+export const BASE_URL = new URL('./tmp/', import.meta.url)
+
 /**
  * Create a http server that will be closed automatically
  * when the test ends

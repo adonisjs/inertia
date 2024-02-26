@@ -46,6 +46,31 @@ export interface InertiaConfig {
    * Data that should be shared with all rendered pages
    */
   sharedData?: SharedData
+
+  /**
+   * Options to configure SSR
+   */
+  ssr?: {
+    /**
+     * Enable or disable SSR
+     */
+    enabled: boolean
+
+    /**
+     * List of components that should be rendered on the server
+     */
+    pages?: string[]
+
+    /**
+     * Path to the SSR entrypoint file
+     */
+    entrypoint?: string
+
+    /**
+     * Path to the SSR bundled file that will be used in production
+     */
+    bundle?: string
+  }
 }
 
 /**
@@ -55,4 +80,10 @@ export interface ResolvedConfig {
   rootView: string
   versionCache: VersionCache
   sharedData: SharedData
+  ssr: {
+    enabled: boolean
+    entrypoint: string
+    pages?: string[]
+    bundle: string
+  }
 }
