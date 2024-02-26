@@ -128,7 +128,8 @@
       "./src/inertia_middleware.ts",
       "./providers/inertia_provider.ts",
       "./src/plugins/edge/plugin.ts",
-      "./src/plugins/api_client.ts"
+      "./src/plugins/japa/api_client.ts",
+      "./src/plugins/vite.ts"
     ],
     "outDir": "./build",
     "clean": true,
