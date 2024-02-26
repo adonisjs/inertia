@@ -8,7 +8,6 @@
  */
 
 import { test } from '@japa/runner'
-import { fileURLToPath } from 'node:url'
 import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
