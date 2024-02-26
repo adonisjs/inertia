@@ -11,9 +11,9 @@ import { configProvider } from '@adonisjs/core'
 import { RuntimeException } from '@poppinss/utils'
 import type { PluginFn } from '@japa/runner/types'
 import { ApiRequest, ApiResponse } from '@japa/api-client'
-
-import type { PageProps, ResolvedConfig } from '../types.js'
 import type { ApplicationService } from '@adonisjs/core/types'
+
+import type { PageProps, ResolvedConfig } from '../../types.js'
 
 declare module '@japa/api-client' {
   export interface ApiRequest {

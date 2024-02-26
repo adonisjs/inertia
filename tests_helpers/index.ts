@@ -1,14 +1,14 @@
 import type { Test } from '@japa/runner/core'
-import { pluginAdonisJS } from '@japa/plugin-adonisjs'
-import { IncomingMessage, ServerResponse, createServer } from 'node:http'
-
 import { getActiveTest } from '@japa/runner'
 import { HttpContext } from '@adonisjs/core/http'
+import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { ApiClient, apiClient } from '@japa/api-client'
 import { ApplicationService } from '@adonisjs/core/types'
 import { NamedReporterContract } from '@japa/runner/types'
 import { runner, syncReporter } from '@japa/runner/factories'
-import { inertiaApiClient } from '../src/plugins/api_client.js'
+import { IncomingMessage, ServerResponse, createServer } from 'node:http'
+
+import { inertiaApiClient } from '../src/plugins/japa/api_client.js'
 
 export const BASE_URL = new URL('./tmp/', import.meta.url)
 
