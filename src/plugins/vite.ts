@@ -35,11 +35,11 @@ export type InertiaPluginOptions = {
 /**
  * Inertia plugin for Vite that is tailored for AdonisJS
  */
-export default function inertia(options: InertiaPluginOptions): PluginOption {
+export default function inertia(options?: InertiaPluginOptions): PluginOption {
   return {
     name: 'vite-plugin-inertia',
     config: () => {
-      if (!options.ssr?.enabled) return {}
+      if (!options?.ssr?.enabled) return {}
 
       return {
         buildSteps: [
