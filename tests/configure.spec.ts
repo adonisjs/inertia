@@ -14,7 +14,6 @@ import { BASE_URL } from '../tests_helpers/index.js'
 import { FileSystem } from '@japa/file-system'
 
 async function setupApp() {
-  console.log(BASE_URL)
   const ignitor = new IgnitorFactory()
     .withCoreProviders()
     .withCoreConfig()

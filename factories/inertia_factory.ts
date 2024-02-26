@@ -7,10 +7,11 @@
  * file that was distributed with this source code.
  */
 
+import type { ViteRuntime } from 'vite/runtime'
 import { HttpContext } from '@adonisjs/core/http'
 import { AppFactory } from '@adonisjs/core/factories/app'
-import { HttpContextFactory } from '@adonisjs/core/factories/http'
 import { ApplicationService } from '@adonisjs/core/types'
+import { HttpContextFactory } from '@adonisjs/core/factories/http'
 
 import { defineConfig } from '../index.js'
 import { Inertia } from '../src/inertia.js'
@@ -29,6 +30,7 @@ export class InertiaFactory {
   #parameters: FactoryParameters = {
     ctx: new HttpContextFactory().create(),
   }
+  #viteRuntime?: ViteRuntime
 
   #getApp() {
     return new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
@@ -50,6 +52,11 @@ export class InertiaFactory {
     return this
   }
 
+  withViteRuntime(runtime: { executeEntrypoint: (path: string) => Promise<any> }) {
+    this.#viteRuntime = runtime as any
+    return this
+  }
+
   withInertiaPartialData(data: string[]) {
     this.#parameters.ctx.request.request.headers['x-inertia-partial-data'] = data.join(',')
     return this
@@ -62,6 +69,6 @@ export class InertiaFactory {
 
   async create() {
     const config = await defineConfig(this.#parameters.config || {}).resolver(this.#getApp())
-    return new Inertia(this.#parameters.ctx, config)
+    return new Inertia(this.#parameters.ctx, config, this.#viteRuntime)
   }
 }

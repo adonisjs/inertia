@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+/// <reference types="@adonisjs/vite/vite_provider" />
+
 import { configProvider } from '@adonisjs/core'
 import { RuntimeException } from '@poppinss/utils'
 import type { ApplicationService } from '@adonisjs/core/types'
@@ -38,6 +40,7 @@ export default class InertiaProvider {
     this.app.container.singleton(InertiaMiddleware, async () => {
       const inertiaConfigProvider = this.app.config.get<InertiaConfig>('inertia')
       const config = await configProvider.resolve<ResolvedConfig>(this.app, inertiaConfigProvider)
+      const vite = await this.app.container.make('vite')
 
       if (!config) {
         throw new RuntimeException(
@@ -45,7 +48,7 @@ export default class InertiaProvider {
         )
       }
 
-      return new InertiaMiddleware(config)
+      return new InertiaMiddleware(config, vite)
     })
 
     await this.registerEdgePlugin()

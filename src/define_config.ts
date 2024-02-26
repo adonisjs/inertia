@@ -25,6 +25,12 @@ export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConf
       rootView: config.rootView ?? 'root',
       sharedData: config.sharedData || {},
       versionCache,
+      ssr: {
+        enabled: config.ssr?.enabled ?? false,
+        pages: config.ssr?.pages,
+        entrypoint: config.ssr?.entrypoint ?? app.makePath('resources/ssr.ts'),
+        bundle: config.ssr?.bundle ?? app.makePath('ssr/ssr.js'),
+      },
     }
   })
 }

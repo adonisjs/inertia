@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import type { Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
@@ -27,12 +28,19 @@ declare module '@adonisjs/core/http' {
  * set appropriate headers/status
  */
 export default class InertiaMiddleware {
-  constructor(protected config: ResolvedConfig) {}
+  #runtime: ReturnType<Vite['getRuntime']> | undefined
+
+  constructor(
+    protected config: ResolvedConfig,
+    vite?: Vite
+  ) {
+    this.#runtime = vite?.getRuntime()
+  }
 
   async handle(ctx: HttpContext, next: NextFn) {
     const { response, request } = ctx
 
-    ctx.inertia = new Inertia(ctx, this.config)
+    ctx.inertia = new Inertia(ctx, this.config, this.#runtime)
 
     await next()
 
