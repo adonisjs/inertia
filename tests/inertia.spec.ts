@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'node:path'
 import { test } from '@japa/runner'
+import { fileURLToPath } from 'node:url'
 import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
@@ -298,7 +298,7 @@ test.group('Inertia | Ssr', () => {
         config: {
           ssr: {
             enabled: true,
-            bundle: join(fs.basePath, 'foo.js'),
+            bundle: fileURLToPath(new URL('foo.js', fs.baseUrl)),
           },
         },
       })
