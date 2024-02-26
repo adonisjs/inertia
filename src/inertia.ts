@@ -9,7 +9,7 @@
 
 /// <reference types="@adonisjs/core/providers/edge_provider" />
 
-import type { Vite } from '@adonisjs/vite'
+import type { ViteRuntime } from 'vite/runtime'
 import type { HttpContext } from '@adonisjs/core/http'
 
 import type { Data, MaybePromise, PageProps, ResolvedConfig, SharedData } from './types.js'
@@ -28,7 +28,7 @@ export class Inertia {
   constructor(
     protected ctx: HttpContext,
     protected config: ResolvedConfig,
-    protected viteRuntime?: ReturnType<Vite['getRuntime']>
+    protected viteRuntime?: ViteRuntime
   ) {
     this.#sharedData = config.sharedData
   }
