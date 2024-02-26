@@ -298,7 +298,7 @@ test.group('Inertia | Ssr', () => {
         config: {
           ssr: {
             enabled: true,
-            bundle: fileURLToPath(new URL('foo.js', fs.baseUrl)),
+            bundle: new URL('foo.js', fs.baseUrl).href,
           },
         },
       })
