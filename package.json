@@ -18,7 +18,8 @@
     "./inertia_provider": "./build/providers/inertia_provider.js",
     "./plugins/edge": "./build/src/plugins/edge/plugin.js",
     "./plugins/api_client": "./build/src/plugins/japa/api_client.js",
-    "./client": "./build/src/plugins/vite.js"
+    "./client": "./build/src/plugins/vite.js",
+    "./helpers": "./build/src/helpers.js"
   },
   "scripts": {
     "clean": "del-cli build",
@@ -124,12 +125,13 @@
     "entry": [
       "./index.ts",
       "./src/types.ts",
+      "./src/helpers.ts",
+      "./src/plugins/vite.ts",
       "./services/inertia.ts",
       "./src/inertia_middleware.ts",
       "./providers/inertia_provider.ts",
       "./src/plugins/edge/plugin.ts",
-      "./src/plugins/japa/api_client.ts",
-      "./src/plugins/vite.ts"
+      "./src/plugins/japa/api_client.ts"
     ],
     "outDir": "./build",
     "clean": true,
