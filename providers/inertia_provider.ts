@@ -33,9 +33,6 @@ export default class InertiaProvider {
     edgeExports.default.use(edgePluginInertia())
   }
 
-  /**
-   * Register Inertia bindings
-   */
   async register() {
     this.app.container.singleton(InertiaMiddleware, async () => {
       const inertiaConfigProvider = this.app.config.get<InertiaConfig>('inertia')
@@ -50,7 +47,9 @@ export default class InertiaProvider {
 
       return new InertiaMiddleware(config, vite)
     })
+  }
 
+  async boot() {
     await this.registerEdgePlugin()
   }
 }
