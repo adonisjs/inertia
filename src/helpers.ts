@@ -4,7 +4,7 @@
  * @example
  *    return resolvePageComponent(
  *      `./pages/${name}.vue`,
- *       import.meta.glob<DefineComponent>("./pages/**\/*.vue"
+ *       import.meta.glob<DefineComponent>("./pages/**\/*.vue")
  *    )
  */
 export async function resolvePageComponent<T>(

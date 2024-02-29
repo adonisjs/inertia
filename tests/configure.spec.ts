@@ -31,7 +31,7 @@ async function setupApp() {
   await app.init().then(() => app.boot())
 
   const ace = await app.container.make('ace')
-  // ace.ui.switchMode('raw')
+  ace.ui.switchMode('raw')
 
   return { ace, app }
 }
@@ -67,6 +67,7 @@ test.group('Configure', (group) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
@@ -85,6 +86,7 @@ test.group('Configure', (group) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
@@ -100,6 +102,7 @@ test.group('Configure', (group) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
@@ -124,6 +127,7 @@ test.group('Frameworks', (group) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
@@ -140,6 +144,7 @@ test.group('Frameworks', (group) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('React')
+    ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
@@ -156,6 +161,7 @@ test.group('Frameworks', (group) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('Solid')
+    ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
     const command = await ace.create(Configure, ['../../index.js'])
@@ -166,5 +172,143 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/tsconfig.json')
     await assert.fileContains('vite.config.ts', 'vite-plugin-solid')
     await assert.fileExists('resources/pages/home.tsx')
+  })
+})
+
+test.group('Frameworks | SSR', (group) => {
+  group.tap((t) => t.timeout(20_000))
+  group.each.setup(async ({ context }) => setupFakeAdonisproject(context.fs))
+
+  test('Vue 3', async ({ assert, fs }) => {
+    await fs.createJson('package.json', {})
+    await fs.createJson('tsconfig.json', { compilerOptions: {} })
+
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('ssr').accept()
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileExists('resources/ssr.ts')
+    await assert.fileContains('vite.config.ts', 'inertia({ ssr: { enabled: true')
+    const inertiaConfig = await fs.contents('config/inertia.ts')
+    assert.snapshot(inertiaConfig).matchInline(`
+      "import { defineConfig } from '@adonisjs/inertia'
+
+      export default defineConfig({
+        /**
+         * Path to the Edge view that will be used as the root view for Inertia responses
+         */
+        rootView: 'root',
+
+        /**
+         * Data that should be shared with all rendered pages
+         */
+        sharedData: {
+          errors: (ctx) => ctx.session.flashMessages.get('errors'),
+        },
+
+        /**
+         * Options for the server-side rendering
+         */
+        ssr: {
+          enabled: true,
+          entrypoint: 'resources/ssr.ts'
+        }
+      })"
+    `)
+  })
+
+  test('React', async ({ assert, fs }) => {
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('React')
+    ace.prompt.trap('ssr').accept()
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileExists('resources/app.tsx')
+    await assert.fileContains(
+      'vite.config.ts',
+      `inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.tsx' } })`
+    )
+
+    const inertiaConfig = await fs.contents('config/inertia.ts')
+
+    assert.snapshot(inertiaConfig).matchInline(`
+      "import { defineConfig } from '@adonisjs/inertia'
+
+      export default defineConfig({
+        /**
+         * Path to the Edge view that will be used as the root view for Inertia responses
+         */
+        rootView: 'root',
+
+        /**
+         * Data that should be shared with all rendered pages
+         */
+        sharedData: {
+          errors: (ctx) => ctx.session.flashMessages.get('errors'),
+        },
+
+        /**
+         * Options for the server-side rendering
+         */
+        ssr: {
+          enabled: true,
+          entrypoint: 'resources/ssr.tsx'
+        }
+      })"
+    `)
+  })
+
+  test('Solid', async ({ assert, fs }) => {
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('Solid')
+    ace.prompt.trap('ssr').accept()
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+    await assert.fileExists('resources/app.tsx')
+    await assert.fileContains(
+      'vite.config.ts',
+      `inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.tsx' } })`
+    )
+
+    await assert.fileContains('vite.config.ts', `solid({ ssr: true })`)
+
+    const inertiaConfig = await fs.contents('config/inertia.ts')
+    assert.snapshot(inertiaConfig).matchInline(`
+      "import { defineConfig } from '@adonisjs/inertia'
+
+      export default defineConfig({
+        /**
+         * Path to the Edge view that will be used as the root view for Inertia responses
+         */
+        rootView: 'root',
+
+        /**
+         * Data that should be shared with all rendered pages
+         */
+        sharedData: {
+          errors: (ctx) => ctx.session.flashMessages.get('errors'),
+        },
+
+        /**
+         * Options for the server-side rendering
+         */
+        ssr: {
+          enabled: true,
+          entrypoint: 'resources/ssr.tsx'
+        }
+      })"
+    `)
   })
 })

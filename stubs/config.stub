@@ -15,4 +15,12 @@ export default defineConfig({
   sharedData: {
     errors: (ctx) => ctx.session.flashMessages.get('errors'),
   },
+
+  /**
+   * Options for the server-side rendering
+   */
+  ssr: {
+    enabled: {{ ssr }},
+    entrypoint: '{{ ssrEntrypoint }}'
+  }
 })

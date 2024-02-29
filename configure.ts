@@ -22,8 +22,10 @@ const ADAPTERS_INFO: {
     ssrDependencies?: { name: string; isDevDependency: boolean }[]
     viteRegister: {
       pluginCall: Parameters<Codemods['registerVitePlugin']>[0]
+      ssrPluginCall?: Parameters<Codemods['registerVitePlugin']>[0]
       importDeclarations: Parameters<Codemods['registerVitePlugin']>[1]
     }
+    ssrEntrypoint?: string
   }
 } = {
   'Vue 3': {
@@ -35,10 +37,12 @@ const ADAPTERS_INFO: {
       { name: 'vue', isDevDependency: false },
       { name: '@vitejs/plugin-vue', isDevDependency: true },
     ],
+    ssrDependencies: [{ name: '@vue/server-renderer', isDevDependency: false }],
     viteRegister: {
       pluginCall: 'vue()',
       importDeclarations: [{ isNamed: false, module: '@vitejs/plugin-vue', identifier: 'vue' }],
     },
+    ssrEntrypoint: 'resources/ssr.ts',
   },
   'React': {
     stubFolder: 'react',
@@ -56,6 +60,7 @@ const ADAPTERS_INFO: {
       pluginCall: 'react()',
       importDeclarations: [{ isNamed: false, module: '@vitejs/plugin-react', identifier: 'react' }],
     },
+    ssrEntrypoint: 'resources/ssr.tsx',
   },
   'Svelte': {
     stubFolder: 'svelte',
@@ -72,6 +77,7 @@ const ADAPTERS_INFO: {
         { isNamed: false, module: '@sveltejs/vite-plugin-svelte', identifier: 'svelte' },
       ],
     },
+    ssrEntrypoint: 'resources/ssr.ts',
   },
   'Solid': {
     stubFolder: 'solid',
@@ -85,8 +91,10 @@ const ADAPTERS_INFO: {
     ],
     viteRegister: {
       pluginCall: 'solid()',
+      ssrPluginCall: 'solid({ ssr: true })',
       importDeclarations: [{ isNamed: false, module: 'vite-plugin-solid', identifier: 'solid' }],
     },
+    ssrEntrypoint: 'resources/ssr.tsx',
   },
 }
 
@@ -128,13 +136,17 @@ async function defineExampleRoute(command: Configure, codemods: Codemods) {
  */
 export async function configure(command: Configure) {
   /**
-   * Prompt for adapter
+   * Prompts for adapter and SSR
    */
   const adapter = await command.prompt.choice(
     'Select the Inertia adapter you want to use',
     ADAPTERS,
     { name: 'adapter' }
   )
+
+  const ssr = await command.prompt.confirm('Do you want to use server-side rendering?', {
+    name: 'ssr',
+  })
 
   const adapterInfo = ADAPTERS_INFO[adapter]
   const codemods = await command.createCodemods()
@@ -160,18 +172,35 @@ export async function configure(command: Configure) {
   const stubFolder = adapterInfo.stubFolder
   const compExt = adapterInfo.componentsExtension
 
-  await codemods.makeUsingStub(stubsRoot, 'config.stub', {})
+  await codemods.makeUsingStub(stubsRoot, 'config.stub', {
+    ssr,
+    ssrEntrypoint: adapterInfo.ssrEntrypoint,
+  })
   await codemods.makeUsingStub(stubsRoot, `app.css.stub`, {})
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/root.edge.stub`, {})
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/tsconfig.json.stub`, {})
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/app.${appExt}.stub`, {})
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/home.${compExt}.stub`, {})
 
+  if (ssr) {
+    await codemods.makeUsingStub(stubsRoot, `${stubFolder}/ssr.${appExt}.stub`, {})
+  }
+
   /**
    * Update vite config
    */
+  const inertiaPluginCall = ssr
+    ? `inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.${appExt}' } })`
+    : `inertia({ ssr: { enabled: false } })`
+
+  await codemods.registerVitePlugin(inertiaPluginCall, [
+    { isNamed: false, module: '@adonisjs/inertia/client', identifier: 'inertia' },
+  ])
+
   await codemods.registerVitePlugin(
-    adapterInfo.viteRegister.pluginCall,
+    ssr && adapterInfo.viteRegister.ssrPluginCall
+      ? adapterInfo.viteRegister.ssrPluginCall
+      : adapterInfo.viteRegister.pluginCall,
     adapterInfo.viteRegister.importDeclarations
   )
 
@@ -184,6 +213,9 @@ export async function configure(command: Configure) {
    * Install packages
    */
   const pkgToInstall = adapterInfo.dependencies
+  if (ssr && adapterInfo.ssrDependencies) {
+    pkgToInstall.push(...adapterInfo.ssrDependencies)
+  }
   const shouldInstallPackages = await command.prompt.confirm(
     `Do you want to install dependencies ${pkgToInstall.map((pkg) => pkg.name).join(', ')}?`,
     { name: 'install' }
@@ -195,5 +227,14 @@ export async function configure(command: Configure) {
     await codemods.listPackagesToInstall(pkgToInstall)
   }
 
-  command.logger.success('Inertia configured')
+  const colors = command.colors
+  command.ui
+    .instructions()
+    .heading('Inertia was successfully configured !')
+    .add('')
+    .add(`We have added a dummy ${colors.cyan('/inertia')} route in your project.`)
+    .add(`Try visiting it in your browser after starting your server to see Inertia in action`)
+    .add('')
+    .add('Happy coding !')
+    .render()
 }

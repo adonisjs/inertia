@@ -1,7 +1,9 @@
 import { assert } from '@japa/assert'
-import { processCLIArgs, configure, run } from '@japa/runner'
+import { snapshot } from '@japa/snapshot'
 import { fileSystem } from '@japa/file-system'
 import { expectTypeOf } from '@japa/expect-type'
+import { processCLIArgs, configure, run } from '@japa/runner'
+
 import { BASE_URL } from '../tests_helpers/index.js'
 
 /*
@@ -20,7 +22,7 @@ import { BASE_URL } from '../tests_helpers/index.js'
 processCLIArgs(process.argv.slice(2))
 configure({
   files: ['tests/**/*.spec.ts'],
-  plugins: [assert(), fileSystem({ basePath: BASE_URL }), expectTypeOf()],
+  plugins: [assert(), fileSystem({ basePath: BASE_URL }), expectTypeOf(), snapshot()],
 })
 
 /*
