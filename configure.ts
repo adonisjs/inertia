@@ -178,7 +178,7 @@ export async function configure(command: Configure) {
   /**
    * Add route example
    */
-  defineExampleRoute(command, codemods)
+  await defineExampleRoute(command, codemods)
 
   /**
    * Install packages
