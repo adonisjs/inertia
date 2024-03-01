@@ -8,10 +8,11 @@
  */
 
 import { test } from '@japa/runner'
+import { FileSystem } from '@japa/file-system'
 import { IgnitorFactory } from '@adonisjs/core/factories'
 import Configure from '@adonisjs/core/commands/configure'
+
 import { BASE_URL } from '../tests_helpers/index.js'
-import { FileSystem } from '@japa/file-system'
 
 async function setupApp() {
   const ignitor = new IgnitorFactory()
@@ -66,7 +67,7 @@ test.group('Configure', (group) => {
   test('add provider, config file, and middleware', async ({ assert }) => {
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('adapter').replyWith('vue')
     ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
@@ -85,7 +86,7 @@ test.group('Configure', (group) => {
 
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('adapter').replyWith('vue')
     ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
@@ -101,7 +102,7 @@ test.group('Configure', (group) => {
 
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('adapter').replyWith('vue')
     ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
@@ -120,13 +121,13 @@ test.group('Frameworks', (group) => {
   group.tap((t) => t.timeout(20_000))
   group.each.setup(async ({ context }) => setupFakeAdonisproject(context.fs))
 
-  test('Vue 3', async ({ assert, fs }) => {
+  test('vue', async ({ assert, fs }) => {
     await fs.createJson('package.json', {})
     await fs.createJson('tsconfig.json', { compilerOptions: {} })
 
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('adapter').replyWith('vue')
     ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
@@ -143,7 +144,7 @@ test.group('Frameworks', (group) => {
   test('React', async ({ assert }) => {
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('React')
+    ace.prompt.trap('adapter').replyWith('react')
     ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
@@ -160,7 +161,7 @@ test.group('Frameworks', (group) => {
   test('Solid', async ({ assert }) => {
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('Solid')
+    ace.prompt.trap('adapter').replyWith('solid')
     ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
@@ -179,13 +180,13 @@ test.group('Frameworks | SSR', (group) => {
   group.tap((t) => t.timeout(20_000))
   group.each.setup(async ({ context }) => setupFakeAdonisproject(context.fs))
 
-  test('Vue 3', async ({ assert, fs }) => {
+  test('vue', async ({ assert, fs }) => {
     await fs.createJson('package.json', {})
     await fs.createJson('tsconfig.json', { compilerOptions: {} })
 
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('Vue 3')
+    ace.prompt.trap('adapter').replyWith('vue')
     ace.prompt.trap('ssr').accept()
     ace.prompt.trap('install').reject()
 
@@ -225,7 +226,7 @@ test.group('Frameworks | SSR', (group) => {
   test('React', async ({ assert, fs }) => {
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('React')
+    ace.prompt.trap('adapter').replyWith('react')
     ace.prompt.trap('ssr').accept()
     ace.prompt.trap('install').reject()
 
@@ -270,7 +271,7 @@ test.group('Frameworks | SSR', (group) => {
   test('Solid', async ({ assert, fs }) => {
     const { ace } = await setupApp()
 
-    ace.prompt.trap('adapter').replyWith('Solid')
+    ace.prompt.trap('adapter').replyWith('solid')
     ace.prompt.trap('ssr').accept()
     ace.prompt.trap('install').reject()
 

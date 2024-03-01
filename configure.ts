@@ -7,12 +7,13 @@
  * file that was distributed with this source code.
  */
 
-import type Configure from '@adonisjs/core/commands/configure'
+import string from '@poppinss/utils/string'
 import { Codemods } from '@adonisjs/core/ace/codemods'
+import type Configure from '@adonisjs/core/commands/configure'
 
 import { stubsRoot } from './stubs/main.js'
 
-const ADAPTERS = ['Vue 3', 'React', 'Svelte', 'Solid'] as const
+const ADAPTERS = ['vue', 'react', 'svelte', 'solid'] as const
 const ADAPTERS_INFO: {
   [K in (typeof ADAPTERS)[number]]: {
     stubFolder: string
@@ -28,7 +29,7 @@ const ADAPTERS_INFO: {
     ssrEntrypoint?: string
   }
 } = {
-  'Vue 3': {
+  vue: {
     stubFolder: 'vue',
     appExtension: 'ts',
     componentsExtension: 'vue',
@@ -44,7 +45,7 @@ const ADAPTERS_INFO: {
     },
     ssrEntrypoint: 'resources/ssr.ts',
   },
-  'React': {
+  react: {
     stubFolder: 'react',
     appExtension: 'tsx',
     componentsExtension: 'tsx',
@@ -62,7 +63,7 @@ const ADAPTERS_INFO: {
     },
     ssrEntrypoint: 'resources/ssr.tsx',
   },
-  'Svelte': {
+  svelte: {
     stubFolder: 'svelte',
     appExtension: 'ts',
     componentsExtension: 'svelte',
@@ -79,7 +80,7 @@ const ADAPTERS_INFO: {
     },
     ssrEntrypoint: 'resources/ssr.ts',
   },
-  'Solid': {
+  solid: {
     stubFolder: 'solid',
     appExtension: 'tsx',
     componentsExtension: 'tsx',
@@ -133,20 +134,44 @@ async function defineExampleRoute(command: Configure, codemods: Codemods) {
  * Configures the package
  */
 export async function configure(command: Configure) {
+  let adapter: keyof typeof ADAPTERS_INFO | undefined = command.parsedFlags.adapter
+  let ssr: boolean | undefined = command.parsedFlags.ssr
+  let shouldInstallPackages: boolean | undefined = command.parsedFlags.install
+
   /**
-   * Prompts for adapter and SSR
+   * Prompt to select the adapter when `--adapter` flag is not passed
    */
-  const adapter = await command.prompt.choice(
-    'Select the Inertia adapter you want to use',
-    ADAPTERS,
-    { name: 'adapter' }
-  )
+  if (adapter === undefined) {
+    adapter = await command.prompt.choice(
+      'Select the Inertia adapter you want to use',
+      ADAPTERS.map((adapterName) => string.capitalCase(adapterName)),
+      { name: 'adapter', result: (value) => value.toLowerCase() as (typeof ADAPTERS)[number] }
+    )
+  }
 
-  const ssr = await command.prompt.confirm('Do you want to use server-side rendering?', {
-    name: 'ssr',
-  })
+  /**
+   * Prompt to select if SSR is needed when `--ssr` flag is not passed
+   */
+  if (ssr === undefined) {
+    ssr = await command.prompt.confirm('Do you want to use server-side rendering?', {
+      name: 'ssr',
+    })
+  }
 
-  const adapterInfo = ADAPTERS_INFO[adapter]
+  /**
+   * Show error when selected adapter is not supported
+   */
+  if (adapter! in ADAPTERS_INFO === false) {
+    command.logger.error(
+      `The selected adapter "${adapter}" is invalid. Select one from: ${string.sentence(
+        Object.keys(ADAPTERS_INFO)
+      )}`
+    )
+    command.exitCode = 1
+    return
+  }
+
+  const adapterInfo = ADAPTERS_INFO[adapter!]
   const codemods = await command.createCodemods()
 
   /**
@@ -214,23 +239,21 @@ export async function configure(command: Configure) {
   if (ssr && adapterInfo.ssrDependencies) {
     pkgToInstall.push(...adapterInfo.ssrDependencies)
   }
-  const shouldInstallPackages = await command.prompt.confirm(
-    `Do you want to install dependencies ${pkgToInstall.map((pkg) => pkg.name).join(', ')}?`,
-    { name: 'install' }
-  )
+
+  /**
+   * Prompt when `install` or `--no-install` flags are
+   * not used
+   */
+  if (shouldInstallPackages === undefined) {
+    shouldInstallPackages = await command.prompt.confirm(
+      `Do you want to install dependencies ${pkgToInstall.map((pkg) => pkg.name).join(', ')}?`,
+      { name: 'install' }
+    )
+  }
 
   if (shouldInstallPackages) {
     await codemods.installPackages(pkgToInstall)
   } else {
     await codemods.listPackagesToInstall(pkgToInstall)
   }
-
-  const colors = command.colors
-  command.ui
-    .instructions()
-    .heading('Inertia was successfully configured !')
-    .add(`We have added a dummy ${colors.cyan('/inertia')} route in your project.`)
-    .add(`Try visiting it in your browser after starting your server to see Inertia in action`)
-    .add('Happy coding !')
-    .render()
 }
