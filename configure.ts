@@ -231,10 +231,8 @@ export async function configure(command: Configure) {
   command.ui
     .instructions()
     .heading('Inertia was successfully configured !')
-    .add('')
     .add(`We have added a dummy ${colors.cyan('/inertia')} route in your project.`)
     .add(`Try visiting it in your browser after starting your server to see Inertia in action`)
-    .add('')
     .add('Happy coding !')
     .render()
 }
