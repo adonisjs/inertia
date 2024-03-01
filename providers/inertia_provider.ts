@@ -15,6 +15,21 @@ import type { ApplicationService } from '@adonisjs/core/types'
 
 import InertiaMiddleware from '../src/inertia_middleware.js'
 import type { InertiaConfig, ResolvedConfig } from '../src/types.js'
+import { BriskRoute } from '@adonisjs/core/http'
+
+declare module '@adonisjs/core/http' {
+  interface BriskRoute {
+    /**
+     * Render an inertia page without defining an
+     * explicit route handler
+     */
+    renderInertia(
+      component: string,
+      props?: Record<string, any>,
+      viewProps?: Record<string, any>
+    ): void
+  }
+}
 
 /**
  * Inertia provider
@@ -51,5 +66,15 @@ export default class InertiaProvider {
 
   async boot() {
     await this.registerEdgePlugin()
+
+    /**
+     * Adding brisk route to render inertia pages
+     * without an explicit handler
+     */
+    BriskRoute.macro('renderInertia', function (this: BriskRoute, template, props, viewProps) {
+      return this.setHandler(({ inertia }) => {
+        return inertia.render(template, props, viewProps)
+      })
+    })
   }
 }
