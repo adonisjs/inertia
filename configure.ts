@@ -118,9 +118,7 @@ async function defineExampleRoute(command: Configure, codemods: Codemods) {
   const action = command.logger.action('update start/routes.ts file')
   try {
     routesFile?.addStatements((writer) => {
-      writer.writeLine(
-        `router.get('/inertia', ({ inertia }) => inertia.render('home', { version: 6 }))`
-      )
+      writer.writeLine(`router.on('/inertia').renderInertia('home', { version: 6 })`)
     })
 
     await tsMorph?.save()

@@ -92,7 +92,7 @@ test.group('Configure', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileContains('start/routes.ts', `router.get('/inertia'`)
+    await assert.fileContains('start/routes.ts', `router.on('/inertia'`)
   })
 
   test('skip adding example route when already defined', async ({ assert, fs }) => {
