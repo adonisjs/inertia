@@ -10,7 +10,7 @@
 
   <title inertia>AdonisJS x Inertia x VueJS</title>
 
-  @vite(['resources/app.ts'])
+  {{ "@vite(['resources/app.ts', `resources/pages/${page.component}.vue`])" }}
   @inertiaHead()
 </head>
 
