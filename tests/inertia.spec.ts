@@ -335,4 +335,30 @@ test.group('Inertia | Ssr', () => {
     assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
     assert.notExists(result2.props.page.ssrBody)
   })
+
+  test('should pass page object to the view', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory()
+      .withViteRuntime({
+        async executeEntrypoint(path) {
+          return { default: () => ({ head: 'head', body: path }) }
+        },
+      })
+      .merge({
+        config: {
+          ssr: {
+            enabled: true,
+            entrypoint: 'foo.ts',
+            pages: ['foo'],
+          },
+        },
+      })
+      .create()
+
+    const result: any = await inertia.render('foo')
+
+    assert.deepEqual(result.props.page.component, 'foo')
+    assert.deepEqual(result.props.page.version, '1')
+  })
 })

@@ -87,3 +87,12 @@ export interface ResolvedConfig {
     bundle: string
   }
 }
+
+export interface PageObject {
+  component: string
+  version: string | number
+  props: PageProps
+  url: string
+  ssrHead?: string
+  ssrBody?: string
+}
