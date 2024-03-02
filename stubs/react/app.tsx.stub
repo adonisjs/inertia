@@ -5,6 +5,7 @@ import './css/app.css';
 
 import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
+import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 
 const appName = import.meta.env.VITE_APP_NAME || 'AdonisJS'
 
@@ -14,8 +15,10 @@ createInertiaApp({
   title: (title) => {{ '`${title} - ${appName}`' }},
 
   resolve: (name) => {
-    const pages = import.meta.glob('./pages/**/*.tsx', { eager: true })
-    {{ 'return pages[`./pages/${name}.tsx`]' }}
+    return resolvePageComponent(
+      {{ '`./pages/${name}.tsx`' }},
+      import.meta.glob<DefineComponent>('./pages/**/*.tsx'),
+    )
   },
 
   setup({ el, App, props }) {
