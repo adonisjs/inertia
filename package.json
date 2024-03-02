@@ -44,7 +44,7 @@
     "@adonisjs/prettier-config": "^1.2.2",
     "@adonisjs/session": "7.1.1",
     "@adonisjs/tsconfig": "^1.2.2",
-    "@adonisjs/vite": "^3.0.0-2",
+    "@adonisjs/vite": "^3.0.0-4",
     "@japa/api-client": "^2.0.2",
     "@japa/assert": "2.1.0",
     "@japa/expect-type": "^2.0.1",
@@ -83,7 +83,7 @@
   "peerDependencies": {
     "@adonisjs/core": "^6.2.0",
     "@adonisjs/session": "^7.0.0",
-    "@adonisjs/vite": "^3.0.0-2",
+    "@adonisjs/vite": "^3.0.0-4",
     "@japa/api-client": "^2.0.0",
     "edge.js": "^6.0.0"
   },
