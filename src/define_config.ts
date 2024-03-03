@@ -11,6 +11,7 @@ import { configProvider } from '@adonisjs/core'
 import type { ConfigProvider } from '@adonisjs/core/types'
 
 import { VersionCache } from './version_cache.js'
+import { FilesDetector } from './files_detector.js'
 import type { InertiaConfig, ResolvedConfig } from './types.js'
 
 /**
@@ -18,6 +19,7 @@ import type { InertiaConfig, ResolvedConfig } from './types.js'
  */
 export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConfig> {
   return configProvider.create(async (app) => {
+    const detector = new FilesDetector(app)
     const versionCache = new VersionCache(app.appRoot, config.assetsVersion)
     await versionCache.computeVersion()
 
@@ -25,12 +27,14 @@ export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConf
       versionCache,
       rootView: config.rootView ?? 'root',
       sharedData: config.sharedData || {},
-      entrypoint: config.entrypoint ?? app.makePath('resources/app.ts'),
+      entrypoint: config.entrypoint ?? (await detector.detectEntrypoint('resources/app.ts')),
       ssr: {
         enabled: config.ssr?.enabled ?? false,
         pages: config.ssr?.pages,
-        entrypoint: config.ssr?.entrypoint ?? app.makePath('resources/ssr.ts'),
-        bundle: config.ssr?.bundle ?? app.makePath('ssr/ssr.js'),
+        entrypoint:
+          config.ssr?.entrypoint ?? (await detector.detectSsrEntrypoint('resources/ssr.ts')),
+
+        bundle: config.ssr?.bundle ?? (await detector.detectSsrBundle('ssr/ssr.js')),
       },
     }
   })
