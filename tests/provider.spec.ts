@@ -14,7 +14,7 @@ const IMPORTER = (filePath: string) => {
 }
 
 test.group('Inertia Provider', () => {
-  test('register inertia middleware singleton', async ({ assert }) => {
+  test('register inertia middleware singleton', async ({ assert, cleanup }) => {
     const ignitor = new IgnitorFactory()
       .merge({
         rcFileContents: {
@@ -34,6 +34,8 @@ test.group('Inertia Provider', () => {
     const app = ignitor.createApp('web')
     await app.init()
     await app.boot()
+
+    cleanup(() => app.terminate())
 
     assert.instanceOf(await app.container.make(InertiaMiddleware), InertiaMiddleware)
   })

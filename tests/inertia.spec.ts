@@ -7,12 +7,13 @@
  * file that was distributed with this source code.
  */
 
+import { join } from 'node:path'
 import { test } from '@japa/runner'
 import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
-import { setupViewMacroMock } from '../tests_helpers/index.js'
 import { InertiaFactory } from '../factories/inertia_factory.js'
+import { setupViewMacroMock, setupVite } from '../tests_helpers/index.js'
 
 test.group('Inertia', () => {
   test('location should returns x-inertia-location with 409 code', async ({ assert }) => {
@@ -259,28 +260,21 @@ test.group('Inertia', () => {
 test.group('Inertia | Ssr', () => {
   test('if viteRuntime is available, use entrypoint file to render the page', async ({
     assert,
+    fs,
   }) => {
     setupViewMacroMock()
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    await fs.create('foo.ts', 'export default () => ({ head: "head", body: "foo.ts" })')
 
     const inertia = await new InertiaFactory()
-      .merge({
-        config: {
-          ssr: {
-            enabled: true,
-            entrypoint: 'foo.ts',
-          },
-        },
-      })
-      .withViteRuntime({
-        async executeEntrypoint(path) {
-          return { default: () => ({ head: 'head', body: path }) }
-        },
-      })
+      .merge({ config: { ssr: { enabled: true, entrypoint: 'foo.ts' } } })
+      .withVite(vite)
       .create()
 
     const result: any = await inertia.render('foo')
 
-    assert.deepEqual(result.props.page.ssrHead, 'head')
+    assert.deepEqual(result.props.page.ssrHead, ['head'])
     assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
   })
 
@@ -293,40 +287,24 @@ test.group('Inertia | Ssr', () => {
     await fs.create('foo.js', 'export default () => ({ head: "head", body: "foo.ts" })')
 
     const inertia = await new InertiaFactory()
-      .merge({
-        config: {
-          ssr: {
-            enabled: true,
-            bundle: new URL('foo.js', fs.baseUrl).href,
-          },
-        },
-      })
+      .merge({ config: { ssr: { enabled: true, bundle: new URL('foo.js', fs.baseUrl).href } } })
       .create()
 
     const result: any = await inertia.render('foo')
 
     assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
-    assert.deepEqual(result.props.page.ssrHead, 'head')
+    assert.deepEqual(result.props.page.ssrHead, ['head'])
   })
 
-  test('enable only for listed pages', async ({ assert }) => {
+  test('enable only for listed pages', async ({ assert, fs }) => {
     setupViewMacroMock()
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    await fs.create('foo.ts', 'export default () => ({ head: "head", body: "foo.ts" })')
 
     const inertia = await new InertiaFactory()
-      .withViteRuntime({
-        async executeEntrypoint(path) {
-          return { default: () => ({ head: 'head', body: path }) }
-        },
-      })
-      .merge({
-        config: {
-          ssr: {
-            enabled: true,
-            entrypoint: 'foo.ts',
-            pages: ['foo'],
-          },
-        },
-      })
+      .withVite(vite)
+      .merge({ config: { ssr: { enabled: true, entrypoint: 'foo.ts', pages: ['foo'] } } })
       .create()
 
     const result: any = await inertia.render('foo')
@@ -336,29 +314,127 @@ test.group('Inertia | Ssr', () => {
     assert.notExists(result2.props.page.ssrBody)
   })
 
-  test('should pass page object to the view', async ({ assert }) => {
+  test('should pass page object to the view', async ({ assert, fs }) => {
     setupViewMacroMock()
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    await fs.create('foo.ts', 'export default () => ({ head: "head", body: "foo.ts" })')
 
     const inertia = await new InertiaFactory()
-      .withViteRuntime({
-        async executeEntrypoint(path) {
-          return { default: () => ({ head: 'head', body: path }) }
-        },
-      })
-      .merge({
-        config: {
-          ssr: {
-            enabled: true,
-            entrypoint: 'foo.ts',
-            pages: ['foo'],
-          },
-        },
-      })
+      .withVite(vite)
+      .merge({ config: { ssr: { enabled: true, entrypoint: 'foo.ts' } } })
       .create()
 
     const result: any = await inertia.render('foo')
 
     assert.deepEqual(result.props.page.component, 'foo')
     assert.deepEqual(result.props.page.version, '1')
+  })
+})
+
+test.group('Inertia | Ssr | CSS Preloading', () => {
+  test('collect and preload css files of entrypoint', async ({ assert, fs }) => {
+    setupViewMacroMock()
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    await fs.create(
+      'foo.ts',
+      `
+      import './style.css'
+      export default () => ({ head: "head", body: "foo.ts" })
+      `
+    )
+
+    await fs.create('style.css', 'body { color: red }')
+
+    const inertia = await new InertiaFactory()
+      .withVite(vite)
+      .merge({
+        config: {
+          entrypoint: join(fs.basePath, 'foo.ts'),
+          ssr: { enabled: true, entrypoint: 'foo.ts' },
+        },
+      })
+      .create()
+
+    const result: any = await inertia.render('foo')
+
+    assert.deepEqual(result.props.page.ssrHead, [
+      '<link rel="stylesheet" href="/style.css" />',
+      'head',
+    ])
+  })
+
+  test('collect recursively css files of entrypoint', async ({ assert, fs }) => {
+    setupViewMacroMock()
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    await fs.create(
+      'foo.ts',
+      `
+      import './foo2.ts'
+      import './style.css'
+      export default () => ({ head: "head", body: "foo.ts" })
+      `
+    )
+
+    await fs.create('foo2.ts', `import './style2.css'`)
+    await fs.create('style.css', 'body { color: red }')
+    await fs.create('style2.css', 'body { color: blue }')
+
+    const inertia = await new InertiaFactory()
+      .withVite(vite)
+      .merge({
+        config: {
+          entrypoint: join(fs.basePath, 'foo.ts'),
+          ssr: { enabled: true, entrypoint: 'foo.ts', pages: ['foo'] },
+        },
+      })
+      .create()
+
+    const result: any = await inertia.render('foo')
+
+    assert.deepEqual(result.props.page.ssrHead, [
+      '<link rel="stylesheet" href="/style2.css" />',
+      '<link rel="stylesheet" href="/style.css" />',
+      'head',
+    ])
+  })
+
+  test('collect css rendered page', async ({ assert, fs }) => {
+    setupViewMacroMock()
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    await fs.create(
+      'app.ts',
+      `
+      import './style.css'
+
+      import.meta.glob('./pages/**/*.tsx')
+      export default () => ({ head: "head", body: "foo.ts" })
+      `
+    )
+    await fs.create('style.css', 'body { color: red }')
+
+    await fs.create('./pages/home/main.tsx', `import './style2.css'`)
+    await fs.create('./pages/home/style2.css', 'body { color: blue }')
+
+    const inertia = await new InertiaFactory()
+      .withVite(vite)
+      .merge({
+        config: {
+          entrypoint: join(fs.basePath, 'app.ts'),
+          ssr: { enabled: true, entrypoint: 'app.ts' },
+        },
+      })
+      .create()
+
+    const result: any = await inertia.render('home/main')
+
+    assert.deepEqual(result.props.page.ssrHead, [
+      '<link rel="stylesheet" href="/pages/home/style2.css" />',
+      '<link rel="stylesheet" href="/style.css" />',
+      'head',
+    ])
   })
 })
