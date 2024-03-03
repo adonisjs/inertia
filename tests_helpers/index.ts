@@ -5,6 +5,7 @@ import { HttpContext } from '@adonisjs/core/http'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { ApiClient, apiClient } from '@japa/api-client'
 import { ApplicationService } from '@adonisjs/core/types'
+import { IgnitorFactory } from '@adonisjs/core/factories'
 import { NamedReporterContract } from '@japa/runner/types'
 import { runner, syncReporter } from '@japa/runner/factories'
 import { IncomingMessage, ServerResponse, createServer } from 'node:http'
@@ -96,4 +97,30 @@ export async function setupVite(options: InlineConfig): Promise<{
   test.cleanup(() => devServer.close())
 
   return { devServer, runtime }
+}
+
+/**
+ * Setup an AdonisJS app for testing
+ */
+export async function setupApp() {
+  const ignitor = new IgnitorFactory()
+    .withCoreProviders()
+    .withCoreConfig()
+    .create(BASE_URL, {
+      importer: (filePath) => {
+        if (filePath.startsWith('./') || filePath.startsWith('../')) {
+          return import(new URL(filePath, BASE_URL).href)
+        }
+
+        return import(filePath)
+      },
+    })
+
+  const app = ignitor.createApp('web')
+  await app.init().then(() => app.boot())
+
+  const ace = await app.container.make('ace')
+  ace.ui.switchMode('raw')
+
+  return { ace, app }
 }
