@@ -85,6 +85,7 @@ export class ServerRenderer {
   #findPageModule(entryMod: ModuleNode | undefined, pageObject: PageObject) {
     const pattern = `${pageObject.component.replace(/\//g, '\\/')}.(tsx|vue|svelte|jsx|ts|js)$`
     const regex = new RegExp(pattern)
+
     return [...(entryMod?.ssrImportedModules || [])].find((dep) => regex.test(dep.url))
   }
 
@@ -108,13 +109,10 @@ export class ServerRenderer {
       /**
        * We need to collect the CSS files to preload them
        * Otherwise, we gonna have a FOUC each time we full reload the page
-       */
-      const moduleGraph = this.viteDevServer.moduleGraph
-
-      /**
+       *
        * First, we need to get the client-side entrypoint module
        */
-      const entryMod = moduleGraph.getModuleById(this.config.entrypoint)
+      const entryMod = this.viteDevServer.moduleGraph.getModuleById(this.config.entrypoint)
 
       /**
        * We should also get the page component that will be rendered. So
