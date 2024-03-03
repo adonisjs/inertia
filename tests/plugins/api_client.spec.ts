@@ -74,6 +74,7 @@ test.group('Japa plugin | Api Client', (group) => {
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         rootView: 'root',
         sharedData: {},
+        entrypoint: 'app.ts',
         ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
@@ -115,6 +116,7 @@ test.group('Japa plugin | Api Client', (group) => {
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         rootView: 'root',
         sharedData: {},
+        entrypoint: 'app.ts',
         ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
@@ -149,6 +151,7 @@ test.group('Japa plugin | Api Client', (group) => {
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         rootView: 'root',
         sharedData: {},
+        entrypoint: 'app.ts',
         ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
 
