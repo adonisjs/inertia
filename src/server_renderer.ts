@@ -127,10 +127,11 @@ export class ServerRenderer {
       /**
        * Then we can finally collect the CSS files
        */
-      let preloadUrls = new Set<string>()
+      const preloadUrls = new Set<string>()
+      const visitedModules = new Set<string>()
 
-      if (pageMod) this.#collectCss(pageMod, preloadUrls, new Set())
-      if (entryMod) this.#collectCss(entryMod, preloadUrls, new Set())
+      if (pageMod) this.#collectCss(pageMod, preloadUrls, visitedModules)
+      if (entryMod) this.#collectCss(entryMod, preloadUrls, visitedModules)
 
       preloadTags = Array.from(preloadUrls).map(this.#getPreloadTag)
     } else {
