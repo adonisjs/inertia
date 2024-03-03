@@ -13,6 +13,7 @@ import type { ConfigProvider } from '@adonisjs/core/types'
 import { VersionCache } from './version_cache.js'
 import { FilesDetector } from './files_detector.js'
 import type { InertiaConfig, ResolvedConfig } from './types.js'
+import { slash } from '@poppinss/utils'
 
 /**
  * Define the Inertia configuration
@@ -27,7 +28,7 @@ export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConf
       versionCache,
       rootView: config.rootView ?? 'root',
       sharedData: config.sharedData || {},
-      entrypoint: config.entrypoint ?? (await detector.detectEntrypoint('resources/app.ts')),
+      entrypoint: slash(config.entrypoint ?? (await detector.detectEntrypoint('resources/app.ts'))),
       ssr: {
         enabled: config.ssr?.enabled ?? false,
         pages: config.ssr?.pages,
