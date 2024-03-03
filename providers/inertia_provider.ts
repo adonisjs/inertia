@@ -10,12 +10,12 @@
 /// <reference types="@adonisjs/vite/vite_provider" />
 
 import { configProvider } from '@adonisjs/core'
+import { BriskRoute } from '@adonisjs/core/http'
 import { RuntimeException } from '@poppinss/utils'
 import type { ApplicationService } from '@adonisjs/core/types'
 
 import InertiaMiddleware from '../src/inertia_middleware.js'
 import type { InertiaConfig, ResolvedConfig } from '../src/types.js'
-import { BriskRoute } from '@adonisjs/core/http'
 
 declare module '@adonisjs/core/http' {
   interface BriskRoute {
@@ -48,6 +48,9 @@ export default class InertiaProvider {
     edgeExports.default.use(edgePluginInertia())
   }
 
+  /**
+   * Register inertia middleware
+   */
   async register() {
     this.app.container.singleton(InertiaMiddleware, async () => {
       const inertiaConfigProvider = this.app.config.get<InertiaConfig>('inertia')
@@ -64,6 +67,9 @@ export default class InertiaProvider {
     })
   }
 
+  /**
+   * Register edge plugin and brisk route macro
+   */
   async boot() {
     await this.registerEdgePlugin()
 

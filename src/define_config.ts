@@ -22,9 +22,10 @@ export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConf
     await versionCache.computeVersion()
 
     return {
+      versionCache,
       rootView: config.rootView ?? 'root',
       sharedData: config.sharedData || {},
-      versionCache,
+      entrypoint: config.entrypoint ?? app.makePath('resources/app.ts'),
       ssr: {
         enabled: config.ssr?.enabled ?? false,
         pages: config.ssr?.pages,

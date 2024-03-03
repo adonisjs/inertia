@@ -37,6 +37,11 @@ export interface InertiaConfig {
   rootView?: string
 
   /**
+   * Path to your client-side entrypoint file.
+   */
+  entrypoint?: string
+
+  /**
    * The version of your assets. Every client request will be checked against this version.
    * If the version is not the same, the client will do a full reload.
    */
@@ -80,6 +85,7 @@ export interface ResolvedConfig {
   rootView: string
   versionCache: VersionCache
   sharedData: SharedData
+  entrypoint: string
   ssr: {
     enabled: boolean
     entrypoint: string

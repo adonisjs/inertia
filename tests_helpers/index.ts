@@ -1,5 +1,6 @@
-import type { Test } from '@japa/runner/core'
+import { ViteRuntime } from 'vite/runtime'
 import { getActiveTest } from '@japa/runner'
+import type { Test } from '@japa/runner/core'
 import { HttpContext } from '@adonisjs/core/http'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { ApiClient, apiClient } from '@japa/api-client'
@@ -7,6 +8,12 @@ import { ApplicationService } from '@adonisjs/core/types'
 import { NamedReporterContract } from '@japa/runner/types'
 import { runner, syncReporter } from '@japa/runner/factories'
 import { IncomingMessage, ServerResponse, createServer } from 'node:http'
+import {
+  createServer as createViteServer,
+  createViteRuntime,
+  ViteDevServer,
+  InlineConfig,
+} from 'vite'
 
 import { inertiaApiClient } from '../src/plugins/japa/api_client.js'
 
@@ -58,4 +65,35 @@ export async function runJapaTest(app: ApplicationService, callback: Parameters<
       files: [],
     })
     .runTest('testing japa integration', callback)
+}
+
+/**
+ * Spin up a Vite server for the test
+ */
+export async function setupVite(options: InlineConfig): Promise<{
+  devServer: ViteDevServer
+  runtime: ViteRuntime
+}> {
+  const test = getActiveTest()
+  if (!test) throw new Error('Cannot use setupVite outside a test')
+
+  /**
+   * Create a dummy file to ensure the root directory exists
+   * otherwise Vite will throw an error
+   */
+  await test.context.fs.create('dummy.txt', 'dummy')
+
+  const devServer = await createViteServer({
+    server: { middlewareMode: true, hmr: false },
+    clearScreen: false,
+    logLevel: 'silent',
+    root: test.context.fs.basePath,
+    ...options,
+  })
+
+  const runtime = await createViteRuntime(devServer)
+
+  test.cleanup(() => devServer.close())
+
+  return { devServer, runtime }
 }
