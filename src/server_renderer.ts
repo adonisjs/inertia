@@ -66,7 +66,6 @@ export class ServerRenderer {
     }
 
     mod.importedModules.forEach((dep) => this.#collectCss(dep, styleUrls, visitedModules, mod))
-    mod.ssrImportedModules.forEach((dep) => this.#collectCss(dep, styleUrls, visitedModules, mod))
   }
 
   /**
