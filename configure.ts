@@ -75,7 +75,7 @@ const ADAPTERS_INFO: {
     viteRegister: {
       pluginCall: 'svelte()',
       importDeclarations: [
-        { isNamed: false, module: '@sveltejs/vite-plugin-svelte', identifier: 'svelte' },
+        { isNamed: true, module: '@sveltejs/vite-plugin-svelte', identifier: 'svelte' },
       ],
     },
     ssrEntrypoint: 'resources/ssr.ts',

@@ -1,0 +1,19 @@
+{{{
+  exports({ to: app.makePath('resources/pages/home.svelte') })
+}}}
+<script>
+export let version: number
+</script>
+
+<svelte:head>
+  <title>Homepage</title>
+</svelte:head>
+
+<div className="container">
+  <div className="title">AdonisJS \{ version \} x Inertia x Svelte</div>
+
+  <span>
+    Learn more about AdonisJS and Inertia.js by visiting the
+    <a href="https://docs.adonisjs.com/guides/inertia">AdonisJS documentation</a>.
+  </span>
+</div>
