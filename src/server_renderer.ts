@@ -97,14 +97,14 @@ export class ServerRenderer {
   async render(pageObject: PageObject) {
     let render: { default: (page: any) => Promise<{ head: string; body: string }> }
     let preloadTags: string[] = []
+    const devServer = this.vite?.getDevServer()
 
     /**
      * Use the Vite Runtime API to execute the entrypoint
      * if we are in development mode
      */
-    if (this.vite) {
-      const devServer = this.vite.getDevServer()!
-      const runtime = await this.vite.createRuntime()
+    if (devServer) {
+      const runtime = await this.vite!.createRuntime()
       render = await runtime.executeEntrypoint(this.config.ssr.entrypoint!)
 
       /**

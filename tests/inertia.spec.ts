@@ -9,6 +9,7 @@
 
 import { join } from 'node:path'
 import { test } from '@japa/runner'
+import { Vite } from '@adonisjs/vite'
 import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
@@ -258,7 +259,7 @@ test.group('Inertia', () => {
 })
 
 test.group('Inertia | Ssr', () => {
-  test('if viteRuntime is available, use entrypoint file to render the page', async ({
+  test('if devServer is available, use entrypoint file to render the page', async ({
     assert,
     fs,
   }) => {
@@ -279,17 +280,23 @@ test.group('Inertia | Ssr', () => {
     assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
   })
 
-  test('if viteRuntime is not available, use bundle file to render the page', async ({
+  test('if devServer is not available, use bundle file to render the page', async ({
     assert,
     fs,
   }) => {
     setupViewMacroMock()
+
+    const vite = new Vite(false, {
+      buildDirectory: fs.basePath,
+      manifestFile: 'manifest.json',
+    })
 
     await fs.createJson('package.json', { type: 'module' })
     await fs.create('foo.js', 'export default () => ({ head: "head", body: "foo.ts" })')
 
     const inertia = await new InertiaFactory()
       .merge({ config: { ssr: { enabled: true, bundle: new URL('foo.js', fs.baseUrl).href } } })
+      .withVite(vite)
       .create()
 
     const result: any = await inertia.render('foo')
