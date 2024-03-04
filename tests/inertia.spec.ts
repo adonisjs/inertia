@@ -263,9 +263,10 @@ test.group('Inertia | Ssr', () => {
     fs,
   }) => {
     setupViewMacroMock()
-    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
 
     await fs.create('foo.ts', 'export default () => ({ head: "head", body: "foo.ts" })')
+
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
 
     const inertia = await new InertiaFactory()
       .merge({ config: { ssr: { enabled: true, entrypoint: 'foo.ts' } } })
@@ -284,6 +285,7 @@ test.group('Inertia | Ssr', () => {
   }) => {
     setupViewMacroMock()
 
+    await fs.createJson('package.json', { type: 'module' })
     await fs.create('foo.js', 'export default () => ({ head: "head", body: "foo.ts" })')
 
     const inertia = await new InertiaFactory()

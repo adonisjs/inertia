@@ -7,8 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import type { ViteRuntime } from 'vite/runtime'
-import type { ModuleNode, ViteDevServer } from 'vite'
+import { Vite } from '@adonisjs/vite'
+import type { ModuleNode } from 'vite'
+
 import type { PageObject, ResolvedConfig } from './types.js'
 
 const styleFileRE = /\.(css|less|sass|scss|styl|stylus|pcss|postcss)($|\?)/
@@ -23,8 +24,7 @@ const styleFileRE = /\.(css|less|sass|scss|styl|stylus|pcss|postcss)($|\?)/
 export class ServerRenderer {
   constructor(
     protected config: ResolvedConfig,
-    protected viteRuntime?: ViteRuntime,
-    protected viteDevServer?: ViteDevServer
+    protected vite?: Vite
   ) {}
 
   /**
@@ -102,8 +102,10 @@ export class ServerRenderer {
      * Use the Vite Runtime API to execute the entrypoint
      * if we are in development mode
      */
-    if (this.viteRuntime && this.viteDevServer) {
-      render = await this.viteRuntime.executeEntrypoint(this.config.ssr.entrypoint!)
+    if (this.vite) {
+      const devServer = this.vite.getDevServer()!
+      const runtime = await this.vite.createRuntime()
+      render = await runtime.executeEntrypoint(this.config.ssr.entrypoint!)
 
       /**
        * We need to collect the CSS files to preload them
@@ -111,7 +113,7 @@ export class ServerRenderer {
        *
        * First, we need to get the client-side entrypoint module
        */
-      const entryMod = this.viteDevServer.moduleGraph.getModuleById(this.config.entrypoint)
+      const entryMod = devServer.moduleGraph.getModuleById(this.config.entrypoint)
 
       /**
        * We should also get the page component that will be rendered. So
@@ -121,7 +123,7 @@ export class ServerRenderer {
        * Then execute it with Vite Runtime so the module graph is populated
        */
       const pageMod = this.#findPageModule(entryMod, pageObject)
-      if (pageMod) await this.viteRuntime.executeUrl(pageMod.url)
+      if (pageMod) await runtime.executeUrl(pageMod.url)
 
       /**
        * Then we can finally collect the CSS files

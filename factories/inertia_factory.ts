@@ -7,8 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import type { ViteDevServer } from 'vite'
-import type { ViteRuntime } from 'vite/runtime'
+import { Vite } from '@adonisjs/vite'
 import { HttpContext } from '@adonisjs/core/http'
 import { AppFactory } from '@adonisjs/core/factories/app'
 import { ApplicationService } from '@adonisjs/core/types'
@@ -28,10 +27,10 @@ type FactoryParameters = {
  * for testing purposes
  */
 export class InertiaFactory {
+  #vite?: Vite
   #parameters: FactoryParameters = {
     ctx: new HttpContextFactory().create(),
   }
-  #vite?: { runtime: ViteRuntime; devServer: ViteDevServer }
 
   #getApp() {
     return new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
@@ -53,7 +52,7 @@ export class InertiaFactory {
     return this
   }
 
-  withVite(options: { runtime: ViteRuntime; devServer: ViteDevServer }) {
+  withVite(options: Vite) {
     this.#vite = options
     return this
   }
@@ -70,6 +69,6 @@ export class InertiaFactory {
 
   async create() {
     const config = await defineConfig(this.#parameters.config || {}).resolver(this.#getApp())
-    return new Inertia(this.#parameters.ctx, config, this.#vite?.runtime, this.#vite?.devServer)
+    return new Inertia(this.#parameters.ctx, config, this.#vite)
   }
 }

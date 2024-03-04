@@ -9,8 +9,7 @@
 
 /// <reference types="@adonisjs/core/providers/edge_provider" />
 
-import type { ViteDevServer } from 'vite'
-import type { ViteRuntime } from 'vite/runtime'
+import { Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
 
 import { ServerRenderer } from './server_renderer.js'
@@ -38,11 +37,10 @@ export class Inertia {
   constructor(
     protected ctx: HttpContext,
     protected config: ResolvedConfig,
-    protected viteRuntime?: ViteRuntime,
-    protected viteDevServer?: ViteDevServer
+    protected vite?: Vite
   ) {
     this.#sharedData = config.sharedData
-    this.#serverRenderer = new ServerRenderer(config, viteRuntime, viteDevServer)
+    this.#serverRenderer = new ServerRenderer(config, vite)
   }
 
   /**

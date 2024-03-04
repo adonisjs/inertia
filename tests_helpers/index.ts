@@ -1,4 +1,5 @@
-import { ViteRuntime } from 'vite/runtime'
+import { InlineConfig } from 'vite'
+import { Vite } from '@adonisjs/vite'
 import { getActiveTest } from '@japa/runner'
 import type { Test } from '@japa/runner/core'
 import { HttpContext } from '@adonisjs/core/http'
@@ -9,12 +10,6 @@ import { IgnitorFactory } from '@adonisjs/core/factories'
 import { NamedReporterContract } from '@japa/runner/types'
 import { runner, syncReporter } from '@japa/runner/factories'
 import { IncomingMessage, ServerResponse, createServer } from 'node:http'
-import {
-  createServer as createViteServer,
-  createViteRuntime,
-  ViteDevServer,
-  InlineConfig,
-} from 'vite'
 
 import { inertiaApiClient } from '../src/plugins/japa/api_client.js'
 
@@ -71,10 +66,7 @@ export async function runJapaTest(app: ApplicationService, callback: Parameters<
 /**
  * Spin up a Vite server for the test
  */
-export async function setupVite(options: InlineConfig): Promise<{
-  devServer: ViteDevServer
-  runtime: ViteRuntime
-}> {
+export async function setupVite(options: InlineConfig) {
   const test = getActiveTest()
   if (!test) throw new Error('Cannot use setupVite outside a test')
 
@@ -84,19 +76,21 @@ export async function setupVite(options: InlineConfig): Promise<{
    */
   await test.context.fs.create('dummy.txt', 'dummy')
 
-  const devServer = await createViteServer({
-    server: { middlewareMode: true, hmr: false },
+  const vite = new Vite(true, {
+    buildDirectory: test.context.fs.basePath,
+    manifestFile: 'manifest.json',
+  })
+
+  await vite.createDevServer({
+    root: test.context.fs.basePath,
     clearScreen: false,
     logLevel: 'silent',
-    root: test.context.fs.basePath,
     ...options,
   })
 
-  const runtime = await createViteRuntime(devServer)
+  test.cleanup(() => vite.stopDevServer())
 
-  test.cleanup(() => devServer.close())
-
-  return { devServer, runtime }
+  return vite
 }
 
 /**
