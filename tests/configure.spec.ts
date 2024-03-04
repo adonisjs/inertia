@@ -113,11 +113,20 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/app.ts')
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
-    await assert.fileContains('vite.config.ts', '@vitejs/plugin-vue')
     await assert.fileExists('resources/pages/home.vue')
+
+    const viteConfig = await fs.contents('vite.config.ts')
+    assert.snapshot(viteConfig).matchInline(`
+      "import inertia from '@adonisjs/inertia/client'
+      import vue from '@vitejs/plugin-vue'
+      import adonisjs from '@adonisjs/vite/client'
+
+      export default { plugins: [inertia({ ssr: { enabled: false } }), vue(), adonisjs({ entrypoints: ['resources/app.ts'], reload: ['resources/views/**/*.edge'] })] }
+      "
+    `)
   })
 
-  test('React', async ({ assert }) => {
+  test('React', async ({ assert, fs }) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('react')
@@ -130,11 +139,20 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/app.tsx')
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
-    await assert.fileContains('vite.config.ts', '@vitejs/plugin-react')
     await assert.fileExists('resources/pages/home.tsx')
+
+    const viteConfig = await fs.contents('vite.config.ts')
+    assert.snapshot(viteConfig).matchInline(`
+      "import inertia from '@adonisjs/inertia/client'
+      import react from '@vitejs/plugin-react'
+      import adonisjs from '@adonisjs/vite/client'
+
+      export default { plugins: [inertia({ ssr: { enabled: false } }), react(), adonisjs({ entrypoints: ['resources/app.tsx'], reload: ['resources/views/**/*.edge'] })] }
+      "
+    `)
   })
 
-  test('Solid', async ({ assert }) => {
+  test('Solid', async ({ assert, fs }) => {
     const { ace } = await setupApp()
 
     ace.prompt.trap('adapter').replyWith('solid')
@@ -147,8 +165,17 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/app.tsx')
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
-    await assert.fileContains('vite.config.ts', 'vite-plugin-solid')
     await assert.fileExists('resources/pages/home.tsx')
+
+    const viteConfig = await fs.contents('vite.config.ts')
+    assert.snapshot(viteConfig).matchInline(`
+      "import inertia from '@adonisjs/inertia/client'
+      import solid from 'vite-plugin-solid'
+      import adonisjs from '@adonisjs/vite/client'
+
+      export default { plugins: [inertia({ ssr: { enabled: false } }), solid(), adonisjs({ entrypoints: ['resources/app.tsx'], reload: ['resources/views/**/*.edge'] })] }
+      "
+    `)
   })
 })
 

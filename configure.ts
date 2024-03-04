@@ -210,7 +210,7 @@ export async function configure(command: Configure) {
   }
 
   /**
-   * Update vite config
+   * Register the inertia plugin in vite config
    */
   const inertiaPluginCall = ssr
     ? `inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.${appExt}' } })`
@@ -220,12 +220,23 @@ export async function configure(command: Configure) {
     { isNamed: false, module: '@adonisjs/inertia/client', identifier: 'inertia' },
   ])
 
+  /**
+   * Register the adapter plugin in vite config
+   */
   await codemods.registerVitePlugin(
     ssr && adapterInfo.viteRegister.ssrPluginCall
       ? adapterInfo.viteRegister.ssrPluginCall
       : adapterInfo.viteRegister.pluginCall,
     adapterInfo.viteRegister.importDeclarations
   )
+
+  /**
+   * Register vite with adonisjs plugin
+   */
+  const adonisjsPluginCall = `adonisjs({ entrypoints: ['resources/app.${appExt}'], reload: ['resources/views/**/*.edge'] })`
+  await codemods.registerVitePlugin(adonisjsPluginCall, [
+    { isNamed: false, module: '@adonisjs/vite/client', identifier: 'adonisjs' },
+  ])
 
   /**
    * Add route example
