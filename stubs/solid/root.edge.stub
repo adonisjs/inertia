@@ -10,8 +10,8 @@
 
   <title inertia>AdonisJS x Inertia x SolidJS</title>
 
-  {{ "@vite(['resources/app.tsx', `resources/pages/${page.component}.tsx`])" }}
   @inertiaHead()
+  {{ "@vite(['resources/app.tsx', `resources/pages/${page.component}.tsx`])" }}
 </head>
 
 <body>
