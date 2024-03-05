@@ -27,7 +27,7 @@ createInertiaApp({
 
   setup({ el, App, props }) {
     {{#if ssr}}
-    hydrateRoot(el).render(<App {...props} />);
+    hydrateRoot(el, <App {...props} />)
     {{#else}}
     createRoot(el).render(<App {...props} />);
     {{/if}}
