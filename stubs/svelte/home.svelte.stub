@@ -2,7 +2,7 @@
   exports({ to: app.makePath('resources/pages/home.svelte') })
 }}}
 <script>
-export let version: number
+export let version
 </script>
 
 <svelte:head>
