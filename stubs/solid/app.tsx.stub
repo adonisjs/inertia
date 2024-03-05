@@ -3,7 +3,11 @@
 }}}
 import './css/app.css'
 
+{{#if ssr}}
+import { hydrate } from 'solid-js/web';
+{{#else}}
 import { render } from 'solid-js/web'
+{{/if}}
 import { createInertiaApp } from 'inertia-adapter-solid'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 
@@ -22,6 +26,10 @@ createInertiaApp({
   },
 
   setup({ el, App, props }) {
+    {{#if ssr}}
+    hydrate(() => <App {...props} />, el)
+    {{#else}}
     render(() => <App {...props} />, el)
+    {{/if}}
   },
 })

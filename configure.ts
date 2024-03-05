@@ -74,6 +74,7 @@ const ADAPTERS_INFO: {
     ],
     viteRegister: {
       pluginCall: 'svelte()',
+      ssrPluginCall: 'svelte({ compilerOptions: { hydratable: true } })',
       importDeclarations: [
         { isNamed: true, module: '@sveltejs/vite-plugin-svelte', identifier: 'svelte' },
       ],
@@ -202,7 +203,7 @@ export async function configure(command: Configure) {
   await codemods.makeUsingStub(stubsRoot, `app.css.stub`, {})
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/root.edge.stub`, {})
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/tsconfig.json.stub`, {})
-  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/app.${appExt}.stub`, {})
+  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/app.${appExt}.stub`, { ssr })
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/home.${compExt}.stub`, {})
 
   if (ssr) {

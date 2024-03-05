@@ -114,6 +114,7 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
     await assert.fileExists('resources/pages/home.vue')
+    await assert.fileContains('resources/app.ts', 'createApp')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -140,6 +141,7 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
     await assert.fileExists('resources/pages/home.tsx')
+    await assert.fileContains('resources/app.tsx', 'createRoot')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -166,6 +168,7 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('resources/tsconfig.json')
     await assert.fileExists('resources/pages/home.tsx')
+    await assert.fileNotContains('resources/app.tsx', 'hydrateRoot')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -174,6 +177,33 @@ test.group('Frameworks', (group) => {
       import adonisjs from '@adonisjs/vite/client'
 
       export default { plugins: [inertia({ ssr: { enabled: false } }), solid(), adonisjs({ entrypoints: ['resources/app.tsx'], reload: ['resources/views/**/*.edge'] })] }
+      "
+    `)
+  })
+
+  test('Svelte', async ({ assert, fs }) => {
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('svelte')
+    ace.prompt.trap('ssr').reject()
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileExists('resources/app.ts')
+    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/tsconfig.json')
+    await assert.fileExists('resources/pages/home.svelte')
+    await assert.fileNotContains('resources/app.ts', 'hydrate')
+
+    const viteConfig = await fs.contents('vite.config.ts')
+    assert.snapshot(viteConfig).matchInline(`
+      "import inertia from '@adonisjs/inertia/client'
+      import { svelte } from '@sveltejs/vite-plugin-svelte'
+      import adonisjs from '@adonisjs/vite/client'
+
+      export default { plugins: [inertia({ ssr: { enabled: false } }), svelte(), adonisjs({ entrypoints: ['resources/app.ts'], reload: ['resources/views/**/*.edge'] })] }
       "
     `)
   })
@@ -241,6 +271,7 @@ test.group('Frameworks | SSR', (group) => {
       'vite.config.ts',
       `inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.tsx' } })`
     )
+    await assert.fileContains('resources/app.tsx', 'hydrateRoot')
 
     const inertiaConfig = await fs.contents('config/inertia.ts')
 
@@ -287,6 +318,7 @@ test.group('Frameworks | SSR', (group) => {
     )
 
     await assert.fileContains('vite.config.ts', `solid({ ssr: true })`)
+    await assert.fileContains('resources/app.tsx', 'hydrate')
 
     const inertiaConfig = await fs.contents('config/inertia.ts')
     assert.snapshot(inertiaConfig).matchInline(`
@@ -313,6 +345,33 @@ test.group('Frameworks | SSR', (group) => {
           entrypoint: 'resources/ssr.tsx'
         }
       })"
+    `)
+  })
+
+  test('Svelte', async ({ assert, fs }) => {
+    const { ace } = await setupApp()
+
+    ace.prompt.trap('adapter').replyWith('svelte')
+    ace.prompt.trap('ssr').accept()
+    ace.prompt.trap('install').reject()
+
+    const command = await ace.create(Configure, ['../../index.js'])
+    await command.exec()
+
+    await assert.fileExists('resources/app.ts')
+    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/tsconfig.json')
+    await assert.fileExists('resources/pages/home.svelte')
+    await assert.fileContains('resources/app.ts', 'hydrate')
+
+    const viteConfig = await fs.contents('vite.config.ts')
+    assert.snapshot(viteConfig).matchInline(`
+      "import inertia from '@adonisjs/inertia/client'
+      import { svelte } from '@sveltejs/vite-plugin-svelte'
+      import adonisjs from '@adonisjs/vite/client'
+
+      export default { plugins: [inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.ts' } }), svelte({ compilerOptions: { hydratable: true } }), adonisjs({ entrypoints: ['resources/app.ts'], reload: ['resources/views/**/*.edge'] })] }
+      "
     `)
   })
 })

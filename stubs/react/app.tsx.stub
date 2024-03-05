@@ -3,7 +3,11 @@
 }}}
 import './css/app.css';
 
+{{#if ssr}}
+import { hydrateRoot } from 'react-dom/client'
+{{#else}}
 import { createRoot } from 'react-dom/client';
+{{/if}}
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 
@@ -22,7 +26,10 @@ createInertiaApp({
   },
 
   setup({ el, App, props }) {
-    const root = createRoot(el);
-    root.render(<App {...props} />);
+    {{#if ssr}}
+    hydrateRoot(el).render(<App {...props} />);
+    {{#else}}
+    createRoot(el).render(<App {...props} />);
+    {{/if}}
   },
 });

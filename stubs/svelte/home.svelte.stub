@@ -9,8 +9,8 @@ export let version
   <title>Homepage</title>
 </svelte:head>
 
-<div className="container">
-  <div className="title">AdonisJS \{ version \} x Inertia x Svelte</div>
+<div class="container">
+  <div class="title">AdonisJS \{ version \} x Inertia x Svelte</div>
 
   <span>
     Learn more about AdonisJS and Inertia.js by visiting the
