@@ -45,11 +45,11 @@ export default function inertia(options?: InertiaPluginOptions): PluginOption {
        * We need to set the `NODE_ENV` to production when building
        * front-end assets. Otherwise, some libraries may behave
        * differently.
-      *
-      * For example `react` will use a `jsxDev` function
-      * that is not available in production.
-      * See https://github.com/remix-run/remix/issues/4081
-      */
+       *
+       * For example `react` will use a `jsxDev` function
+       * that is not available in production.
+       * See https://github.com/remix-run/remix/issues/4081
+       */
       if (command === 'build') {
         process.env.NODE_ENV = 'production'
       }
