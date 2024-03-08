@@ -38,19 +38,21 @@ export type InertiaPluginOptions = {
 export default function inertia(options?: InertiaPluginOptions): PluginOption {
   return {
     name: 'vite-plugin-inertia',
-    config: () => {
+    config: (_, { command }) => {
       if (!options?.ssr?.enabled) return {}
 
       /**
        * We need to set the `NODE_ENV` to production when building
        * front-end assets. Otherwise, some libraries may behave
        * differently.
-       *
-       * For example `react` will use a `jsxDev` function
-       * that is not available in production.
-       * See https://github.com/remix-run/remix/issues/4081
-       */
-      process.env.NODE_ENV = 'production'
+      *
+      * For example `react` will use a `jsxDev` function
+      * that is not available in production.
+      * See https://github.com/remix-run/remix/issues/4081
+      */
+      if (command === 'build') {
+        process.env.NODE_ENV = 'production'
+      }
 
       return {
         buildSteps: [
