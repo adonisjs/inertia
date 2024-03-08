@@ -32,7 +32,7 @@ export type AssetsVersion = string | number | undefined
 export interface InertiaConfig {
   /**
    * Path to the Edge view that will be used as the root view for Inertia responses.
-   * @default root (resources/views/root.edge)
+   * @default root (resources/views/inertia_layout.edge)
    */
   rootView?: string
 

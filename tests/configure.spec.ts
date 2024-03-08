@@ -27,10 +27,9 @@ async function setupFakeAdonisproject(fs: FileSystem) {
 
       router.use([
         () => import('@adonisjs/core/bodyparser_middleware'),
-        () => import('@adonisjs/session/session_middleware'),
-        () => import('@adonisjs/shield/shield_middleware'),
-        () => import('@adonisjs/auth/initialize_auth_middleware'),
       ])
+
+      server.use([])
     `
     ),
   ])
@@ -110,11 +109,13 @@ test.group('Frameworks', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileExists('resources/app.ts')
-    await assert.fileExists('resources/views/root.edge')
-    await assert.fileExists('resources/tsconfig.json')
-    await assert.fileExists('resources/pages/home.vue')
-    await assert.fileContains('resources/app.ts', 'createApp')
+    await assert.fileExists('inertia/app/app.ts')
+    await assert.fileExists('resources/views/inertia_layout.edge')
+    await assert.fileExists('inertia/tsconfig.json')
+    await assert.fileExists('inertia/pages/home.vue')
+    await assert.fileExists('inertia/pages/errors/not_found.vue')
+    await assert.fileExists('inertia/pages/errors/server_error.vue')
+    await assert.fileContains('inertia/app/app.ts', 'createApp')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -122,7 +123,7 @@ test.group('Frameworks', (group) => {
       import vue from '@vitejs/plugin-vue'
       import adonisjs from '@adonisjs/vite/client'
 
-      export default { plugins: [inertia({ ssr: { enabled: false } }), vue(), adonisjs({ entrypoints: ['resources/app.ts'], reload: ['resources/views/**/*.edge'] })] }
+      export default { plugins: [inertia({ ssr: { enabled: false } }), vue(), adonisjs({ entrypoints: ['inertia/app/app.ts'], reload: ['resources/views/**/*.edge'] })] }
       "
     `)
   })
@@ -137,11 +138,13 @@ test.group('Frameworks', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileExists('resources/app.tsx')
-    await assert.fileExists('resources/views/root.edge')
-    await assert.fileExists('resources/tsconfig.json')
-    await assert.fileExists('resources/pages/home.tsx')
-    await assert.fileContains('resources/app.tsx', 'createRoot')
+    await assert.fileExists('inertia/app/app.tsx')
+    await assert.fileExists('resources/views/inertia_layout.edge')
+    await assert.fileExists('inertia/tsconfig.json')
+    await assert.fileExists('inertia/pages/home.tsx')
+    await assert.fileExists('inertia/pages/errors/not_found.tsx')
+    await assert.fileExists('inertia/pages/errors/server_error.tsx')
+    await assert.fileContains('inertia/app/app.tsx', 'createRoot')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -149,7 +152,7 @@ test.group('Frameworks', (group) => {
       import react from '@vitejs/plugin-react'
       import adonisjs from '@adonisjs/vite/client'
 
-      export default { plugins: [inertia({ ssr: { enabled: false } }), react(), adonisjs({ entrypoints: ['resources/app.tsx'], reload: ['resources/views/**/*.edge'] })] }
+      export default { plugins: [inertia({ ssr: { enabled: false } }), react(), adonisjs({ entrypoints: ['inertia/app/app.tsx'], reload: ['resources/views/**/*.edge'] })] }
       "
     `)
   })
@@ -164,11 +167,13 @@ test.group('Frameworks', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileExists('resources/app.tsx')
-    await assert.fileExists('resources/views/root.edge')
-    await assert.fileExists('resources/tsconfig.json')
-    await assert.fileExists('resources/pages/home.tsx')
-    await assert.fileNotContains('resources/app.tsx', 'hydrateRoot')
+    await assert.fileExists('inertia/app/app.tsx')
+    await assert.fileExists('resources/views/inertia_layout.edge')
+    await assert.fileExists('inertia/tsconfig.json')
+    await assert.fileExists('inertia/pages/home.tsx')
+    await assert.fileExists('inertia/pages/errors/not_found.tsx')
+    await assert.fileExists('inertia/pages/errors/server_error.tsx')
+    await assert.fileNotContains('inertia/app/app.tsx', 'hydrateRoot')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -176,7 +181,7 @@ test.group('Frameworks', (group) => {
       import solid from 'vite-plugin-solid'
       import adonisjs from '@adonisjs/vite/client'
 
-      export default { plugins: [inertia({ ssr: { enabled: false } }), solid(), adonisjs({ entrypoints: ['resources/app.tsx'], reload: ['resources/views/**/*.edge'] })] }
+      export default { plugins: [inertia({ ssr: { enabled: false } }), solid(), adonisjs({ entrypoints: ['inertia/app/app.tsx'], reload: ['resources/views/**/*.edge'] })] }
       "
     `)
   })
@@ -191,11 +196,13 @@ test.group('Frameworks', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileExists('resources/app.ts')
-    await assert.fileExists('resources/views/root.edge')
-    await assert.fileExists('resources/tsconfig.json')
-    await assert.fileExists('resources/pages/home.svelte')
-    await assert.fileNotContains('resources/app.ts', 'hydrate')
+    await assert.fileExists('inertia/app/app.ts')
+    await assert.fileExists('resources/views/inertia_layout.edge')
+    await assert.fileExists('inertia/tsconfig.json')
+    await assert.fileExists('inertia/pages/home.svelte')
+    await assert.fileExists('inertia/pages/errors/not_found.svelte')
+    await assert.fileExists('inertia/pages/errors/server_error.svelte')
+    await assert.fileNotContains('inertia/app/app.ts', 'hydrate')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -203,7 +210,7 @@ test.group('Frameworks', (group) => {
       import { svelte } from '@sveltejs/vite-plugin-svelte'
       import adonisjs from '@adonisjs/vite/client'
 
-      export default { plugins: [inertia({ ssr: { enabled: false } }), svelte(), adonisjs({ entrypoints: ['resources/app.ts'], reload: ['resources/views/**/*.edge'] })] }
+      export default { plugins: [inertia({ ssr: { enabled: false } }), svelte(), adonisjs({ entrypoints: ['inertia/app/app.ts'], reload: ['resources/views/**/*.edge'] })] }
       "
     `)
   })
@@ -226,7 +233,7 @@ test.group('Frameworks | SSR', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileExists('resources/ssr.ts')
+    await assert.fileExists('inertia/app/ssr.ts')
     await assert.fileContains('vite.config.ts', 'inertia({ ssr: { enabled: true')
     const inertiaConfig = await fs.contents('config/inertia.ts')
     assert.snapshot(inertiaConfig).matchInline(`
@@ -236,13 +243,13 @@ test.group('Frameworks | SSR', (group) => {
         /**
          * Path to the Edge view that will be used as the root view for Inertia responses
          */
-        rootView: 'root',
+        rootView: 'inertia_layout',
 
         /**
          * Data that should be shared with all rendered pages
          */
         sharedData: {
-          errors: (ctx) => ctx.session.flashMessages.get('errors'),
+          errors: (ctx) => ctx.session?.flashMessages.get('errors'),
         },
 
         /**
@@ -250,7 +257,7 @@ test.group('Frameworks | SSR', (group) => {
          */
         ssr: {
           enabled: true,
-          entrypoint: 'resources/ssr.ts'
+          entrypoint: 'inertia/app/ssr.ts'
         }
       })"
     `)
@@ -266,12 +273,12 @@ test.group('Frameworks | SSR', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileExists('resources/app.tsx')
+    await assert.fileExists('inertia/app/app.tsx')
     await assert.fileContains(
       'vite.config.ts',
-      `inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.tsx' } })`
+      `inertia({ ssr: { enabled: true, entrypoint: 'inertia/app/ssr.tsx' } })`
     )
-    await assert.fileContains('resources/app.tsx', 'hydrateRoot')
+    await assert.fileContains('inertia/app/app.tsx', 'hydrateRoot')
 
     const inertiaConfig = await fs.contents('config/inertia.ts')
 
@@ -282,13 +289,13 @@ test.group('Frameworks | SSR', (group) => {
         /**
          * Path to the Edge view that will be used as the root view for Inertia responses
          */
-        rootView: 'root',
+        rootView: 'inertia_layout',
 
         /**
          * Data that should be shared with all rendered pages
          */
         sharedData: {
-          errors: (ctx) => ctx.session.flashMessages.get('errors'),
+          errors: (ctx) => ctx.session?.flashMessages.get('errors'),
         },
 
         /**
@@ -296,7 +303,7 @@ test.group('Frameworks | SSR', (group) => {
          */
         ssr: {
           enabled: true,
-          entrypoint: 'resources/ssr.tsx'
+          entrypoint: 'inertia/app/ssr.tsx'
         }
       })"
     `)
@@ -311,14 +318,14 @@ test.group('Frameworks | SSR', (group) => {
 
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
-    await assert.fileExists('resources/app.tsx')
+    await assert.fileExists('inertia/app/app.tsx')
     await assert.fileContains(
       'vite.config.ts',
-      `inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.tsx' } })`
+      `inertia({ ssr: { enabled: true, entrypoint: 'inertia/app/ssr.tsx' } })`
     )
 
     await assert.fileContains('vite.config.ts', `solid({ ssr: true })`)
-    await assert.fileContains('resources/app.tsx', 'hydrate')
+    await assert.fileContains('inertia/app/app.tsx', 'hydrate')
 
     const inertiaConfig = await fs.contents('config/inertia.ts')
     assert.snapshot(inertiaConfig).matchInline(`
@@ -328,13 +335,13 @@ test.group('Frameworks | SSR', (group) => {
         /**
          * Path to the Edge view that will be used as the root view for Inertia responses
          */
-        rootView: 'root',
+        rootView: 'inertia_layout',
 
         /**
          * Data that should be shared with all rendered pages
          */
         sharedData: {
-          errors: (ctx) => ctx.session.flashMessages.get('errors'),
+          errors: (ctx) => ctx.session?.flashMessages.get('errors'),
         },
 
         /**
@@ -342,7 +349,7 @@ test.group('Frameworks | SSR', (group) => {
          */
         ssr: {
           enabled: true,
-          entrypoint: 'resources/ssr.tsx'
+          entrypoint: 'inertia/app/ssr.tsx'
         }
       })"
     `)
@@ -358,11 +365,11 @@ test.group('Frameworks | SSR', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileExists('resources/app.ts')
-    await assert.fileExists('resources/views/root.edge')
-    await assert.fileExists('resources/tsconfig.json')
-    await assert.fileExists('resources/pages/home.svelte')
-    await assert.fileContains('resources/app.ts', 'hydrate')
+    await assert.fileExists('inertia/app/app.ts')
+    await assert.fileExists('resources/views/inertia_layout.edge')
+    await assert.fileExists('inertia/tsconfig.json')
+    await assert.fileExists('inertia/pages/home.svelte')
+    await assert.fileContains('inertia/app/app.ts', 'hydrate')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -370,7 +377,7 @@ test.group('Frameworks | SSR', (group) => {
       import { svelte } from '@sveltejs/vite-plugin-svelte'
       import adonisjs from '@adonisjs/vite/client'
 
-      export default { plugins: [inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.ts' } }), svelte({ compilerOptions: { hydratable: true } }), adonisjs({ entrypoints: ['resources/app.ts'], reload: ['resources/views/**/*.edge'] })] }
+      export default { plugins: [inertia({ ssr: { enabled: true, entrypoint: 'inertia/app/ssr.ts' } }), svelte({ compilerOptions: { hydratable: true } }), adonisjs({ entrypoints: ['inertia/app/app.ts'], reload: ['resources/views/**/*.edge'] })] }
       "
     `)
   })

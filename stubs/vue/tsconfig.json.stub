@@ -1,26 +1,16 @@
 {{{
-  exports({ to: app.makePath('resources/tsconfig.json') })
+  exports({ to: app.makePath('inertia/tsconfig.json') })
 }}}
 {
+  "extends": "@adonisjs/tsconfig/tsconfig.client.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "jsx": "preserve",
-    "jsxImportSource": "vue",
-    "lib": ["DOM", "ESNext", "DOM.Iterable", "ES2020"],
-    "useDefineForClassFields": true,
     "baseUrl": ".",
+    "jsx": "preserve",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "jsxImportSource": "vue",
     "paths": {
-      "@/*": ["./*"],
-      "~/*": ["../*"],
+      "~/*": ["./*"],
     },
-    "resolveJsonModule": true,
-    "types": ["vite/client"],
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
   },
   "include": ["./**/*.ts", "./**/*.vue"],
 }

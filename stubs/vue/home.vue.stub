@@ -1,5 +1,5 @@
 {{{
-  exports({ to: app.makePath('resources/pages/home.vue') })
+  exports({ to: app.makePath('inertia/pages/home.vue') })
 }}}
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3'

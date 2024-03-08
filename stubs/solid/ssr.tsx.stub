@@ -1,5 +1,5 @@
 {{{
-  exports({ to: app.makePath('resources/ssr.tsx') })
+  exports({ to: app.makePath('inertia/app/ssr.tsx') })
 }}}
 
 import { hydrate } from 'solid-js/web'
@@ -9,8 +9,8 @@ export default function render(page: any) {
   return createInertiaApp({
     page,
     resolve: (name) => {
-      const pages = import.meta.glob('./pages/**/*.tsx', { eager: true })
-      {{ 'return pages[`./pages/${name}.tsx`]' }}
+      const pages = import.meta.glob('../pages/**/*.tsx', { eager: true })
+      {{ 'return pages[`../pages/${name}.tsx`]' }}
     },
     setup({ el, App, props }) {
       hydrate(() => <App {...props} />, el)

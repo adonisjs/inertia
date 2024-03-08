@@ -1,7 +1,7 @@
 {{{
-  exports({ to: app.makePath('resources/app.ts') })
+  exports({ to: app.makePath('inertia/app/app.ts') })
 }}}
-import './css/app.css';
+import '../css/app.css';
 
 {{#if ssr}}
 import { createSSRApp, h } from 'vue'
@@ -21,8 +21,8 @@ createInertiaApp({
 
   resolve: (name) => {
     return resolvePageComponent(
-      {{ '`./pages/${name}.vue`' }},
-      import.meta.glob<DefineComponent>('./pages/**/*.vue'),
+      {{ '`../pages/${name}.vue`' }},
+      import.meta.glob<DefineComponent>('../pages/**/*.vue'),
     )
   },
 

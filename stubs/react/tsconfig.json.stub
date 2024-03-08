@@ -1,25 +1,15 @@
 {{{
-  exports({ to: app.makePath('resources/tsconfig.json') })
+  exports({ to: app.makePath('inertia/tsconfig.json') })
 }}}
 {
+  "extends": "@adonisjs/tsconfig/tsconfig.client.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "jsx": "react-jsx",
-    "lib": ["DOM", "ESNext", "DOM.Iterable", "ES2020"],
-    "useDefineForClassFields": true,
     "baseUrl": ".",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./*"],
       "~/*": ["../*"],
     },
-    "resolveJsonModule": true,
-    "types": ["vite/client"],
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
   },
   "include": ["./**/*.ts", "./**/*.tsx"],
 }

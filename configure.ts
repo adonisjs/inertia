@@ -43,7 +43,7 @@ const ADAPTERS_INFO: {
       pluginCall: 'vue()',
       importDeclarations: [{ isNamed: false, module: '@vitejs/plugin-vue', identifier: 'vue' }],
     },
-    ssrEntrypoint: 'resources/ssr.ts',
+    ssrEntrypoint: 'inertia/app/ssr.ts',
   },
   react: {
     stubFolder: 'react',
@@ -61,7 +61,7 @@ const ADAPTERS_INFO: {
       pluginCall: 'react()',
       importDeclarations: [{ isNamed: false, module: '@vitejs/plugin-react', identifier: 'react' }],
     },
-    ssrEntrypoint: 'resources/ssr.tsx',
+    ssrEntrypoint: 'inertia/app/ssr.tsx',
   },
   svelte: {
     stubFolder: 'svelte',
@@ -79,7 +79,7 @@ const ADAPTERS_INFO: {
         { isNamed: true, module: '@sveltejs/vite-plugin-svelte', identifier: 'svelte' },
       ],
     },
-    ssrEntrypoint: 'resources/ssr.ts',
+    ssrEntrypoint: 'inertia/app/ssr.ts',
   },
   solid: {
     stubFolder: 'solid',
@@ -96,7 +96,7 @@ const ADAPTERS_INFO: {
       ssrPluginCall: 'solid({ ssr: true })',
       importDeclarations: [{ isNamed: false, module: 'vite-plugin-solid', identifier: 'solid' }],
     },
-    ssrEntrypoint: 'resources/ssr.tsx',
+    ssrEntrypoint: 'inertia/app/ssr.tsx',
   },
 }
 
@@ -185,7 +185,7 @@ export async function configure(command: Configure) {
   /**
    * Add Inertia middleware
    */
-  await codemods.registerMiddleware('router', [
+  await codemods.registerMiddleware('server', [
     { path: '@adonisjs/inertia/inertia_middleware', position: 'after' },
   ])
 
@@ -205,6 +205,8 @@ export async function configure(command: Configure) {
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/tsconfig.json.stub`, {})
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/app.${appExt}.stub`, { ssr })
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/home.${compExt}.stub`, {})
+  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/errors/not_found.${compExt}.stub`, {})
+  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/errors/server_error.${compExt}.stub`, {})
 
   if (ssr) {
     await codemods.makeUsingStub(stubsRoot, `${stubFolder}/ssr.${appExt}.stub`, {})
@@ -214,7 +216,7 @@ export async function configure(command: Configure) {
    * Register the inertia plugin in vite config
    */
   const inertiaPluginCall = ssr
-    ? `inertia({ ssr: { enabled: true, entrypoint: 'resources/ssr.${appExt}' } })`
+    ? `inertia({ ssr: { enabled: true, entrypoint: 'inertia/app/ssr.${appExt}' } })`
     : `inertia({ ssr: { enabled: false } })`
 
   await codemods.registerVitePlugin(inertiaPluginCall, [
@@ -234,7 +236,7 @@ export async function configure(command: Configure) {
   /**
    * Register vite with adonisjs plugin
    */
-  const adonisjsPluginCall = `adonisjs({ entrypoints: ['resources/app.${appExt}'], reload: ['resources/views/**/*.edge'] })`
+  const adonisjsPluginCall = `adonisjs({ entrypoints: ['inertia/app/app.${appExt}'], reload: ['resources/views/**/*.edge'] })`
   await codemods.registerVitePlugin(adonisjsPluginCall, [
     { isNamed: false, module: '@adonisjs/vite/client', identifier: 'adonisjs' },
   ])

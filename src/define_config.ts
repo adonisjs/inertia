@@ -26,14 +26,16 @@ export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConf
 
     return {
       versionCache,
-      rootView: config.rootView ?? 'root',
+      rootView: config.rootView ?? 'inertia_layout',
       sharedData: config.sharedData || {},
-      entrypoint: slash(config.entrypoint ?? (await detector.detectEntrypoint('resources/app.ts'))),
+      entrypoint: slash(
+        config.entrypoint ?? (await detector.detectEntrypoint('inertia/app/app.ts'))
+      ),
       ssr: {
         enabled: config.ssr?.enabled ?? false,
         pages: config.ssr?.pages,
         entrypoint:
-          config.ssr?.entrypoint ?? (await detector.detectSsrEntrypoint('resources/ssr.ts')),
+          config.ssr?.entrypoint ?? (await detector.detectSsrEntrypoint('inertia/app/ssr.ts')),
 
         bundle: config.ssr?.bundle ?? (await detector.detectSsrBundle('ssr/ssr.js')),
       },

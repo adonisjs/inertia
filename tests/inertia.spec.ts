@@ -55,7 +55,7 @@ test.group('Inertia', () => {
     const inertia = await new InertiaFactory().create()
     const result: any = await inertia.render('foo', { foo: 'bar' })
 
-    assert.deepEqual(result.view, 'root')
+    assert.deepEqual(result.view, 'inertia_layout')
     assert.deepEqual(result.props.page, {
       component: 'foo',
       version: '1',

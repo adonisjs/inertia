@@ -1,5 +1,5 @@
 {{{
-  exports({ to: app.makePath('resources/ssr.ts') })
+  exports({ to: app.makePath('inertia/app/ssr.ts') })
 }}}
 
 import { createInertiaApp } from '@inertiajs/vue3'
@@ -11,8 +11,8 @@ export default function render(page: any) {
     page,
     render: renderToString,
     resolve: (name) => {
-      const pages = import.meta.glob<DefineComponent>('./pages/**/*.vue', { eager: true })
-      {{ 'return pages[`./pages/${name}.vue`]' }}
+      const pages = import.meta.glob<DefineComponent>('../pages/**/*.vue', { eager: true })
+      {{ 'return pages[`../pages/${name}.vue`]' }}
     },
 
     setup({ App, props, plugin }) {

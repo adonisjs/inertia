@@ -19,14 +19,13 @@ export class FilesDetector {
    */
   async detectEntrypoint(defaultPath: string) {
     const possiblesLocations = [
+      './inertia/app/app.ts',
+      './inertia/app/app.tsx',
       './resources/app.ts',
       './resources/app.tsx',
-      './resources/application/app.ts',
-      './resources/application/app.tsx',
       './resources/app.jsx',
       './resources/app.js',
-      './resources/application/app.jsx',
-      './resources/application/app.js',
+      './inertia/app/app.jsx',
     ]
 
     const path = await locatePath(possiblesLocations, { cwd: this.app.appRoot })
@@ -39,14 +38,13 @@ export class FilesDetector {
    */
   async detectSsrEntrypoint(defaultPath: string) {
     const possiblesLocations = [
+      './inertia/app/ssr.ts',
+      './inertia/app/ssr.tsx',
       './resources/ssr.ts',
       './resources/ssr.tsx',
-      './resources/application/ssr.ts',
-      './resources/application/ssr.tsx',
       './resources/ssr.jsx',
       './resources/ssr.js',
-      './resources/application/ssr.jsx',
-      './resources/application/ssr.js',
+      './inertia/app/ssr.jsx',
     ]
 
     const path = await locatePath(possiblesLocations, { cwd: this.app.appRoot })
