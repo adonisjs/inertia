@@ -16,7 +16,7 @@ import { setupApp } from '../tests_helpers/index.js'
 
 test.group('Define Config', () => {
   test('detect entrypoint automatically - "{$self}"')
-    .with(['resources/application/app.tsx', 'resources/app.ts', 'resources/app.tsx'])
+    .with(['inertia/app/app.tsx', 'resources/app.ts', 'resources/app.tsx'])
     .run(async ({ assert, fs }, filePath) => {
       const { app } = await setupApp()
       const configProvider = defineConfig({})
@@ -40,7 +40,7 @@ test.group('Define Config', () => {
     })
 
   test('detect ssr entrypoint automatically - "{$self}"')
-    .with(['resources/application/ssr.tsx', 'resources/ssr.ts', 'resources/ssr.tsx'])
+    .with(['inertia/app/ssr.tsx', 'resources/ssr.ts', 'resources/ssr.tsx'])
     .run(async ({ assert, fs }, filePath) => {
       const { app } = await setupApp()
       const configProvider = defineConfig({})

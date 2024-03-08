@@ -1,5 +1,5 @@
 {{{
-  exports({ to: app.makePath('resources/pages/home.tsx') })
+  exports({ to: app.makePath('inertia/pages/home.tsx') })
 }}}
 import { Head } from '@inertiajs/react'
 

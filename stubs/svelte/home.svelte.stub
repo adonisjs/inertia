@@ -1,5 +1,5 @@
 {{{
-  exports({ to: app.makePath('resources/pages/home.svelte') })
+  exports({ to: app.makePath('inertia/pages/home.svelte') })
 }}}
 <script>
 export let version

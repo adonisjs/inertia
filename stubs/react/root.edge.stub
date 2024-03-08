@@ -12,7 +12,7 @@
 
   @viteReactRefresh()
   @inertiaHead()
-  {{ "@vite(['resources/app.tsx', `resources/pages/${page.component}.tsx`])" }}
+  {{ "@vite(['inertia/app/app.tsx', `inertia/pages/${page.component}.tsx`])" }}
 </head>
 
 <body>

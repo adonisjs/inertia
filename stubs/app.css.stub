@@ -1,5 +1,5 @@
 {{{
-  exports({ to: app.makePath('resources/css/app.css') })
+  exports({ to: app.makePath('inertia/css/app.css') })
 }}}
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
 

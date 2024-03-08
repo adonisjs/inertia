@@ -1,26 +1,16 @@
 {{{
-  exports({ to: app.makePath('resources/tsconfig.json') })
+  exports({ to: app.makePath('inertia/tsconfig.json') })
 }}}
 {
+  "extends": "@adonisjs/tsconfig/tsconfig.client.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
-    "lib": ["DOM", "ESNext", "DOM.Iterable", "ES2020"],
-    "useDefineForClassFields": true,
     "baseUrl": ".",
+    "jsx": "preserve",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "jsxImportSource": "solid-js",
     "paths": {
-      "@/*": ["./*"],
-      "~/*": ["../*"],
+      "~/*": ["./*"],
     },
-    "resolveJsonModule": true,
-    "types": ["vite/client"],
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
   },
   "include": ["./**/*.ts", "./**/*.tsx"],
 }

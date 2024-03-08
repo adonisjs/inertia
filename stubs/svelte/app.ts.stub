@@ -1,7 +1,7 @@
 {{{
-  exports({ to: app.makePath('resources/app.ts') })
+  exports({ to: app.makePath('inertia/app/app.ts') })
 }}}
-import './css/app.css';
+import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/svelte'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
@@ -15,8 +15,8 @@ createInertiaApp({
 
   resolve: (name) => {
     return resolvePageComponent(
-      {{ '`./pages/${name}.svelte`' }},
-      import.meta.glob('./pages/**/*.svelte'),
+      {{ '`../pages/${name}.svelte`' }},
+      import.meta.glob('../pages/**/*.svelte'),
     )
   },
 

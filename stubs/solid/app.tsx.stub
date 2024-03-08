@@ -1,7 +1,7 @@
 {{{
-  exports({ to: app.makePath('resources/app.tsx') })
+  exports({ to: app.makePath('inertia/app/app.tsx') })
 }}}
-import './css/app.css'
+import '../css/app.css'
 
 {{#if ssr}}
 import { hydrate } from 'solid-js/web';
@@ -20,8 +20,8 @@ createInertiaApp({
 
   resolve: (name) => {
     return resolvePageComponent(
-      {{ '`./pages/${name}.tsx`' }},
-      import.meta.glob('./pages/**/*.tsx'),
+      {{ '`../pages/${name}.tsx`' }},
+      import.meta.glob('../pages/**/*.tsx'),
     )
   },
 
