@@ -185,7 +185,7 @@ export async function configure(command: Configure) {
   /**
    * Add Inertia middleware
    */
-  await codemods.registerMiddleware('router', [
+  await codemods.registerMiddleware('server', [
     { path: '@adonisjs/inertia/inertia_middleware', position: 'after' },
   ])
 
