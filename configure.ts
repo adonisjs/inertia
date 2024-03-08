@@ -205,6 +205,8 @@ export async function configure(command: Configure) {
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/tsconfig.json.stub`, {})
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/app.${appExt}.stub`, { ssr })
   await codemods.makeUsingStub(stubsRoot, `${stubFolder}/home.${compExt}.stub`, {})
+  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/errors/not_found.${compExt}.stub`, {})
+  await codemods.makeUsingStub(stubsRoot, `${stubFolder}/errors/server_error.${compExt}.stub`, {})
 
   if (ssr) {
     await codemods.makeUsingStub(stubsRoot, `${stubFolder}/ssr.${appExt}.stub`, {})

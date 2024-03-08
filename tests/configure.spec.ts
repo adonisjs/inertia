@@ -113,6 +113,8 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.vue')
+    await assert.fileExists('inertia/pages/errors/not_found.vue')
+    await assert.fileExists('inertia/pages/errors/server_error.vue')
     await assert.fileContains('inertia/app/app.ts', 'createApp')
 
     const viteConfig = await fs.contents('vite.config.ts')
@@ -140,6 +142,8 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.tsx')
+    await assert.fileExists('inertia/pages/errors/not_found.tsx')
+    await assert.fileExists('inertia/pages/errors/server_error.tsx')
     await assert.fileContains('inertia/app/app.tsx', 'createRoot')
 
     const viteConfig = await fs.contents('vite.config.ts')
@@ -167,6 +171,8 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.tsx')
+    await assert.fileExists('inertia/pages/errors/not_found.tsx')
+    await assert.fileExists('inertia/pages/errors/server_error.tsx')
     await assert.fileNotContains('inertia/app/app.tsx', 'hydrateRoot')
 
     const viteConfig = await fs.contents('vite.config.ts')
@@ -194,6 +200,8 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('resources/views/root.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.svelte')
+    await assert.fileExists('inertia/pages/errors/not_found.svelte')
+    await assert.fileExists('inertia/pages/errors/server_error.svelte')
     await assert.fileNotContains('inertia/app/app.ts', 'hydrate')
 
     const viteConfig = await fs.contents('vite.config.ts')
