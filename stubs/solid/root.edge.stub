@@ -1,5 +1,5 @@
 {{{
-  exports({ to: app.makePath('resources/views/root.edge') })
+  exports({ to: app.makePath('resources/views/inertia_layout.edge') })
 }}}
 <!DOCTYPE html>
 <html>

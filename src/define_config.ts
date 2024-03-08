@@ -26,7 +26,7 @@ export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConf
 
     return {
       versionCache,
-      rootView: config.rootView ?? 'root',
+      rootView: config.rootView ?? 'inertia_layout',
       sharedData: config.sharedData || {},
       entrypoint: slash(
         config.entrypoint ?? (await detector.detectEntrypoint('inertia/app/app.ts'))

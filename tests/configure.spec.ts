@@ -110,7 +110,7 @@ test.group('Frameworks', (group) => {
     await command.exec()
 
     await assert.fileExists('inertia/app/app.ts')
-    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/views/inertia_layout.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.vue')
     await assert.fileExists('inertia/pages/errors/not_found.vue')
@@ -139,7 +139,7 @@ test.group('Frameworks', (group) => {
     await command.exec()
 
     await assert.fileExists('inertia/app/app.tsx')
-    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/views/inertia_layout.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.tsx')
     await assert.fileExists('inertia/pages/errors/not_found.tsx')
@@ -168,7 +168,7 @@ test.group('Frameworks', (group) => {
     await command.exec()
 
     await assert.fileExists('inertia/app/app.tsx')
-    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/views/inertia_layout.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.tsx')
     await assert.fileExists('inertia/pages/errors/not_found.tsx')
@@ -197,7 +197,7 @@ test.group('Frameworks', (group) => {
     await command.exec()
 
     await assert.fileExists('inertia/app/app.ts')
-    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/views/inertia_layout.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.svelte')
     await assert.fileExists('inertia/pages/errors/not_found.svelte')
@@ -243,7 +243,7 @@ test.group('Frameworks | SSR', (group) => {
         /**
          * Path to the Edge view that will be used as the root view for Inertia responses
          */
-        rootView: 'root',
+        rootView: 'inertia_layout',
 
         /**
          * Data that should be shared with all rendered pages
@@ -289,7 +289,7 @@ test.group('Frameworks | SSR', (group) => {
         /**
          * Path to the Edge view that will be used as the root view for Inertia responses
          */
-        rootView: 'root',
+        rootView: 'inertia_layout',
 
         /**
          * Data that should be shared with all rendered pages
@@ -335,7 +335,7 @@ test.group('Frameworks | SSR', (group) => {
         /**
          * Path to the Edge view that will be used as the root view for Inertia responses
          */
-        rootView: 'root',
+        rootView: 'inertia_layout',
 
         /**
          * Data that should be shared with all rendered pages
@@ -366,7 +366,7 @@ test.group('Frameworks | SSR', (group) => {
     await command.exec()
 
     await assert.fileExists('inertia/app/app.ts')
-    await assert.fileExists('resources/views/root.edge')
+    await assert.fileExists('resources/views/inertia_layout.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.svelte')
     await assert.fileContains('inertia/app/app.ts', 'hydrate')
