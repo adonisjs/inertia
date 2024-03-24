@@ -305,7 +305,7 @@ test.group('Inertia | Ssr', () => {
     assert.deepEqual(result.props.page.ssrHead, ['head'])
   })
 
-  test('enable only for listed pages', async ({ assert, fs }) => {
+  test('enable only for listed pages (Array)', async ({ assert, fs }) => {
     setupViewMacroMock()
     const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
 
@@ -321,6 +321,36 @@ test.group('Inertia | Ssr', () => {
 
     assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
     assert.notExists(result2.props.page.ssrBody)
+  })
+
+  test('enable only for listed pages (Function)', async ({ assert, fs }) => {
+    setupViewMacroMock()
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    await fs.create('foo.ts', 'export default () => ({ head: "head", body: "foo.ts" })')
+
+    const inertia = await new InertiaFactory()
+      .withVite(vite)
+      .merge({
+        config: {
+          ssr: {
+            enabled: true,
+            entrypoint: 'foo.ts',
+            pages: (_, page) => page.startsWith('admin/'),
+          },
+        },
+      })
+      .create()
+
+    const r1: any = await inertia.render('foo')
+    const r2: any = await inertia.render('bar')
+    const r3: any = await inertia.render('admin/foo')
+    const r4: any = await inertia.render('admin/bar')
+
+    assert.notExists(r1.props.page.ssrBody)
+    assert.notExists(r2.props.page.ssrBody)
+    assert.deepEqual(r3.props.page.ssrBody, 'foo.ts')
+    assert.deepEqual(r4.props.page.ssrBody, 'foo.ts')
   })
 
   test('should pass page object to the view', async ({ assert, fs }) => {

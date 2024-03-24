@@ -64,7 +64,7 @@ export interface InertiaConfig {
     /**
      * List of components that should be rendered on the server
      */
-    pages?: string[]
+    pages?: string[] | ((ctx: HttpContext, page: string) => MaybePromise<boolean>)
 
     /**
      * Path to the SSR entrypoint file
@@ -89,7 +89,7 @@ export interface ResolvedConfig {
   ssr: {
     enabled: boolean
     entrypoint: string
-    pages?: string[]
+    pages?: string[] | ((ctx: HttpContext, page: string) => MaybePromise<boolean>)
     bundle: string
   }
 }

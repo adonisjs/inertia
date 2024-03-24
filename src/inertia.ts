@@ -111,15 +111,22 @@ export class Inertia {
   }
 
   /**
-   * If the page should be rendered on the server
+   * If the page should be rendered on the server or not
+   *
+   * The ssr.pages config can be a list of pages or a function that returns a boolean
    */
-  #shouldRenderOnServer(component: string) {
+  async #shouldRenderOnServer(component: string) {
     const isSsrEnabled = this.config.ssr.enabled
-    const isSsrEnabledForPage = this.config.ssr.pages
-      ? this.config.ssr.pages.includes(component)
-      : true
+    if (!isSsrEnabled) return false
 
-    return isSsrEnabled && isSsrEnabledForPage
+    let isSsrEnabledForPage = false
+    if (typeof this.config.ssr.pages === 'function') {
+      isSsrEnabledForPage = await this.config.ssr.pages(this.ctx, component)
+    } else {
+      isSsrEnabledForPage = this.config.ssr.pages?.includes(component) ?? false
+    }
+
+    return isSsrEnabledForPage
   }
 
   /**
@@ -153,7 +160,7 @@ export class Inertia {
     const isInertiaRequest = !!this.ctx.request.header('x-inertia')
 
     if (!isInertiaRequest) {
-      const shouldRenderOnServer = this.#shouldRenderOnServer(component)
+      const shouldRenderOnServer = await this.#shouldRenderOnServer(component)
       if (shouldRenderOnServer) return this.#renderOnServer(pageObject, viewProps)
 
       return this.ctx.view.render(this.config.rootView, { ...viewProps, page: pageObject })
