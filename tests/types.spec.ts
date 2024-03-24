@@ -8,6 +8,7 @@
  */
 
 import { test } from '@japa/runner'
+import { InferPageProps } from '../src/types.js'
 import { InertiaFactory } from '../factories/inertia_factory.js'
 
 test.group('Types', () => {
@@ -60,5 +61,17 @@ test.group('Types', () => {
 
     type SentProps = Exclude<Awaited<ReturnType<Controller['index']>>, string>['props']
     expectTypeOf<SentProps>().toEqualTypeOf<{ foo: number }>()
+  })
+
+  test('InferPageProps helper', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      index() {
+        return inertia.render('foo', { foo: 1 })
+      }
+    }
+
+    expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<{ foo: number }>()
   })
 })

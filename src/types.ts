@@ -102,3 +102,27 @@ export interface PageObject<TPageProps extends PageProps = PageProps> {
   ssrHead?: string
   ssrBody?: string
 }
+
+/**
+ * Helper for infering the page props from a Controller method that returns
+ * inertia.render
+ *
+ * ```ts
+ * // Your Adonis Controller
+ * class MyController {
+ *  index() {
+ *   return inertia.render('foo', { foo: 1 })
+ *  }
+ * }
+ *
+ * // Your React component
+ * export default MyReactComponent(props: InferPageProps<Controller, 'index'>) {
+ * }
+ * ```
+ */
+export type InferPageProps<
+  Controller,
+  Method extends keyof Controller,
+> = Controller[Method] extends (...args: any[]) => any
+  ? Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']
+  : never
