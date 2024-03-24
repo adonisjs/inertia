@@ -94,10 +94,10 @@ export interface ResolvedConfig {
   }
 }
 
-export interface PageObject {
+export interface PageObject<TPageProps extends PageProps = PageProps> {
   component: string
   version: string | number
-  props: PageProps
+  props: TPageProps
   url: string
   ssrHead?: string
   ssrBody?: string

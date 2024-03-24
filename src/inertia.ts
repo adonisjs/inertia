@@ -101,7 +101,10 @@ export class Inertia {
    *
    * See https://inertiajs.com/the-protocol#the-page-object
    */
-  async #buildPageObject(component: string, pageProps?: PageProps): Promise<PageObject> {
+  async #buildPageObject<TPageProps extends PageProps>(
+    component: string,
+    pageProps?: TPageProps
+  ): Promise<PageObject<TPageProps>> {
     return {
       component,
       version: this.config.versionCache.getVersion(),
@@ -155,7 +158,11 @@ export class Inertia {
   async render<
     TPageProps extends Record<string, any> = PageProps,
     TViewProps extends Record<string, any> = PageProps,
-  >(component: string, pageProps?: TPageProps, viewProps?: TViewProps) {
+  >(
+    component: string,
+    pageProps?: TPageProps,
+    viewProps?: TViewProps
+  ): Promise<string | PageObject<TPageProps>> {
     const pageObject = await this.#buildPageObject(component, pageProps)
     const isInertiaRequest = !!this.ctx.request.header('x-inertia')
 

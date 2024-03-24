@@ -48,4 +48,17 @@ test.group('Types', () => {
     // @ts-expect-error props doesn't match generic
     inertia.render<any, MyViewProps>('foo', { foo: 1 }, { foo: 32 }).catch(() => {})
   })
+
+  test('able to extract PageProps from inertia.render', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      index() {
+        return inertia.render('foo', { foo: 1 })
+      }
+    }
+
+    type SentProps = Exclude<Awaited<ReturnType<Controller['index']>>, string>['props']
+    expectTypeOf<SentProps>().toEqualTypeOf<{ foo: number }>()
+  })
 })
