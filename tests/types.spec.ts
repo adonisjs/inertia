@@ -74,4 +74,16 @@ test.group('Types', () => {
 
     expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<{ foo: number }>()
   })
+
+  test('InferPageProps should serialize props', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      index() {
+        return inertia.render('foo', { foo: new Date() })
+      }
+    }
+
+    expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<{ foo: string }>()
+  })
 })
