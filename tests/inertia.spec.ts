@@ -305,6 +305,24 @@ test.group('Inertia | Ssr', () => {
     assert.deepEqual(result.props.page.ssrHead, ['head'])
   })
 
+  test('enable everywhere if pages is not defined', async ({ assert, fs }) => {
+    setupViewMacroMock()
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    await fs.create('foo.ts', 'export default () => ({ head: "head", body: "foo.ts" })')
+
+    const inertia = await new InertiaFactory()
+      .withVite(vite)
+      .merge({ config: { ssr: { enabled: true, entrypoint: 'foo.ts' } } })
+      .create()
+
+    const result: any = await inertia.render('foo')
+    const result2: any = await inertia.render('bar')
+
+    assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
+    assert.deepEqual(result2.props.page.ssrBody, 'foo.ts')
+  })
+
   test('enable only for listed pages (Array)', async ({ assert, fs }) => {
     setupViewMacroMock()
     const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })

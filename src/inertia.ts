@@ -125,8 +125,10 @@ export class Inertia {
     let isSsrEnabledForPage = false
     if (typeof this.config.ssr.pages === 'function') {
       isSsrEnabledForPage = await this.config.ssr.pages(this.ctx, component)
+    } else if (this.config.ssr.pages) {
+      isSsrEnabledForPage = this.config.ssr.pages?.includes(component)
     } else {
-      isSsrEnabledForPage = this.config.ssr.pages?.includes(component) ?? false
+      isSsrEnabledForPage = true
     }
 
     return isSsrEnabledForPage
