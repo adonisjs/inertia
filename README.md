@@ -8,7 +8,7 @@
 Official [Inertia.js](https://inertiajs.com/) adapter for AdonisJS.
 
 ## Official Documentation
-The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/inertia/introduction).
+The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/inertia/).
 
 ## Contributing
 One of the primary goals of AdonisJS is to have a vibrant community of users and contributors who believes in the principles of the framework.
