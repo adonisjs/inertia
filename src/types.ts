@@ -87,7 +87,6 @@ export interface ResolvedConfig {
   rootView: string
   versionCache: VersionCache
   sharedData: SharedData
-  entrypoint: string
   ssr: {
     enabled: boolean
     entrypoint: string

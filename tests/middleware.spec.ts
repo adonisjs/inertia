@@ -24,7 +24,6 @@ test.group('Middleware', () => {
       const middleware = new InertiaMiddleware({
         rootView: 'root',
         sharedData: {},
-        entrypoint: 'app.ts',
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
@@ -47,7 +46,6 @@ test.group('Middleware', () => {
       const middleware = new InertiaMiddleware({
         rootView: 'root',
         sharedData: {},
-        entrypoint: 'app.ts',
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
@@ -77,7 +75,6 @@ test.group('Middleware', () => {
       const middleware = new InertiaMiddleware({
         rootView: 'root',
         sharedData: {},
-        entrypoint: 'app.ts',
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
@@ -107,7 +104,6 @@ test.group('Middleware', () => {
       const middleware = new InertiaMiddleware({
         rootView: 'root',
         sharedData: {},
-        entrypoint: 'app.ts',
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
@@ -135,7 +131,6 @@ test.group('Middleware', () => {
       const middleware = new InertiaMiddleware({
         rootView: 'root',
         sharedData: {},
-        entrypoint: 'app.ts',
         versionCache: new VersionCache(new URL(import.meta.url), '1'),
         ssr: { enabled: false, bundle: '', entrypoint: '' },
       })
@@ -157,7 +152,6 @@ test.group('Middleware', () => {
     const middleware = new InertiaMiddleware({
       rootView: 'root',
       sharedData: {},
-      entrypoint: 'app.ts',
       versionCache: version,
       ssr: { enabled: false, bundle: '', entrypoint: '' },
     })
@@ -189,7 +183,6 @@ test.group('Middleware', () => {
     const middleware = new InertiaMiddleware({
       rootView: 'root',
       sharedData: {},
-      entrypoint: 'app.ts',
       versionCache: version,
       ssr: { enabled: false, bundle: '', entrypoint: '' },
     })

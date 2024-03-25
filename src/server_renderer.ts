@@ -8,11 +8,8 @@
  */
 
 import { Vite } from '@adonisjs/vite'
-import type { ModuleNode } from 'vite'
 
 import type { PageObject, ResolvedConfig } from './types.js'
-
-const styleFileRE = /\.(css|less|sass|scss|styl|stylus|pcss|postcss)($|\?)/
 
 /**
  * Responsible for rendering page on the server
@@ -28,67 +25,6 @@ export class ServerRenderer {
   ) {}
 
   /**
-   * If the module is a style module
-   */
-  #isStyle(mod: ModuleNode) {
-    if (styleFileRE.test(mod.url) || (mod.id && /\?vue&type=style/.test(mod.id))) {
-      return true
-    }
-    return false
-  }
-
-  /**
-   * Collect CSS files from the module graph recursively
-   */
-  #collectCss(
-    mod: ModuleNode,
-    styleUrls: Set<string>,
-    visitedModules: Set<string>,
-    importer?: ModuleNode
-  ): void {
-    if (!mod.url) return
-
-    /**
-     * Prevent visiting the same module twice
-     */
-    if (visitedModules.has(mod.url)) return
-    visitedModules.add(mod.url)
-
-    if (this.#isStyle(mod) && (!importer || !this.#isStyle(importer))) {
-      if (mod.url.startsWith('/')) {
-        styleUrls.add(mod.url)
-      } else if (mod.url.startsWith('\0')) {
-        // virtual modules are prefixed with \0
-        styleUrls.add(`/@id/__x00__${mod.url.substring(1)}`)
-      } else {
-        styleUrls.add(`/@id/${mod.url}`)
-      }
-    }
-
-    mod.importedModules.forEach((dep) => this.#collectCss(dep, styleUrls, visitedModules, mod))
-  }
-
-  /**
-   * Generate the preload tag for a CSS file
-   */
-  #getPreloadTag(href: string) {
-    return `<link rel="stylesheet" href="${href}" />`
-  }
-
-  /**
-   * Find a page module from the entrypoint module
-   *
-   * The implementation is dumb, we are just looking for the first module
-   * imported by the entrypoint module that matches the regex
-   */
-  #findPageModule(entryMod: ModuleNode | undefined, pageObject: PageObject) {
-    const pattern = `${pageObject.component.replace(/\//g, '\\/')}.(tsx|vue|svelte|jsx|ts|js)$`
-    const regex = new RegExp(pattern)
-
-    return [...(entryMod?.ssrImportedModules || [])].find((dep) => regex.test(dep.url))
-  }
-
-  /**
    * Render the page on the server
    *
    * On development, we use the Vite Runtime API
@@ -96,7 +32,6 @@ export class ServerRenderer {
    */
   async render(pageObject: PageObject) {
     let render: { default: (page: any) => Promise<{ head: string; body: string }> }
-    let preloadTags: string[] = []
     const devServer = this.vite?.getDevServer()
 
     /**
@@ -106,35 +41,6 @@ export class ServerRenderer {
     if (devServer) {
       const runtime = await this.vite!.createRuntime()
       render = await runtime.executeEntrypoint(this.config.ssr.entrypoint!)
-
-      /**
-       * We need to collect the CSS files to preload them
-       * Otherwise, we gonna have a FOUC each time we full reload the page
-       *
-       * First, we need to get the client-side entrypoint module
-       */
-      const entryMod = devServer.moduleGraph.getModuleById(this.config.entrypoint)
-
-      /**
-       * We should also get the page component that will be rendered. So
-       * we analyze the module graph to find the module that matches the
-       * page component
-       *
-       * Then execute it with Vite Runtime so the module graph is populated
-       */
-      const pageMod = this.#findPageModule(entryMod, pageObject)
-      if (pageMod) await runtime.executeUrl(pageMod.url)
-
-      /**
-       * Then we can finally collect the CSS files
-       */
-      const preloadUrls = new Set<string>()
-      const visitedModules = new Set<string>()
-
-      if (pageMod) this.#collectCss(pageMod, preloadUrls, visitedModules)
-      if (entryMod) this.#collectCss(entryMod, preloadUrls, visitedModules)
-
-      preloadTags = Array.from(preloadUrls).map(this.#getPreloadTag)
     } else {
       /**
        * Otherwise, just import the SSR bundle
@@ -146,7 +52,6 @@ export class ServerRenderer {
      * Call the render function and return head and body
      */
     const result = await render.default(pageObject)
-    const head = preloadTags.concat(result.head)
-    return { head, body: result.body }
+    return { head: [result.head], body: result.body }
   }
 }
