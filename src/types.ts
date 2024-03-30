@@ -127,3 +127,8 @@ export type InferPageProps<
 > = Controller[Method] extends (...args: any[]) => any
   ? Serialize<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']>
   : never
+
+/**
+ * Signature for the method in the SSR entrypoint file
+ */
+export type RenderInertiaSsrApp = (page: PageObject) => Promise<{ head: string[]; body: string }>
