@@ -33,7 +33,7 @@
     "prebuild": "npm run lint && npm run clean",
     "build": "tsup-node",
     "postbuild": "npm run copy:templates",
-    "release": "np",
+    "release": "release-it",
     "version": "npm run build",
     "prepublishOnly": "npm run build"
   },
@@ -64,8 +64,8 @@
     "edge.js": "^6.0.2",
     "eslint": "^8.57.0",
     "get-port": "^7.1.0",
-    "np": "^10.0.2",
     "prettier": "^3.2.5",
+    "release-it": "^17.1.1",
     "supertest": "^6.3.4",
     "tinybench": "^2.6.0",
     "ts-node": "^10.9.2",
@@ -75,11 +75,11 @@
   },
   "dependencies": {
     "@poppinss/utils": "^6.7.2",
+    "@tuyau/utils": "^0.0.1",
     "crc-32": "^1.2.2",
     "edge-error": "^4.0.1",
     "html-entities": "^2.5.2",
     "locate-path": "^7.2.0",
-    "@tuyau/utils": "^0.0.1",
     "qs": "^6.11.2"
   },
   "peerDependencies": {
@@ -108,11 +108,17 @@
     "access": "public",
     "tag": "latest"
   },
-  "np": {
-    "message": "chore(release): %s",
-    "tag": "latest",
-    "branch": "main",
-    "anyBranch": false
+  "release-it": {
+    "git": {
+      "commitMessage": "chore(release): ${version}",
+      "tagAnnotation": "v${version}",
+      "tagName": "v${version}"
+    },
+    "github": {
+      "release": true,
+      "releaseName": "v${version}",
+      "web": true
+    }
   },
   "c8": {
     "reporter": [
