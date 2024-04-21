@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
  */
 
-import type { Serialize } from '@tuyau/utils/types'
 import type { HttpContext } from '@adonisjs/core/http'
 
 import type { VersionCache } from './version_cache.js'
+import { Infer, Prettify } from './lucid.js'
 
 export type MaybePromise<T> = T | Promise<T>
 
@@ -125,7 +125,7 @@ export type InferPageProps<
   Controller,
   Method extends keyof Controller,
 > = Controller[Method] extends (...args: any[]) => any
-  ? Serialize<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']>
+  ? Prettify<Infer<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']>>
   : never
 
 /**
