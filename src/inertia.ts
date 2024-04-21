@@ -21,6 +21,7 @@ import type {
   ResolvedConfig,
   SharedData,
 } from './types.js'
+import { serialize } from './serialize.js'
 
 /**
  * Symbol used to identify lazy props
@@ -105,10 +106,14 @@ export class Inertia {
     component: string,
     pageProps?: TPageProps
   ): Promise<PageObject<TPageProps>> {
+    const serializedPageProps = serialize(pageProps || {})
     return {
       component,
       version: this.config.versionCache.getVersion(),
-      props: await this.#resolvePageProps(component, { ...this.#sharedData, ...pageProps }),
+      props: await this.#resolvePageProps(component, {
+        ...this.#sharedData,
+        ...serializedPageProps,
+      }),
       url: this.ctx.request.url(true),
     }
   }
