@@ -8,6 +8,7 @@
  */
 
 import { test } from '@japa/runner'
+
 import { InferPageProps } from '../src/types.js'
 import { InertiaFactory } from '../factories/inertia_factory.js'
 

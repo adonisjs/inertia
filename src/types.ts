@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import type { Serialize } from '@tuyau/utils/types'
 import type { HttpContext } from '@adonisjs/core/http'
+import type { Serialize, Simplify } from '@tuyau/utils/types'
 
 import { kLazySymbol } from './inertia.js'
 import type { VersionCache } from './version_cache.js'
@@ -139,7 +139,9 @@ export type InferPageProps<
   Controller,
   Method extends keyof Controller,
 > = Controller[Method] extends (...args: any[]) => any
-  ? Serialize<InferProps<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']>>
+  ? Simplify<
+      Serialize<InferProps<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']>>
+    >
   : never
 
 /**
