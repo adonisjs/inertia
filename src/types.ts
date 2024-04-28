@@ -10,6 +10,7 @@
 import type { Serialize } from '@tuyau/utils/types'
 import type { HttpContext } from '@adonisjs/core/http'
 
+import { kLazySymbol } from './inertia.js'
 import type { VersionCache } from './version_cache.js'
 
 export type MaybePromise<T> = T | Promise<T>
@@ -104,6 +105,19 @@ export interface PageObject<TPageProps extends PageProps = PageProps> {
   ssrBody?: string
 }
 
+type IsLazyProp<T> = T extends { [kLazySymbol]: () => MaybePromise<any> } ? true : false
+type InferProps<T> = {
+  // First extract and unwrap lazy props. Also make them optional as they are lazy
+  [K in keyof T as IsLazyProp<T[K]> extends true ? K : never]+?: T[K] extends {
+    [kLazySymbol]: () => MaybePromise<infer U>
+  }
+    ? U
+    : T[K]
+} & {
+  // Then include all other props as it is
+  [K in keyof T as IsLazyProp<T[K]> extends true ? never : K]: T[K]
+}
+
 /**
  * Helper for infering the page props from a Controller method that returns
  * inertia.render
@@ -125,7 +139,7 @@ export type InferPageProps<
   Controller,
   Method extends keyof Controller,
 > = Controller[Method] extends (...args: any[]) => any
-  ? Serialize<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']>
+  ? Serialize<InferProps<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']>>
   : never
 
 /**

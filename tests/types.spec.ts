@@ -86,4 +86,34 @@ test.group('Types', () => {
 
     expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<{ foo: string }>()
   })
+
+  test('InferPageProps with lazy props', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      index() {
+        return inertia.render('foo', {
+          bar: inertia.lazy(() => 'bar'),
+          foo: inertia.lazy(() => new Date()),
+          bar2: 'bar2',
+        })
+      }
+
+      edit() {
+        return inertia.render('foo', {
+          bar: inertia.lazy(() => 'bar'),
+        })
+      }
+    }
+
+    expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<{
+      bar?: string
+      foo?: string
+      bar2: string
+    }>()
+
+    expectTypeOf<InferPageProps<Controller, 'edit'>>().toEqualTypeOf<{
+      bar?: string
+    }>()
+  })
 })

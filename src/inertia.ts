@@ -25,7 +25,7 @@ import type {
 /**
  * Symbol used to identify lazy props
  */
-const kLazySymbol = Symbol('lazy')
+export const kLazySymbol = Symbol('lazy')
 
 /**
  * Main class used to interact with Inertia
@@ -187,7 +187,7 @@ export class Inertia {
    *
    * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
    */
-  lazy(callback: () => MaybePromise<any>) {
+  lazy<T>(callback: () => MaybePromise<T>) {
     return { [kLazySymbol]: callback }
   }
 
