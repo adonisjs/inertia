@@ -158,8 +158,8 @@ export class Inertia {
    * Render a page using Inertia
    */
   async render<
-    TPageProps extends Record<string, any> = PageProps,
-    TViewProps extends Record<string, any> = PageProps,
+    TPageProps extends Record<string, any> = {},
+    TViewProps extends Record<string, any> = {},
   >(
     component: string,
     pageProps?: TPageProps,

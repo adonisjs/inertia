@@ -116,4 +116,17 @@ test.group('Types', () => {
       bar?: string
     }>()
   })
+
+  test('InferPageProps with empty props', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      index() {
+        return inertia.render('foo')
+      }
+    }
+
+    type Props = InferPageProps<Controller, 'index'>
+    expectTypeOf<Props>().toEqualTypeOf<{}>()
+  })
 })
