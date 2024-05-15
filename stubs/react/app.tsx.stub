@@ -1,6 +1,8 @@
 {{{
   exports({ to: app.makePath('inertia/app/app.tsx') })
 }}}
+/// <reference path="../../adonisrc.ts" />
+
 import '../css/app.css';
 
 {{#if ssr}}

@@ -1,6 +1,8 @@
 {{{
   exports({ to: app.makePath('inertia/app/app.ts') })
 }}}
+/// <reference path="../../adonisrc.ts" />
+
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/svelte'
