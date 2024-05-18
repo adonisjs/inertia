@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { join } from 'node:path'
 import { test } from '@japa/runner'
 import { Vite } from '@adonisjs/vite'
 import { HttpContext } from '@adonisjs/core/http'
@@ -294,7 +295,7 @@ test.group('Inertia | Ssr', () => {
     await fs.create('foo.js', 'export default () => ({ head: ["head"], body: "foo.ts" })')
 
     const inertia = await new InertiaFactory()
-      .merge({ config: { ssr: { enabled: true, bundle: new URL('foo.js', fs.baseUrl).href } } })
+      .merge({ config: { ssr: { enabled: true, bundle: join(fs.basePath, 'foo.js') } } })
       .withVite(vite)
       .create()
 
