@@ -9,7 +9,7 @@
 
 import { Vite } from '@adonisjs/vite'
 
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pathToFileURL } from 'node:url'
 import type { PageObject, RenderInertiaSsrApp, ResolvedConfig } from './types.js'
 
 /**
