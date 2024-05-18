@@ -9,6 +9,7 @@
 
 import { Vite } from '@adonisjs/vite'
 
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { PageObject, RenderInertiaSsrApp, ResolvedConfig } from './types.js'
 
 /**
@@ -45,7 +46,7 @@ export class ServerRenderer {
       /**
        * Otherwise, just import the SSR bundle
        */
-      render = await import(this.config.ssr.bundle!)
+      render = await import(pathToFileURL(this.config.ssr.bundle).href)
     }
 
     /**
