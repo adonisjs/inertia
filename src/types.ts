@@ -37,7 +37,7 @@ export interface InertiaConfig {
    * Path to the Edge view that will be used as the root view for Inertia responses.
    * @default root (resources/views/inertia_layout.edge)
    */
-  rootView?: string
+  rootView?: string | ((ctx: HttpContext) => string)
 
   /**
    * Path to your client-side entrypoint file.
@@ -85,7 +85,7 @@ export interface InertiaConfig {
  * Resolved inertia configuration
  */
 export interface ResolvedConfig {
-  rootView: string
+  rootView: string | ((ctx: HttpContext) => string)
   versionCache: VersionCache
   sharedData: SharedData
   ssr: {

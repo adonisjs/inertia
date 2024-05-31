@@ -64,6 +64,21 @@ test.group('Inertia', () => {
     })
   })
 
+  test('render dynamic root view', async ({ assert }) => {
+    setupViewMacroMock()
+
+    let i = 0
+    const inertia = await new InertiaFactory()
+      .merge({ config: { rootView: () => `inertia_layout_${i++}` } })
+      .create()
+
+    const r1: any = await inertia.render('foo', { foo: 'bar' })
+    const r2: any = await inertia.render('foo', { foo: 'bar' })
+
+    assert.deepEqual(r1.view, 'inertia_layout_0')
+    assert.deepEqual(r2.view, 'inertia_layout_1')
+  })
+
   test('only return page object when request is from inertia', async ({ assert }) => {
     const inertia = await new InertiaFactory().withXInertiaHeader().create()
     const result = await inertia.render('foo', { foo: 'bar' })

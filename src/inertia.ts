@@ -135,12 +135,21 @@ export class Inertia {
   }
 
   /**
+   * Resolve the root view
+   */
+  #resolveRootView() {
+    return typeof this.config.rootView === 'function'
+      ? this.config.rootView(this.ctx)
+      : this.config.rootView
+  }
+
+  /**
    * Render the page on the server
    */
   async #renderOnServer(pageObject: PageObject, viewProps?: Record<string, any>) {
     const { head, body } = await this.#serverRenderer.render(pageObject)
 
-    return this.ctx.view.render(this.config.rootView, {
+    return this.ctx.view.render(this.#resolveRootView(), {
       ...viewProps,
       page: { ssrHead: head, ssrBody: body, ...pageObject },
     })
@@ -172,7 +181,7 @@ export class Inertia {
       const shouldRenderOnServer = await this.#shouldRenderOnServer(component)
       if (shouldRenderOnServer) return this.#renderOnServer(pageObject, viewProps)
 
-      return this.ctx.view.render(this.config.rootView, { ...viewProps, page: pageObject })
+      return this.ctx.view.render(this.#resolveRootView(), { ...viewProps, page: pageObject })
     }
 
     this.ctx.response.header('x-inertia', 'true')
