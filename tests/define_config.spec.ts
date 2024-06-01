@@ -63,7 +63,7 @@ test.group('Define Config', () => {
     type Props = InferSharedProps<typeof config>
     expectTypeOf<Props>().toEqualTypeOf<{}>()
 
-    const props: Props = null as any
+    const props: Props = {}
 
     // @ts-expect-error
     props.notExistent

@@ -101,7 +101,7 @@ const ADAPTERS_INFO: {
 }
 
 /**
- * Adds the /inertia route to the routes file
+ * Adds the example route to the routes file
  */
 async function defineExampleRoute(command: Configure, codemods: Codemods) {
   const tsMorph = await codemods.getTsMorphProject()
@@ -111,16 +111,10 @@ async function defineExampleRoute(command: Configure, codemods: Codemods) {
     return command.logger.warning('Unable to find the routes file')
   }
 
-  const isAlreadyDefined = routesFile.getText().includes('/inertia')
-  if (isAlreadyDefined) {
-    command.logger.warning('/inertia route is already defined. Skipping')
-    return
-  }
-
   const action = command.logger.action('update start/routes.ts file')
   try {
     routesFile?.addStatements((writer) => {
-      writer.writeLine(`router.on('/inertia').renderInertia('home', { version: 6 })`)
+      writer.writeLine(`router.on('/').renderInertia('home', { version: 6 })`)
     })
 
     await tsMorph?.save()
@@ -138,6 +132,7 @@ export async function configure(command: Configure) {
   let adapter: keyof typeof ADAPTERS_INFO | undefined = command.parsedFlags.adapter
   let ssr: boolean | undefined = command.parsedFlags.ssr
   let shouldInstallPackages: boolean | undefined = command.parsedFlags.install
+  let shouldSkipExampleRoute: boolean | undefined = command.parsedFlags['skip-example-route']
 
   /**
    * Prompt to select the adapter when `--adapter` flag is not passed
@@ -244,7 +239,9 @@ export async function configure(command: Configure) {
   /**
    * Add route example
    */
-  await defineExampleRoute(command, codemods)
+  if (shouldSkipExampleRoute !== true) {
+    await defineExampleRoute(command, codemods)
+  }
 
   /**
    * Install packages

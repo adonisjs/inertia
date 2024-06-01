@@ -68,12 +68,12 @@ test.group('Configure', (group) => {
     const command = await ace.create(Configure, ['../../index.js'])
     await command.exec()
 
-    await assert.fileContains('start/routes.ts', `router.on('/inertia'`)
+    await assert.fileContains('start/routes.ts', `router.on('/'`)
   })
 
-  test('skip adding example route when already defined', async ({ assert, fs }) => {
+  test('skip example route when flag is passed', async ({ assert, fs }) => {
     await fs.createJson('tsconfig.json', { compilerOptions: {} })
-    await fs.create('start/routes.ts', `router.get('/inertia', () => {})`)
+    await fs.create('start/routes.ts', '')
 
     const { ace } = await setupApp()
 
@@ -81,14 +81,10 @@ test.group('Configure', (group) => {
     ace.prompt.trap('ssr').reject()
     ace.prompt.trap('install').reject()
 
-    const command = await ace.create(Configure, ['../../index.js'])
+    const command = await ace.create(Configure, ['../../index.js', '--skip-example-route'])
     await command.exec()
 
-    const fileContent = await fs.contents('start/routes.ts')
-    const matches = fileContent.match(/router.get\('\/inertia'/g)
-
-    assert.isArray(matches)
-    assert.lengthOf(matches!, 1)
+    await assert.fileNotContains('start/routes.ts', `router.on('/'`)
   })
 })
 
