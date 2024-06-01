@@ -2,6 +2,7 @@
   exports({ to: app.makePath('inertia/app/app.ts') })
 }}}
 /// <reference path="../../adonisrc.ts" />
+/// <reference path="../../config/inertia.ts" />
 
 import '../css/app.css';
 
