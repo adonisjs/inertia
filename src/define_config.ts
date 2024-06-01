@@ -7,18 +7,20 @@
  * file that was distributed with this source code.
  */
 
+import { slash } from '@poppinss/utils'
 import { configProvider } from '@adonisjs/core'
 import type { ConfigProvider } from '@adonisjs/core/types'
 
 import { VersionCache } from './version_cache.js'
 import { FilesDetector } from './files_detector.js'
-import type { InertiaConfig, ResolvedConfig } from './types.js'
-import { slash } from '@poppinss/utils'
+import type { InertiaConfig, ResolvedConfig, SharedData } from './types.js'
 
 /**
  * Define the Inertia configuration
  */
-export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConfig> {
+export function defineConfig<T extends SharedData>(
+  config: InertiaConfig<T>
+): ConfigProvider<ResolvedConfig<T>> {
   return configProvider.create(async (app) => {
     const detector = new FilesDetector(app)
     const versionCache = new VersionCache(app.appRoot, config.assetsVersion)
@@ -27,7 +29,7 @@ export function defineConfig(config: InertiaConfig): ConfigProvider<ResolvedConf
     return {
       versionCache,
       rootView: config.rootView ?? 'inertia_layout',
-      sharedData: config.sharedData || {},
+      sharedData: config.sharedData! || {},
       entrypoint: slash(
         config.entrypoint ?? (await detector.detectEntrypoint('inertia/app/app.ts'))
       ),

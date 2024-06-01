@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { ConfigProvider } from '@adonisjs/core/types'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { Serialize, Simplify } from '@tuyau/utils/types'
 
@@ -32,7 +33,7 @@ export type SharedData = Record<string, Data | SharedDatumFactory>
  */
 export type AssetsVersion = string | number | undefined
 
-export interface InertiaConfig {
+export interface InertiaConfig<T extends SharedData = SharedData> {
   /**
    * Path to the Edge view that will be used as the root view for Inertia responses.
    * @default root (resources/views/inertia_layout.edge)
@@ -53,7 +54,7 @@ export interface InertiaConfig {
   /**
    * Data that should be shared with all rendered pages
    */
-  sharedData?: SharedData
+  sharedData?: T
 
   /**
    * Options to configure SSR
@@ -84,10 +85,10 @@ export interface InertiaConfig {
 /**
  * Resolved inertia configuration
  */
-export interface ResolvedConfig {
+export interface ResolvedConfig<T extends SharedData = SharedData> {
   rootView: string | ((ctx: HttpContext) => string)
   versionCache: VersionCache
-  sharedData: SharedData
+  sharedData: T
   ssr: {
     enabled: boolean
     entrypoint: string
@@ -118,9 +119,28 @@ type InferProps<T> = {
   [K in keyof T as IsLazyProp<T[K]> extends true ? never : K]: T[K]
 }
 
+type ReturnsTypesSharedData<T extends SharedData> = {} extends T
+  ? {}
+  : { [K in keyof T]: T[K] extends (...args: any[]) => MaybePromise<infer U> ? U : T[K] }
+
+/**
+ * Infer shared data types from the config provider
+ */
+export type InferSharedProps<T extends ConfigProvider<ResolvedConfig>> = ReturnsTypesSharedData<
+  Awaited<ReturnType<T['resolver']>>['sharedData']
+>
+
+/**
+ * The shared props inferred from the user config user-land.
+ * Should be module augmented by the user
+ */
+export interface SharedProps {}
+
 /**
  * Helper for infering the page props from a Controller method that returns
  * inertia.render
+ *
+ * InferPageProps will also include the shared props
  *
  * ```ts
  * // Your Adonis Controller
@@ -140,7 +160,9 @@ export type InferPageProps<
   Method extends keyof Controller,
 > = Controller[Method] extends (...args: any[]) => any
   ? Simplify<
-      Serialize<InferProps<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']>>
+      Serialize<
+        InferProps<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']> & SharedProps
+      >
     >
   : never
 
