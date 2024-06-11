@@ -8,7 +8,7 @@
 Official [Inertia.js](https://inertiajs.com/) adapter for AdonisJS.
 
 ## Official Documentation
-The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/inertia/).
+The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/views-and-templates/inertia).
 
 ## Starter Kit
 The AdonisJS team maintains an Inertia starter kit. This starter kit provides a configurable base application using AdonisJS with Inertia and your favorite frontend framework (e.g. React, Vue.js, Svelte).
