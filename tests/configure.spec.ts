@@ -13,7 +13,7 @@ import Configure from '@adonisjs/core/commands/configure'
 
 import { setupApp } from '../tests_helpers/index.js'
 
-async function setupFakeAdonisproject(fs: FileSystem) {
+async function setupFakeAdonisProject(fs: FileSystem) {
   await Promise.all([
     fs.create('.env', ''),
     fs.createJson('tsconfig.json', {}),
@@ -37,7 +37,7 @@ async function setupFakeAdonisproject(fs: FileSystem) {
 
 test.group('Configure', (group) => {
   group.tap((t) => t.timeout(20_000))
-  group.each.setup(async ({ context }) => setupFakeAdonisproject(context.fs))
+  group.each.setup(async ({ context }) => setupFakeAdonisProject(context.fs))
 
   test('add provider, config file, and middleware', async ({ assert }) => {
     const { ace } = await setupApp()
@@ -90,7 +90,7 @@ test.group('Configure', (group) => {
 
 test.group('Frameworks', (group) => {
   group.tap((t) => t.timeout(20_000))
-  group.each.setup(async ({ context }) => setupFakeAdonisproject(context.fs))
+  group.each.setup(async ({ context }) => setupFakeAdonisProject(context.fs))
 
   test('vue', async ({ assert, fs }) => {
     await fs.createJson('package.json', {})
@@ -214,7 +214,7 @@ test.group('Frameworks', (group) => {
 
 test.group('Frameworks | SSR', (group) => {
   group.tap((t) => t.timeout(20_000))
-  group.each.setup(async ({ context }) => setupFakeAdonisproject(context.fs))
+  group.each.setup(async ({ context }) => setupFakeAdonisProject(context.fs))
 
   test('vue', async ({ assert, fs }) => {
     await fs.createJson('package.json', {})
