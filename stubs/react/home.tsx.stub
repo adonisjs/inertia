@@ -77,7 +77,7 @@ export default function Home() {
                 </svg>
               </div>
 
-              <div className="mt-1.5 space-y-1">
+              <div className="space-y-1">
                 <h2 className="text-lg font-semibold">
                   <a href="https://docs.adonisjs.com" target="_blank">
                     <span>Documentation</span>

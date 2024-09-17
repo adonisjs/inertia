@@ -74,7 +74,7 @@
           </svg>
         </div>
 
-        <div class="mt-1.5 space-y-1">
+        <div class="space-y-1">
           <h2 class="text-lg font-semibold">
             <a href="https://docs.adonisjs.com" target="_blank">
               <span>Documentation</span>
