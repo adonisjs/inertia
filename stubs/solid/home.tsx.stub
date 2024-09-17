@@ -6,7 +6,7 @@ import type { JSXElement } from 'solid-js'
 
 // You can extract the Meta component to a separate file
 export function Meta(props: { title?: string; children?: JSXElement }) {
-  const title = props.title ? `${props.title} - AdonisJS` : 'AdonisJS'
+  const title = props.title ? props.title + ' - AdonisJS' : 'AdonisJS'
 
   return (
     <MetaProvider>
