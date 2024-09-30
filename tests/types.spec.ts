@@ -130,4 +130,37 @@ test.group('Types', () => {
     type Props = InferPageProps<Controller, 'index'>
     expectTypeOf<Props>().toEqualTypeOf<{}>()
   })
+
+  test('multiple render calls', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      index() {
+        if (Math.random() > 0.5) {
+          return inertia.render('foo', { bar: 1 })
+        }
+
+        return inertia.render('foo', { foo: 1 })
+      }
+    }
+
+    expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<
+      { bar: number } | { foo: number }
+    >()
+  })
+
+  test('ignore non-PageObject returns from controller', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      index() {
+        if (Math.random() > 0.5) return
+        if (Math.random() > 0.5) return { foo: 1 }
+
+        return inertia.render('foo', { foo: 1 })
+      }
+    }
+
+    expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<{ foo: number }>()
+  })
 })

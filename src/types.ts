@@ -161,7 +161,8 @@ export type InferPageProps<
 > = Controller[Method] extends (...args: any[]) => any
   ? Simplify<
       Serialize<
-        InferProps<Exclude<Awaited<ReturnType<Controller[Method]>>, string>['props']> & SharedProps
+        InferProps<Extract<Awaited<ReturnType<Controller[Method]>>, PageObject>['props']> &
+          SharedProps
       >
     >
   : never
