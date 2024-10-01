@@ -25,9 +25,9 @@
     "clean": "del-cli build",
     "copy:templates": "copyfiles --up 1 \"stubs/**/*.stub\" build",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext=.ts",
+    "lint": "eslint",
     "format": "prettier --write .",
-    "quick:test": "node --enable-source-maps --loader=ts-node/esm bin/test.ts",
+    "quick:test": "node --import=ts-node-maintained/register/esm bin/test.ts",
     "pretest": "npm run lint",
     "test": "c8 npm run quick:test",
     "prebuild": "npm run lint && npm run clean",
@@ -40,7 +40,7 @@
   "devDependencies": {
     "@adonisjs/assembler": "^7.8.2",
     "@adonisjs/core": "6.14.0",
-    "@adonisjs/eslint-config": "^1.3.0",
+    "@adonisjs/eslint-config": "^2.0.0-beta.7",
     "@adonisjs/prettier-config": "^1.4.0",
     "@adonisjs/session": "7.5.0",
     "@adonisjs/tsconfig": "^1.4.0",
@@ -62,12 +62,12 @@
     "del-cli": "^5.1.0",
     "edge-parser": "^9.0.3",
     "edge.js": "^6.2.0",
-    "eslint": "^8.57.1",
+    "eslint": "^9.11.1",
     "get-port": "^7.1.0",
     "prettier": "^3.3.3",
     "release-it": "^17.6.0",
     "supertest": "^7.0.0",
-    "ts-node": "^10.9.2",
+    "ts-node-maintained": "^10.9.4",
     "tsup": "^8.3.0",
     "typescript": "~5.6.2",
     "vite": "^5.4.8"
@@ -99,14 +99,7 @@
     "inertia",
     "adonisjs"
   ],
-  "eslintConfig": {
-    "extends": "@adonisjs/eslint-config/package"
-  },
   "prettier": "@adonisjs/prettier-config",
-  "publishConfig": {
-    "access": "public",
-    "tag": "latest"
-  },
   "release-it": {
     "git": {
       "commitMessage": "chore(release): ${version}",
