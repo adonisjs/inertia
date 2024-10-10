@@ -104,6 +104,7 @@ export interface PageObject<TPageProps extends PageProps = PageProps> {
   url: string
   ssrHead?: string
   ssrBody?: string
+  deferredProps?: Record<string, string[]>
 }
 
 type IsLazyProp<T> = T extends { [kLazySymbol]: () => MaybePromise<any> } ? true : false

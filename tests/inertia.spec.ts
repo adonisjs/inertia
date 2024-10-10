@@ -271,6 +271,72 @@ test.group('Inertia', () => {
 
     assert.deepEqual(result.props, { foo: 'baz' })
   })
+
+  test('dont execute deferred props on first visit', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory().create()
+    let executed = false
+
+    await inertia.render('foo', {
+      foo: 'bar',
+      baz: inertia.defer(() => {
+        executed = true
+        return 'baz'
+      }),
+    })
+
+    assert.deepEqual(executed, false)
+  })
+
+  test('deferred props listing are returned in page object', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory().create()
+
+    const result: any = await inertia.render('foo', {
+      foo: 'bar',
+      baz: inertia.defer(() => 'baz'),
+      qux: inertia.defer(() => 'qux'),
+    })
+
+    assert.deepEqual(result.props.page.deferredProps, {
+      default: ['baz', 'qux'],
+    })
+  })
+
+  test('deferred props groups are respected', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory().create()
+
+    const result: any = await inertia.render('foo', {
+      foo: 'bar',
+      baz: inertia.defer(() => 'baz', 'group1'),
+      qux: inertia.defer(() => 'qux', 'group2'),
+      lorem: inertia.defer(() => 'lorem', 'group1'),
+      ipsum: inertia.defer(() => 'ipsum', 'group2'),
+    })
+
+    assert.deepEqual(result.props.page.deferredProps, {
+      group1: ['baz', 'lorem'],
+      group2: ['qux', 'ipsum'],
+    })
+  })
+
+  test('execute and return deferred props on partial reload', async ({ assert }) => {
+    const inertia = await new InertiaFactory()
+      .withXInertiaHeader()
+      .withInertiaPartialReload('foo', ['baz'])
+      .create()
+
+    const result: any = await inertia.render('foo', {
+      foo: 'bar',
+      baz: inertia.defer(() => 'baz'),
+    })
+
+    assert.deepEqual(result.props, { baz: 'baz' })
+  })
 })
 
 test.group('Inertia | Ssr', () => {

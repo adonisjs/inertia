@@ -28,6 +28,11 @@ import type {
 export const kLazySymbol = Symbol('lazy')
 
 /**
+ * Symbol used to identify deferred props
+ */
+export const kDeferredSymbol = Symbol('deferred')
+
+/**
  * Main class used to interact with Inertia
  */
 export class Inertia {
@@ -51,6 +56,20 @@ export class Inertia {
   }
 
   /**
+   * Check if a value is a deferred prop
+   */
+  #isDeferredProps(value: any) {
+    return typeof value === 'object' && value && kDeferredSymbol in value
+  }
+
+  /**
+   * Check if the current request is a partial request
+   */
+  #isPartial(component: string) {
+    return this.ctx.request.header('x-inertia-partial-component') === component
+  }
+
+  /**
    * Pick props to resolve based on x-inertia-partial-data header
    *
    * If header is not present, resolve all props except lazy props
@@ -62,13 +81,13 @@ export class Inertia {
       ?.split(',')
       .filter(Boolean)
 
-    const partialComponent = this.ctx.request.header('x-inertia-partial-component')
-
     let entriesToResolve = Object.entries(props)
-    if (partialData && partialComponent === component) {
+    if (this.#isPartial(component) && partialData) {
       entriesToResolve = entriesToResolve.filter(([key]) => partialData.includes(key))
     } else {
-      entriesToResolve = entriesToResolve.filter(([key]) => !this.#isLazyProps(props[key]))
+      entriesToResolve = entriesToResolve.filter(
+        ([key]) => !this.#isLazyProps(props[key]) && !this.#isDeferredProps(props[key])
+      )
     }
 
     return entriesToResolve
@@ -85,15 +104,50 @@ export class Inertia {
         return [key, await value(this.ctx)]
       }
 
+      /**
+       * Resolve lazy props
+       */
       if (this.#isLazyProps(value)) {
         const lazyValue = (value as any)[kLazySymbol]
         return [key, await lazyValue()]
+      }
+
+      /**
+       * Resolve deferred props
+       */
+      if (this.#isDeferredProps(value)) {
+        const { callback } = (value as any)[kDeferredSymbol]
+        return [key, await callback()]
       }
 
       return [key, value]
     })
 
     return Object.fromEntries(await Promise.all(entries))
+  }
+
+  /**
+   * Resolve the deferred props listing. Will be returned only
+   * on the first visit to the page and will be used to make
+   * subsequent partial requests
+   */
+  #resolveDeferredProps(component: string, pageProps?: PageProps) {
+    if (this.#isPartial(component)) return {}
+
+    const deferredProps = Object.entries(pageProps || {})
+      .filter(([_, value]) => this.#isDeferredProps(value))
+      .map(([key, value]) => ({ key, group: (value as any)[kDeferredSymbol].group }))
+      .reduce(
+        (groups, { key, group }) => {
+          if (!groups[group]) groups[group] = []
+
+          groups[group].push(key)
+          return groups
+        },
+        {} as Record<string, string[]>
+      )
+
+    return deferredProps
   }
 
   /**
@@ -107,9 +161,10 @@ export class Inertia {
   ): Promise<PageObject<TPageProps>> {
     return {
       component,
-      version: this.config.versionCache.getVersion(),
-      props: await this.#resolvePageProps(component, { ...this.#sharedData, ...pageProps }),
       url: this.ctx.request.url(true),
+      version: this.config.versionCache.getVersion(),
+      deferredProps: this.#resolveDeferredProps(component, pageProps),
+      props: await this.#resolvePageProps(component, { ...this.#sharedData, ...pageProps }),
     }
   }
 
@@ -198,6 +253,18 @@ export class Inertia {
    */
   lazy<T>(callback: () => MaybePromise<T>) {
     return { [kLazySymbol]: callback }
+  }
+
+  /**
+   * Create a deferred prop
+   *
+   * Deferred props feature allows you to defer the loading of certain
+   * page data until after the initial page render.
+   *
+   * See https://v2.inertiajs.com/deferred-props
+   */
+  defer<T>(callback: () => MaybePromise<T>, group = 'default') {
+    return { [kDeferredSymbol]: { callback, group } }
   }
 
   /**
