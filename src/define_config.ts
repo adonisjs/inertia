@@ -30,6 +30,7 @@ export function defineConfig<T extends SharedData>(
       versionCache,
       rootView: config.rootView ?? 'inertia_layout',
       sharedData: config.sharedData! || {},
+      history: { encrypt: config.history?.encrypt ?? false },
       entrypoint: slash(
         config.entrypoint ?? (await detector.detectEntrypoint('inertia/app/app.ts'))
       ),

@@ -38,6 +38,9 @@ export class Inertia {
   #sharedData: SharedData = {}
   #serverRenderer: ServerRenderer
 
+  #shouldClearHistory = false
+  #shouldEncryptHistory = false
+
   constructor(
     protected ctx: HttpContext,
     protected config: ResolvedConfig,
@@ -45,6 +48,9 @@ export class Inertia {
   ) {
     this.#sharedData = config.sharedData
     this.#serverRenderer = new ServerRenderer(config, vite)
+
+    this.#shouldClearHistory = false
+    this.#shouldEncryptHistory = config.history.encrypt
   }
 
   /**
@@ -133,7 +139,7 @@ export class Inertia {
       await Promise.all(
         Object.entries(props).map(async ([key, value]) => {
           if (typeof value === 'function') {
-            return [key, await value()]
+            return [key, await value(this.ctx)]
           }
 
           if (
@@ -209,6 +215,8 @@ export class Inertia {
       url: this.ctx.request.url(true),
       version: this.config.versionCache.getVersion(),
       props: await this.#resolvePageProps(propsToResolve),
+      clearHistory: this.#shouldClearHistory,
+      encryptHistory: this.#shouldEncryptHistory,
       ...this.#resolveMergeProps(pageProps),
       ...this.#resolveDeferredProps(component, pageProps),
     }
@@ -287,6 +295,24 @@ export class Inertia {
 
     this.ctx.response.header(InertiaHeaders.Inertia, 'true')
     return pageObject
+  }
+
+  /**
+   * Clear history state.
+   *
+   * See https://v2.inertiajs.com/history-encryption#clearing-history
+   */
+  clearHistory() {
+    this.#shouldClearHistory = true
+  }
+
+  /**
+   * Encrypt history
+   *
+   * See https://v2.inertiajs.com/history-encryption
+   */
+  encryptHistory(encrypt = true) {
+    this.#shouldEncryptHistory = encrypt
   }
 
   /**

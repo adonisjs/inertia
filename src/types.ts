@@ -57,6 +57,15 @@ export interface InertiaConfig<T extends SharedData = SharedData> {
   sharedData?: T
 
   /**
+   * History encryption
+   *
+   * See https://v2.inertiajs.com/history-encryption
+   */
+  history?: {
+    encrypt?: boolean
+  }
+
+  /**
    * Options to configure SSR
    */
   ssr?: {
@@ -89,6 +98,7 @@ export interface ResolvedConfig<T extends SharedData = SharedData> {
   rootView: string | ((ctx: HttpContext) => string)
   versionCache: VersionCache
   sharedData: T
+  history: { encrypt: boolean }
   ssr: {
     enabled: boolean
     entrypoint: string
@@ -98,14 +108,48 @@ export interface ResolvedConfig<T extends SharedData = SharedData> {
 }
 
 export interface PageObject<TPageProps extends PageProps = PageProps> {
-  component: string
-  version: string | number
-  props: TPageProps
-  url: string
   ssrHead?: string
   ssrBody?: string
+
+  /**
+   * The name of the JavaScript page component.
+   */
+  component: string
+
+  /**
+   * The current asset version.
+   */
+  version: string | number
+
+  /**
+   * The page props (data).
+   */
+  props: TPageProps
+
+  /**
+   * The page URL.
+   */
+  url: string
+
+  /**
+   * List of deferred props that will be loaded with subsequent requests
+   */
   deferredProps?: Record<string, string[]>
+
+  /**
+   * List of mergeable props that will be merged with subsequent requests
+   */
   mergeProps?: string[]
+
+  /**
+   * Whether or not to encrypt the current page's history state.
+   */
+  encryptHistory?: boolean
+
+  /**
+   *  Whether or not to clear any encrypted history state.
+   */
+  clearHistory?: boolean
 }
 
 type IsOptionalProp<T> =

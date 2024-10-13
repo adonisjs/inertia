@@ -61,6 +61,8 @@ test.group('Inertia', () => {
       version: '1',
       props: { foo: 'bar' },
       url: null,
+      clearHistory: false,
+      encryptHistory: false,
     })
   })
 
@@ -88,6 +90,8 @@ test.group('Inertia', () => {
       version: '1',
       props: { foo: 'bar' },
       url: null,
+      encryptHistory: false,
+      clearHistory: false,
     })
   })
 
@@ -395,6 +399,41 @@ test.group('Inertia', () => {
     })
 
     assert.deepEqual(result.props, { baz: 'baz' })
+  })
+
+  test('encrypt history with config file', async ({ assert }) => {
+    const inertia = await new InertiaFactory()
+      .merge({ config: { history: { encrypt: true } } })
+      .withXInertiaHeader()
+      .create()
+
+    const result: any = await inertia.render('foo')
+
+    assert.isTrue(result.encryptHistory)
+  })
+
+  test('encrypt history with api', async ({ assert }) => {
+    const inertia = await new InertiaFactory()
+      .merge({ config: { history: { encrypt: false } } })
+      .withXInertiaHeader()
+      .create()
+
+    inertia.encryptHistory()
+    const result: any = await inertia.render('foo')
+
+    assert.isTrue(result.encryptHistory)
+  })
+
+  test('clear history with api', async ({ assert }) => {
+    const inertia = await new InertiaFactory()
+      .merge({ config: { history: { encrypt: false } } })
+      .withXInertiaHeader()
+      .create()
+
+    inertia.clearHistory()
+    const result: any = await inertia.render('foo')
+
+    assert.isTrue(result.clearHistory)
   })
 })
 
