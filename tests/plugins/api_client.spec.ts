@@ -75,6 +75,7 @@ test.group('Japa plugin | Api Client', (group) => {
         rootView: 'root',
         sharedData: {},
         ssr: { enabled: false, bundle: '', entrypoint: '' },
+        history: { encrypt: false },
       })
 
       await middleware.handle(ctx, async () => {
@@ -116,6 +117,7 @@ test.group('Japa plugin | Api Client', (group) => {
         rootView: 'root',
         sharedData: {},
         ssr: { enabled: false, bundle: '', entrypoint: '' },
+        history: { encrypt: false },
       })
 
       await middleware.handle(ctx, async () => {
@@ -150,6 +152,7 @@ test.group('Japa plugin | Api Client', (group) => {
         rootView: 'root',
         sharedData: {},
         ssr: { enabled: false, bundle: '', entrypoint: '' },
+        history: { encrypt: false },
       })
 
       await middleware.handle(ctx, async () => {
