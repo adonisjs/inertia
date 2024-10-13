@@ -149,6 +149,65 @@ test.group('Inertia', () => {
     assert.deepEqual(result.props, { user: 'jul', categories: [1, 2] })
   })
 
+  test('exclude props from partial response', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory()
+      .withXInertiaHeader()
+      .withInertiaPartialComponent('Auth/Login')
+      .withInertiaPartialExcept(['user'])
+      .create()
+
+    const result: any = await inertia.render('Auth/Login', {
+      user: 'jul',
+      message: 'hello',
+    })
+
+    assert.deepEqual(result.props, { message: 'hello' })
+  })
+
+  test('AlwaysProps are included on partial response', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory()
+      .withXInertiaHeader()
+      .withInertiaPartialReload('Auth/Login', ['user'])
+      .create()
+
+    const result: any = await inertia.render('Auth/Login', {
+      user: 'jul',
+      message: inertia.always(() => 'hello'),
+    })
+
+    assert.deepEqual(result.props, { user: 'jul', message: 'hello' })
+  })
+
+  test('correct server response when mergeable props is used', async ({ assert }) => {
+    const inertia = await new InertiaFactory().withXInertiaHeader().create()
+
+    const result: any = await inertia.render('foo', {
+      foo: 'bar',
+      baz: inertia.merge(() => [1, 2, 3]),
+      bar: inertia.merge(() => 'bar'),
+    })
+
+    assert.deepEqual(result.props, { foo: 'bar', baz: [1, 2, 3], bar: 'bar' })
+    assert.deepEqual(result.mergeProps, ['baz', 'bar'])
+  })
+
+  test('correct server response witht mergeable and deferred props', async ({ assert }) => {
+    const inertia = await new InertiaFactory().withXInertiaHeader().create()
+
+    const result: any = await inertia.render('foo', {
+      foo: 'bar',
+      baz: inertia.merge(() => [1, 2, 3]),
+      bar: inertia.defer(() => 'bar').merge(),
+    })
+
+    assert.deepEqual(result.deferredProps, { default: ['bar'] })
+    assert.deepEqual(result.mergeProps, ['baz', 'bar'])
+  })
+
   test("don't return lazy props on first visit", async ({ assert }) => {
     setupViewMacroMock()
 

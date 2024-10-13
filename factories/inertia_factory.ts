@@ -15,6 +15,7 @@ import { HttpContextFactory } from '@adonisjs/core/factories/http'
 
 import { defineConfig } from '../index.js'
 import { Inertia } from '../src/inertia.js'
+import { InertiaHeaders } from '../src/headers.js'
 import { AssetsVersion, InertiaConfig } from '../src/types.js'
 
 type FactoryParameters = {
@@ -42,13 +43,23 @@ export class InertiaFactory {
   }
 
   withXInertiaHeader() {
-    this.#parameters.ctx.request.request.headers['x-inertia'] = 'true'
+    this.#parameters.ctx.request.request.headers[InertiaHeaders.Inertia] = 'true'
+    return this
+  }
+
+  withInertiaPartialComponent(component: string) {
+    this.#parameters.ctx.request.request.headers[InertiaHeaders.PartialComponent] = component
     return this
   }
 
   withInertiaPartialReload(component: string, data: string[]) {
     this.withInertiaPartialData(data)
-    this.#parameters.ctx.request.request.headers['x-inertia-partial-component'] = component
+    this.withInertiaPartialComponent(component)
+    return this
+  }
+
+  withInertiaPartialExcept(data: string[]) {
+    this.#parameters.ctx.request.request.headers[InertiaHeaders.PartialExcept] = data.join(',')
     return this
   }
 
@@ -58,7 +69,7 @@ export class InertiaFactory {
   }
 
   withInertiaPartialData(data: string[]) {
-    this.#parameters.ctx.request.request.headers['x-inertia-partial-data'] = data.join(',')
+    this.#parameters.ctx.request.request.headers[InertiaHeaders.PartialOnly] = data.join(',')
     return this
   }
 

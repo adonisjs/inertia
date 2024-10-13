@@ -21,16 +21,15 @@ import type {
   ResolvedConfig,
   SharedData,
 } from './types.js'
-
-/**
- * Symbol used to identify lazy props
- */
-export const kLazySymbol = Symbol('lazy')
-
-/**
- * Symbol used to identify deferred props
- */
-export const kDeferredSymbol = Symbol('deferred')
+import {
+  AlwaysProp,
+  DeferProp,
+  ignoreFirstLoadSymbol,
+  MergeableProp,
+  MergeProp,
+  OptionalProp,
+} from './props.js'
+import { InertiaHeaders } from './headers.js'
 
 /**
  * Main class used to interact with Inertia
@@ -49,81 +48,107 @@ export class Inertia {
   }
 
   /**
-   * Check if a value is a lazy prop
-   */
-  #isLazyProps(value: any) {
-    return typeof value === 'object' && value && kLazySymbol in value
-  }
-
-  /**
-   * Check if a value is a deferred prop
-   */
-  #isDeferredProps(value: any) {
-    return typeof value === 'object' && value && kDeferredSymbol in value
-  }
-
-  /**
    * Check if the current request is a partial request
    */
   #isPartial(component: string) {
-    return this.ctx.request.header('x-inertia-partial-component') === component
+    return this.ctx.request.header(InertiaHeaders.PartialComponent) === component
   }
 
   /**
-   * Pick props to resolve based on x-inertia-partial-data header
-   *
-   * If header is not present, resolve all props except lazy props
-   * If header is present, resolve only the props that are listed in the header
+   * Resolve the `only` partial request props.
+   * Only the props listed in the `x-inertia-partial-data` header
+   * will be returned
    */
-  #pickPropsToResolve(component: string, props: PageProps) {
-    const partialData = this.ctx.request
-      .header('x-inertia-partial-data')
-      ?.split(',')
-      .filter(Boolean)
+  #resolveOnly(props: PageProps) {
+    const partialOnlyHeader = this.ctx.request.header(InertiaHeaders.PartialOnly)
+    const only = partialOnlyHeader!.split(',').filter(Boolean)
+    let newProps: PageProps = {}
 
-    let entriesToResolve = Object.entries(props)
-    if (this.#isPartial(component) && partialData) {
-      entriesToResolve = entriesToResolve.filter(([key]) => partialData.includes(key))
-    } else {
-      entriesToResolve = entriesToResolve.filter(
-        ([key]) => !this.#isLazyProps(props[key]) && !this.#isDeferredProps(props[key])
+    for (const key of only) newProps[key] = props[key]
+
+    return newProps
+  }
+
+  /**
+   * Resolve the `except` partial request props.
+   * Remove the props listed in the `x-inertia-partial-except` header
+   */
+  #resolveExcept(props: PageProps) {
+    const partialExceptHeader = this.ctx.request.header(InertiaHeaders.PartialExcept)
+    const except = partialExceptHeader!.split(',').filter(Boolean)
+
+    for (const key of except) delete props[key]
+
+    return props
+  }
+
+  /**
+   * Resolve the props for the current request
+   * by filtering out the props that are not needed
+   * based on the request headers
+   */
+  #pickPropsToResolve(component: string, props: PageProps = {}) {
+    const isPartial = this.#isPartial(component)
+    let newProps = props
+
+    /**
+     * If it's not a partial request, keep everything as it is
+     * except the props that are marked as `ignoreFirstLoad`
+     */
+    if (!isPartial) {
+      newProps = Object.fromEntries(
+        Object.entries(props).filter(([_, value]) => !(value as any)[ignoreFirstLoadSymbol])
       )
     }
 
-    return entriesToResolve
+    /**
+     * Keep only the props that are listed in the `x-inertia-partial-data` header
+     */
+    const partialOnlyHeader = this.ctx.request.header(InertiaHeaders.PartialOnly)
+    if (isPartial && partialOnlyHeader) newProps = this.#resolveOnly(props)
+
+    /**
+     * Remove the props that are listed in the `x-inertia-partial-except` header
+     */
+    const partialExceptHeader = this.ctx.request.header(InertiaHeaders.PartialExcept)
+    if (isPartial && partialExceptHeader) newProps = this.#resolveExcept(newProps)
+
+    /**
+     * Resolve all the props that are marked as `AlwaysProp` since they
+     * should be resolved on every request, no matter if it's a partial
+     * request or not.
+     */
+    for (const [key, value] of Object.entries(props)) {
+      if (value instanceof AlwaysProp) newProps[key] = props[key]
+    }
+
+    return newProps
   }
 
   /**
-   * Resolve the props that will be sent to the client
+   * Resolve a single prop by calling the callback or resolving the promise
    */
-  async #resolvePageProps(component: string, props: PageProps) {
-    const entriesToResolve = this.#pickPropsToResolve(component, props)
+  async #resolvePageProps(props: PageProps = {}) {
+    return Object.fromEntries(
+      await Promise.all(
+        Object.entries(props).map(async ([key, value]) => {
+          if (typeof value === 'function') {
+            return [key, await value()]
+          }
 
-    const entries = entriesToResolve.map(async ([key, value]) => {
-      if (typeof value === 'function') {
-        return [key, await value(this.ctx)]
-      }
+          if (
+            value instanceof OptionalProp ||
+            value instanceof MergeProp ||
+            value instanceof DeferProp ||
+            value instanceof AlwaysProp
+          ) {
+            return [key, await value.callback()]
+          }
 
-      /**
-       * Resolve lazy props
-       */
-      if (this.#isLazyProps(value)) {
-        const lazyValue = (value as any)[kLazySymbol]
-        return [key, await lazyValue()]
-      }
-
-      /**
-       * Resolve deferred props
-       */
-      if (this.#isDeferredProps(value)) {
-        const { callback } = (value as any)[kDeferredSymbol]
-        return [key, await callback()]
-      }
-
-      return [key, value]
-    })
-
-    return Object.fromEntries(await Promise.all(entries))
+          return [key, value]
+        })
+      )
+    )
   }
 
   /**
@@ -135,8 +160,8 @@ export class Inertia {
     if (this.#isPartial(component)) return {}
 
     const deferredProps = Object.entries(pageProps || {})
-      .filter(([_, value]) => this.#isDeferredProps(value))
-      .map(([key, value]) => ({ key, group: (value as any)[kDeferredSymbol].group }))
+      .filter(([_, value]) => value instanceof DeferProp)
+      .map(([key, value]) => ({ key, group: (value as DeferProp<any>).getGroup() }))
       .reduce(
         (groups, { key, group }) => {
           if (!groups[group]) groups[group] = []
@@ -147,7 +172,22 @@ export class Inertia {
         {} as Record<string, string[]>
       )
 
-    return deferredProps
+    return Object.keys(deferredProps).length ? { deferredProps } : {}
+  }
+
+  /**
+   * Resolve the props that should be merged
+   */
+  #resolveMergeProps(pageProps?: PageProps) {
+    const inertiaResetHeader = this.ctx.request.header(InertiaHeaders.Reset) || ''
+    const resetProps = new Set(inertiaResetHeader.split(',').filter(Boolean))
+
+    const mergeProps = Object.entries(pageProps || {})
+      .filter(([_, value]) => value instanceof MergeableProp && value.shouldMerge)
+      .map(([key]) => key)
+      .filter((key) => !resetProps.has(key))
+
+    return mergeProps.length ? { mergeProps } : {}
   }
 
   /**
@@ -159,12 +199,18 @@ export class Inertia {
     component: string,
     pageProps?: TPageProps
   ): Promise<PageObject<TPageProps>> {
+    const propsToResolve = this.#pickPropsToResolve(component, {
+      ...this.#sharedData,
+      ...pageProps,
+    })
+
     return {
       component,
       url: this.ctx.request.url(true),
       version: this.config.versionCache.getVersion(),
-      deferredProps: this.#resolveDeferredProps(component, pageProps),
-      props: await this.#resolvePageProps(component, { ...this.#sharedData, ...pageProps }),
+      props: await this.#resolvePageProps(propsToResolve),
+      ...this.#resolveMergeProps(pageProps),
+      ...this.#resolveDeferredProps(component, pageProps),
     }
   }
 
@@ -230,7 +276,7 @@ export class Inertia {
     viewProps?: TViewProps
   ): Promise<string | PageObject<TPageProps>> {
     const pageObject = await this.#buildPageObject(component, pageProps)
-    const isInertiaRequest = !!this.ctx.request.header('x-inertia')
+    const isInertiaRequest = !!this.ctx.request.header(InertiaHeaders.Inertia)
 
     if (!isInertiaRequest) {
       const shouldRenderOnServer = await this.#shouldRenderOnServer(component)
@@ -239,7 +285,7 @@ export class Inertia {
       return this.ctx.view.render(this.#resolveRootView(), { ...viewProps, page: pageObject })
     }
 
-    this.ctx.response.header('x-inertia', 'true')
+    this.ctx.response.header(InertiaHeaders.Inertia, 'true')
     return pageObject
   }
 
@@ -250,9 +296,41 @@ export class Inertia {
    * request a partial reload explicitely with this value.
    *
    * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
+   *
+   * @deprecated use `optional` instead
    */
   lazy<T>(callback: () => MaybePromise<T>) {
-    return { [kLazySymbol]: callback }
+    return new OptionalProp(callback)
+  }
+
+  /**
+   * Create an optional prop
+   *
+   * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
+   */
+  optional<T>(callback: () => MaybePromise<T>) {
+    return new OptionalProp(callback)
+  }
+
+  /**
+   * Create a mergeable prop
+   *
+   * See https://v2.inertiajs.com/merging-props
+   */
+  merge<T>(callback: () => MaybePromise<T>) {
+    return new MergeProp(callback)
+  }
+
+  /**
+   * Create an always prop
+   *
+   * Always props are resolved on every request, no matter if it's a partial
+   * request or not.
+   *
+   * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
+   */
+  always<T>(callback: () => MaybePromise<T>) {
+    return new AlwaysProp(callback)
   }
 
   /**
@@ -264,7 +342,7 @@ export class Inertia {
    * See https://v2.inertiajs.com/deferred-props
    */
   defer<T>(callback: () => MaybePromise<T>, group = 'default') {
-    return { [kDeferredSymbol]: { callback, group } }
+    return new DeferProp(callback, group)
   }
 
   /**
@@ -274,7 +352,7 @@ export class Inertia {
    * See https://inertiajs.com/redirects#external-redirects
    */
   async location(url: string) {
-    this.ctx.response.header('X-Inertia-Location', url)
+    this.ctx.response.header(InertiaHeaders.Location, url)
     this.ctx.response.status(409)
   }
 }

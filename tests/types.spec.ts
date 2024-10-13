@@ -88,21 +88,21 @@ test.group('Types', () => {
     expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<{ foo: string }>()
   })
 
-  test('InferPageProps with lazy props', async ({ expectTypeOf }) => {
+  test('InferPageProps with optional props', async ({ expectTypeOf }) => {
     const inertia = await new InertiaFactory().create()
 
     class Controller {
       index() {
         return inertia.render('foo', {
-          bar: inertia.lazy(() => 'bar'),
-          foo: inertia.lazy(() => new Date()),
+          bar: inertia.optional(() => 'bar'),
+          foo: inertia.optional(() => new Date()),
           bar2: 'bar2',
         })
       }
 
       edit() {
         return inertia.render('foo', {
-          bar: inertia.lazy(() => 'bar'),
+          bar: inertia.optional(() => 'bar'),
         })
       }
     }
@@ -115,6 +115,30 @@ test.group('Types', () => {
 
     expectTypeOf<InferPageProps<Controller, 'edit'>>().toEqualTypeOf<{
       bar?: string
+    }>()
+  })
+
+  test('inferPageProps with deferred, optional and mergeable props', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      edit() {
+        return inertia.render('foo', {
+          optional: inertia.optional(() => 'bar'),
+          deferred: inertia.defer(async () => 'deferred'),
+          deferredMerged: inertia.defer(async () => 'deferred').merge(),
+          mergeable: inertia.merge(async () => 'mergeable'),
+          always: inertia.always(() => 'always'),
+        })
+      }
+    }
+
+    expectTypeOf<InferPageProps<Controller, 'edit'>>().toEqualTypeOf<{
+      optional?: string | undefined
+      deferred?: string | undefined
+      deferredMerged?: string | undefined
+      mergeable: string
+      always: string
     }>()
   })
 

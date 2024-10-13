@@ -11,8 +11,8 @@ import { ConfigProvider } from '@adonisjs/core/types'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { Serialize, Simplify } from '@tuyau/utils/types'
 
-import { kLazySymbol } from './inertia.js'
 import type { VersionCache } from './version_cache.js'
+import { DeferProp, OptionalProp } from './props.js'
 
 export type MaybePromise<T> = T | Promise<T>
 
@@ -105,19 +105,26 @@ export interface PageObject<TPageProps extends PageProps = PageProps> {
   ssrHead?: string
   ssrBody?: string
   deferredProps?: Record<string, string[]>
+  mergeProps?: string[]
 }
 
-type IsLazyProp<T> = T extends { [kLazySymbol]: () => MaybePromise<any> } ? true : false
+type IsOptionalProp<T> =
+  T extends OptionalProp<any> ? true : T extends DeferProp<any> ? true : false
+
 type InferProps<T> = {
   // First extract and unwrap lazy props. Also make them optional as they are lazy
-  [K in keyof T as IsLazyProp<T[K]> extends true ? K : never]+?: T[K] extends {
-    [kLazySymbol]: () => MaybePromise<infer U>
+  [K in keyof T as IsOptionalProp<T[K]> extends true ? K : never]+?: T[K] extends {
+    callback: () => MaybePromise<infer U>
   }
     ? U
     : T[K]
 } & {
   // Then include all other props as it is
-  [K in keyof T as IsLazyProp<T[K]> extends true ? never : K]: T[K]
+  [K in keyof T as IsOptionalProp<T[K]> extends true ? never : K]: T[K] extends {
+    callback: () => MaybePromise<infer U>
+  }
+    ? U
+    : T[K]
 }
 
 type ReturnsTypesSharedData<T extends SharedData> = {} extends T
