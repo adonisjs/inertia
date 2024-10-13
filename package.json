@@ -94,6 +94,10 @@
       "optional": true
     }
   },
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta"
+  },
   "author": "Julien Ripouteau <julien@ripouteau.com>,adonisjs",
   "license": "MIT",
   "keywords": [
