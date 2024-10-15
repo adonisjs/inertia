@@ -212,6 +212,24 @@ test.group('Inertia', () => {
     assert.deepEqual(result.mergeProps, ['baz', 'bar'])
   })
 
+  test('properly handle null and undefined values props on first visit', async ({ assert }) => {
+    setupViewMacroMock()
+
+    const inertia = await new InertiaFactory().create()
+
+    const result: any = await inertia.render('Auth/Login', {
+      user: undefined,
+      password: null,
+      message: 'hello',
+    })
+
+    assert.deepEqual(result.props.page.props, {
+      message: 'hello',
+      password: null,
+      user: undefined,
+    })
+  })
+
   test("don't return lazy props on first visit", async ({ assert }) => {
     setupViewMacroMock()
 
