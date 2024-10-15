@@ -103,7 +103,11 @@ export class Inertia {
      */
     if (!isPartial) {
       newProps = Object.fromEntries(
-        Object.entries(props).filter(([_, value]) => !(value as any)[ignoreFirstLoadSymbol])
+        Object.entries(props).filter(([_, value]) => {
+          if (value && (value as any)[ignoreFirstLoadSymbol]) return false
+
+          return true
+        })
       )
     }
 

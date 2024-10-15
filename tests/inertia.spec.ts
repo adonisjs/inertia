@@ -225,6 +225,8 @@ test.group('Inertia', () => {
 
     assert.deepEqual(result.props.page.props, {
       message: 'hello',
+      password: null,
+      user: undefined,
     })
   })
 
