@@ -44,6 +44,7 @@ export class ServerRenderer {
      */
     if (devServer) {
       ServerRenderer.runtime ??= await this.vite!.createRuntime()
+      ServerRenderer.runtime.clearCache()
       render = await ServerRenderer.runtime.executeEntrypoint(this.config.ssr.entrypoint!)
     } else {
       /**
