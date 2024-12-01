@@ -70,7 +70,7 @@ const ADAPTERS_INFO: {
     dependencies: [
       { name: '@inertiajs/svelte', isDevDependency: false },
       { name: 'svelte', isDevDependency: false },
-      { name: '@sveltejs/vite-plugin-svelte', isDevDependency: true },
+      { name: '@sveltejs/vite-plugin-svelte@4.0.2', isDevDependency: true },
     ],
     viteRegister: {
       pluginCall: 'svelte()',
