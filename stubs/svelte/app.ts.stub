@@ -8,6 +8,7 @@ import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/svelte'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
+import { hydrate, mount } from 'svelte'
 
 const appName = import.meta.env.VITE_APP_NAME || 'AdonisJS'
 
@@ -24,10 +25,10 @@ createInertiaApp({
   },
 
   setup({ el, App, props }) {
-    {{#if ssr}}
-    new App({ target: el, props, hydrate: true })
-    {{#else}}
-    new App({ target: el, props })
-    {{/if}}
+    if (el.dataset.serverRendered === 'true') {
+      hydrate(App, { target: el, props })
+    } else {
+      mount(App, { target: el, props })
+    }
   },
 })
