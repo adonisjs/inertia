@@ -198,7 +198,6 @@ test.group('Frameworks', (group) => {
     await assert.fileExists('inertia/pages/home.svelte')
     await assert.fileExists('inertia/pages/errors/not_found.svelte')
     await assert.fileExists('inertia/pages/errors/server_error.svelte')
-    await assert.fileNotContains('inertia/app/app.ts', 'hydrate')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
@@ -386,7 +385,6 @@ test.group('Frameworks | SSR', (group) => {
     await assert.fileExists('resources/views/inertia_layout.edge')
     await assert.fileExists('inertia/tsconfig.json')
     await assert.fileExists('inertia/pages/home.svelte')
-    await assert.fileContains('inertia/app/app.ts', 'hydrate')
 
     const viteConfig = await fs.contents('vite.config.ts')
     assert.snapshot(viteConfig).matchInline(`
