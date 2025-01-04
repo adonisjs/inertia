@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+/// <reference types="@adonisjs/session/session_middleware" />
+
 import type { Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
@@ -34,10 +36,51 @@ export default class InertiaMiddleware {
     protected vite?: Vite
   ) {}
 
+  /**
+   * Resolves the validation errors to be shared with Inertia
+   */
+  #resolveValidationErrors(ctx: HttpContext) {
+    const { session, request } = ctx
+
+    /**
+     * If not a Vine Validation error, then return the entire error bag
+     */
+    if (!session.flashMessages.has('errorsBag.E_VALIDATION_ERROR')) {
+      return session.flashMessages.get('errorsBag')
+    }
+
+    /**
+     * Otherwise, resolve the validation errors. We only keep the first
+     * error message for each field
+     */
+    const errors = Object.entries(session.flashMessages.get('inputErrorsBag')).reduce(
+      (acc, [field, messages]) => {
+        acc[field] = Array.isArray(messages) ? messages[0] : messages
+        return acc
+      },
+      {} as Record<string, string>
+    )
+
+    /**
+     * Also, nest the errors under the error bag key if asked
+     * See https://inertiajs.com/validation#error-bags
+     */
+    const errorBag = request.header(InertiaHeaders.ErrorBag)
+    return errorBag ? { [errorBag]: errors } : errors
+  }
+
+  /**
+   * Share validation and flashed errors with Inertia
+   */
+  #shareErrors(ctx: HttpContext) {
+    ctx.inertia.share({ errors: ctx.inertia.always(() => this.#resolveValidationErrors(ctx)) })
+  }
+
   async handle(ctx: HttpContext, next: NextFn) {
     const { response, request } = ctx
 
     ctx.inertia = new Inertia(ctx, this.config, this.vite)
+    this.#shareErrors(ctx)
 
     await next()
 

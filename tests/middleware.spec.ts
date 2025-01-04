@@ -16,6 +16,7 @@ import { InertiaHeaders } from '../src/headers.js'
 import { httpServer } from '../tests_helpers/index.js'
 import { VersionCache } from '../src/version_cache.js'
 import InertiaMiddleware from '../src/inertia_middleware.js'
+import { SessionMiddlewareFactory } from '@adonisjs/session/factories'
 
 test.group('Middleware', () => {
   test('add inertia to http context', async ({ assert }) => {
@@ -60,9 +61,9 @@ test.group('Middleware', () => {
       ctx.response.finish()
     })
 
-    const r1 = await supertest(server).put('/').set('x-inertia', 'true')
-    const r2 = await supertest(server).delete('/').set('x-inertia', 'true')
-    const r3 = await supertest(server).patch('/').set('x-inertia', 'true')
+    const r1 = await supertest(server).put('/').set(InertiaHeaders.Inertia, 'true')
+    const r2 = await supertest(server).delete('/').set(InertiaHeaders.Inertia, 'true')
+    const r3 = await supertest(server).patch('/').set(InertiaHeaders.Inertia, 'true')
 
     assert.equal(r1.status, 303)
     assert.equal(r2.status, 303)
@@ -120,7 +121,7 @@ test.group('Middleware', () => {
       ctx.response.finish()
     })
 
-    const r1 = await supertest(server).get('/').set('x-inertia', 'true')
+    const r1 = await supertest(server).get('/').set(InertiaHeaders.Inertia, 'true')
     const r2 = await supertest(server).get('/')
 
     assert.equal(r1.headers.vary, InertiaHeaders.Inertia)
@@ -177,7 +178,7 @@ test.group('Middleware', () => {
       ctx.response.finish()
     })
 
-    const r1 = await supertest(server).get('/').set('x-inertia', 'true')
+    const r1 = await supertest(server).get('/').set(InertiaHeaders.Inertia, 'true')
 
     assert.equal(r1.status, 409)
     assert.equal(r1.headers['x-inertia-location'], '/')
@@ -212,7 +213,7 @@ test.group('Middleware', () => {
       ctx.response.finish()
     })
 
-    const r1 = await supertest(server).get('/').set('x-inertia', 'true')
+    const r1 = await supertest(server).get('/').set(InertiaHeaders.Inertia, 'true')
 
     assert.equal(r1.status, 409)
     assert.equal(r1.headers['x-inertia-location'], '/')
@@ -243,9 +244,156 @@ test.group('Middleware', () => {
 
     const r1 = await supertest(server)
       .get('/')
-      .set('x-inertia', 'true')
+      .set(InertiaHeaders.Inertia, 'true')
       .set('x-inertia-version', '1')
 
     assert.equal(r1.status, 200)
+  })
+})
+
+test.group('Middleware | Errors', () => {
+  test('flashed errors should be shared', async ({ assert }) => {
+    const middleware = new InertiaMiddleware({
+      rootView: 'root',
+      sharedData: {},
+      versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      ssr: { enabled: false, bundle: '', entrypoint: '' },
+      history: { encrypt: false },
+    })
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      await sessionMiddleware.handle(ctx, () => {})
+
+      ctx.session.flashMessages.set('errorsBag', { foo: 'bar', bar: 'baz' })
+      await middleware.handle(ctx, () => {})
+
+      ctx.response.json(await ctx.inertia.render('foo'))
+      ctx.response.finish()
+    })
+
+    const r1 = await supertest(server).post('/').set(InertiaHeaders.Inertia, 'true')
+    assert.deepEqual(r1.body.props.errors, { foo: 'bar', bar: 'baz' })
+  })
+
+  test('if validation error, only return first message', async ({ assert }) => {
+    const middleware = new InertiaMiddleware({
+      rootView: 'root',
+      sharedData: {},
+      versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      ssr: { enabled: false, bundle: '', entrypoint: '' },
+      history: { encrypt: false },
+    })
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      await sessionMiddleware.handle(ctx, () => {})
+
+      ctx.session.flashMessages.set('errorsBag', {
+        E_VALIDATION_ERROR: 'Could not be saved',
+      })
+      ctx.session.flashMessages.set('inputErrorsBag', {
+        email: ['Email is required'],
+        password: ['Password is required'],
+      })
+
+      await middleware.handle(ctx, () => {})
+
+      ctx.response.json(await ctx.inertia.render('foo'))
+      ctx.response.finish()
+    })
+
+    const r1 = await supertest(server).post('/').set(InertiaHeaders.Inertia, 'true')
+    const errors = r1.body.props.errors
+
+    assert.deepEqual(errors, { email: 'Email is required', password: 'Password is required' })
+  })
+
+  test('use correct error bag', async ({ assert }) => {
+    const middleware = new InertiaMiddleware({
+      rootView: 'root',
+      sharedData: {},
+      versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      ssr: { enabled: false, bundle: '', entrypoint: '' },
+      history: { encrypt: false },
+    })
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      await sessionMiddleware.handle(ctx, () => {})
+
+      ctx.session.flashMessages.set('errorsBag', {
+        E_VALIDATION_ERROR: 'Could not be saved',
+      })
+      ctx.session.flashMessages.set('inputErrorsBag', {
+        email: ['Email is required'],
+        password: ['Password is required'],
+      })
+
+      await middleware.handle(ctx, () => {})
+
+      ctx.response.json(await ctx.inertia.render('foo'))
+      ctx.response.finish()
+    })
+
+    const r1 = await supertest(server)
+      .post('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.ErrorBag, 'createUser')
+
+    const errors = r1.body.props.errors
+
+    assert.deepEqual(errors, {
+      createUser: { email: 'Email is required', password: 'Password is required' },
+    })
+  })
+
+  test('errors are always shared', async ({ assert }) => {
+    const middleware = new InertiaMiddleware({
+      rootView: 'root',
+      sharedData: {},
+      versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      ssr: { enabled: false, bundle: '', entrypoint: '' },
+      history: { encrypt: false },
+    })
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      await sessionMiddleware.handle(ctx, () => {})
+
+      ctx.session.flashMessages.set('errorsBag', { foo: 'bar', bar: 'baz' })
+      await middleware.handle(ctx, () => {})
+
+      ctx.response.json(
+        await ctx.inertia.render('foo', {
+          test: 'value',
+          yeah: 'no',
+        })
+      )
+      ctx.response.finish()
+    })
+
+    const r1 = await supertest(server)
+      .post('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.PartialComponent, 'foo')
+      .set(InertiaHeaders.PartialOnly, 'yeah')
+
+    assert.deepEqual(r1.body.props, {
+      yeah: 'no',
+      errors: { foo: 'bar', bar: 'baz' },
+    })
   })
 })
