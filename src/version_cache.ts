@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
+import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
-
 import type { AssetsVersion } from './types.js'
 
 /**
@@ -33,10 +33,10 @@ export class VersionCache {
    */
   async #getManifestHash(): Promise<AssetsVersion> {
     try {
-      const crc32 = await import('crc-32')
       const manifestPath = new URL('public/assets/.vite/manifest.json', this.appRoot)
       const manifestFile = await readFile(manifestPath, 'utf-8')
-      this.#cachedVersion = crc32.default.str(manifestFile)
+      this.#cachedVersion = createHash('md5').update(manifestFile).digest('hex')
+
       return this.#cachedVersion
     } catch {
       /**
