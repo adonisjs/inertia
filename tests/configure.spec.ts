@@ -234,7 +234,7 @@ test.group('Frameworks | SSR', (group) => {
     const inertiaConfig = await fs.contents('config/inertia.ts')
     assert.snapshot(inertiaConfig).matchInline(`
       "import { defineConfig } from '@adonisjs/inertia'
-      import type { InferSharedProps } from '@adonisjs/inertia/types'
+      import type { InferSharedProps, PageProps } from '@adonisjs/inertia/types'
 
       const inertiaConfig = defineConfig({
         /**
@@ -261,7 +261,7 @@ test.group('Frameworks | SSR', (group) => {
       export default inertiaConfig
 
       declare module '@adonisjs/inertia/types' {
-        export interface SharedProps extends InferSharedProps<typeof inertiaConfig> {}
+        export interface SharedProps extends InferSharedProps<typeof inertiaConfig>, PageProps {}
       }"
     `)
   })
@@ -287,7 +287,7 @@ test.group('Frameworks | SSR', (group) => {
 
     assert.snapshot(inertiaConfig).matchInline(`
       "import { defineConfig } from '@adonisjs/inertia'
-      import type { InferSharedProps } from '@adonisjs/inertia/types'
+      import type { InferSharedProps, PageProps } from '@adonisjs/inertia/types'
 
       const inertiaConfig = defineConfig({
         /**
@@ -314,7 +314,7 @@ test.group('Frameworks | SSR', (group) => {
       export default inertiaConfig
 
       declare module '@adonisjs/inertia/types' {
-        export interface SharedProps extends InferSharedProps<typeof inertiaConfig> {}
+        export interface SharedProps extends InferSharedProps<typeof inertiaConfig>, PageProps {}
       }"
     `)
   })
@@ -340,7 +340,7 @@ test.group('Frameworks | SSR', (group) => {
     const inertiaConfig = await fs.contents('config/inertia.ts')
     assert.snapshot(inertiaConfig).matchInline(`
       "import { defineConfig } from '@adonisjs/inertia'
-      import type { InferSharedProps } from '@adonisjs/inertia/types'
+      import type { InferSharedProps, PageProps } from '@adonisjs/inertia/types'
 
       const inertiaConfig = defineConfig({
         /**
@@ -367,7 +367,7 @@ test.group('Frameworks | SSR', (group) => {
       export default inertiaConfig
 
       declare module '@adonisjs/inertia/types' {
-        export interface SharedProps extends InferSharedProps<typeof inertiaConfig> {}
+        export interface SharedProps extends InferSharedProps<typeof inertiaConfig>, PageProps {}
       }"
     `)
   })
