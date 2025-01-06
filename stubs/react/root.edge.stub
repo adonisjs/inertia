@@ -63,6 +63,7 @@
     }
   </script>
 
+  @stack('dumper')
   @viteReactRefresh()
   @inertiaHead()
   {{ "@vite(['inertia/app/app.tsx', `inertia/pages/${page.component}.tsx`])" }}

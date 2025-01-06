@@ -65,6 +65,7 @@
 
   {{ "@vite(['inertia/app/app.ts', `inertia/pages/${page.component}.vue`])" }}
   @inertiaHead()
+  @stack('dumper')
 </head>
 
 <body class="min-h-screen w-screen font-sans">
