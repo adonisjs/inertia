@@ -19,7 +19,7 @@ export type MaybePromise<T> = T | Promise<T>
 /**
  * Props that will be passed to inertia render method
  */
-export type PageProps = Record<string, unknown>
+export type PageProps = Record<string, unknown> & { errors: Record<string, string | string[]> }
 
 /**
  * Shared data types
