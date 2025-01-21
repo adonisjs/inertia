@@ -85,7 +85,7 @@
     "@adonisjs/core": "^6.9.1",
     "@adonisjs/session": "^7.4.0",
     "@adonisjs/vite": "^4.0.0",
-    "@japa/api-client": "^2.0.0",
+    "@japa/api-client": "^2.0.0 || ^3.0.0",
     "edge.js": "^6.0.0"
   },
   "peerDependenciesMeta": {
