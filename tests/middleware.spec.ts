@@ -396,4 +396,37 @@ test.group('Middleware | Errors', () => {
       errors: { foo: 'bar', bar: 'baz' },
     })
   })
+
+  test('if session isn\t initialized, doesn\t throw an error', async ({ assert }) => {
+    const middleware = new InertiaMiddleware({
+      rootView: 'root',
+      sharedData: {},
+      versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      ssr: { enabled: false, bundle: '', entrypoint: '' },
+      history: { encrypt: false },
+    })
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      await middleware.handle(ctx, () => {})
+
+      try {
+        ctx.response.json(await ctx.inertia.render('foo'))
+      } catch (error) {
+        ctx.response.internalServerError()
+      } finally {
+        ctx.response.finish()
+      }
+    })
+
+    const r1 = await supertest(server)
+      .post('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+
+    assert.equal(r1.status, 200)
+  })
 })

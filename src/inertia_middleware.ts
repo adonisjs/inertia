@@ -42,6 +42,13 @@ export default class InertiaMiddleware {
   #resolveValidationErrors(ctx: HttpContext) {
     const { session, request } = ctx
 
+    // If the session middleware wasn't executed
+    // (on routes that are not in the router, for instance),
+    // then the session object will be undefined.
+    if (!session) {
+      return {}
+    }
+
     /**
      * If not a Vine Validation error, then return the entire error bag
      */
