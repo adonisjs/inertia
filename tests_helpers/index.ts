@@ -15,41 +15,19 @@ import { inertiaApiClient } from '../src/plugins/japa/api_client.js'
 
 export const BASE_URL = new URL('./tmp/', import.meta.url)
 
-type PromiseFunctions<T> = Parameters<ConstructorParameters<typeof Promise<T>>[0]>
-class PromiseWithResolvers<T> {
-  promise
-  resolve
-  reject
-
-  constructor() {
-    let resolve: PromiseFunctions<T>[0] | null
-    let reject: PromiseFunctions<T>[1] | null
-
-    this.promise = new Promise<T>(($resolve, $reject) => {
-      this.resolve = $resolve
-      this.reject = $reject
-    })
-
-    this.resolve = resolve!
-    this.reject = reject!
-  }
-}
-
 type RequestCallback = (req: IncomingMessage, res: ServerResponse) => any
 
 function createServerWithErrorHandling(callback: RequestCallback) {
-  const errors = new PromiseWithResolvers<void>()
-
   const server = createServer(async (req, res) => {
     try {
       return await callback(req, res)
     } catch (error) {
-      errors.reject(error)
-      res.destroy(error)
+      if (error instanceof Error) res.destroy(error)
     }
   })
 
-  server.on('close', () => errors.resolve())
+  const errors: Error[] = []
+  server.once('clientError', (err) => errors.push(err))
 
   return {
     server,
@@ -66,11 +44,11 @@ export const httpServer = {
     const { server, errors } = createServerWithErrorHandling(callback)
 
     getActiveTest()?.cleanup(async () => {
-      await errors.promise
-
       await new Promise<void>((resolve) => {
         server.close(() => resolve())
       })
+
+      if (errors.length > 0) throw errors[0]
     })
 
     return server
