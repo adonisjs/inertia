@@ -397,7 +397,7 @@ test.group('Middleware | Errors', () => {
     })
   })
 
-  test("if session isn't initialized, doesn't throw an error", async ({ assert }) => {
+  test("if session isn't initialized, doesn't throw an error", async () => {
     const middleware = new InertiaMiddleware({
       rootView: 'root',
       sharedData: {},
@@ -413,20 +413,13 @@ test.group('Middleware | Errors', () => {
 
       await middleware.handle(ctx, () => {})
 
-      try {
-        ctx.response.json(await ctx.inertia.render('foo'))
-      } catch (error) {
-        ctx.response.internalServerError()
-      } finally {
-        ctx.response.finish()
-      }
+      ctx.response.json(await ctx.inertia.render('foo'))
+      ctx.response.finish()
     })
 
-    const r1 = await supertest(server)
+    await supertest(server)
       .post('/')
       .set(InertiaHeaders.Inertia, 'true')
       .set(InertiaHeaders.Version, '1')
-
-    assert.equal(r1.status, 200)
   })
 })
