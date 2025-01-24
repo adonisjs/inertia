@@ -397,7 +397,7 @@ test.group('Middleware | Errors', () => {
     })
   })
 
-  test('if session isn\t initialized, doesn\t throw an error', async ({ assert }) => {
+  test("if session isn't initialized, doesn't throw an error", async ({ assert }) => {
     const middleware = new InertiaMiddleware({
       rootView: 'root',
       sharedData: {},
