@@ -27,7 +27,7 @@ function createServerWithErrorHandling(callback: RequestCallback) {
   })
 
   const errors: Error[] = []
-  server.once('clientError', (err) => errors.push(err))
+  server.on('clientError', (err) => errors.push(err))
 
   return {
     server,
