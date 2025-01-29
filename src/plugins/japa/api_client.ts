@@ -119,9 +119,13 @@ export function inertiaApiClient(app: ApplicationService): PluginFn {
     ApiResponse.macro(
       'assertInertiaProps',
       function (this: ApiResponse, props: Record<string, unknown>) {
-        this.ensureHasAssert()
+        if (!this.assert) {
+          throw new Error(
+            'Response assertions are not available. Make sure to install the @japa/assert plugin'
+          )
+        }
         ensureIsInertiaResponse.call(this)
-        this.assert!.deepEqual(this.body().props, props)
+        this.assert.deepEqual(this.body().props, props)
         return this
       }
     )
@@ -129,9 +133,13 @@ export function inertiaApiClient(app: ApplicationService): PluginFn {
     ApiResponse.macro(
       'assertInertiaPropsContains',
       function (this: ApiResponse, props: Record<string, unknown>) {
-        this.ensureHasAssert()
+        if (!this.assert) {
+          throw new Error(
+            'Response assertions are not available. Make sure to install the @japa/assert plugin'
+          )
+        }
         ensureIsInertiaResponse.call(this)
-        this.assert!.containsSubset(this.body().props, props)
+        this.assert.containsSubset(this.body().props, props)
         return this
       }
     )
