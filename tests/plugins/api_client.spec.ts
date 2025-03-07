@@ -17,7 +17,7 @@ import { defineConfig } from '../../index.js'
 import { VersionCache } from '../../src/version_cache.js'
 import InertiaMiddleware from '../../src/inertia_middleware.js'
 import { InertiaFactory } from '../../factories/inertia_factory.js'
-import { httpServer, runJapaTest } from '../../tests_helpers/index.js'
+import { httpServer, runJapaTest } from '../helpers.js'
 
 const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
 

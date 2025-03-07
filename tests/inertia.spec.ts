@@ -14,7 +14,7 @@ import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
 import { InertiaFactory } from '../factories/inertia_factory.js'
-import { setupViewMacroMock, setupVite } from '../tests_helpers/index.js'
+import { setupViewMacroMock, setupVite } from './helpers.js'
 
 test.group('Inertia', () => {
   test('location should returns x-inertia-location with 409 code', async ({ assert }) => {

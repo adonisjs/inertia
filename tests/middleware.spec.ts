@@ -13,7 +13,7 @@ import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/c
 
 import { Inertia } from '../src/inertia.js'
 import { InertiaHeaders } from '../src/headers.js'
-import { httpServer } from '../tests_helpers/index.js'
+import { httpServer } from './helpers.js'
 import { VersionCache } from '../src/version_cache.js'
 import InertiaMiddleware from '../src/inertia_middleware.js'
 import { SessionMiddlewareFactory } from '@adonisjs/session/factories'

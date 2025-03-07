@@ -11,7 +11,7 @@ import { test } from '@japa/runner'
 import { FileSystem } from '@japa/file-system'
 import Configure from '@adonisjs/core/commands/configure'
 
-import { setupApp } from '../tests_helpers/index.js'
+import { setupApp } from './helpers.js'
 
 async function setupFakeAdonisProject(fs: FileSystem) {
   await Promise.all([

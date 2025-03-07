@@ -11,7 +11,7 @@ import { join } from 'node:path'
 import { test } from '@japa/runner'
 
 import { defineConfig } from '../index.js'
-import { setupApp } from '../tests_helpers/index.js'
+import { setupApp } from './helpers.js'
 import { InferSharedProps } from '../src/types.js'
 
 test.group('Define Config', () => {
