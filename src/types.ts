@@ -168,7 +168,9 @@ type InferProps<T> = {
     callback: () => MaybePromise<infer U>
   }
     ? U
-    : T[K]
+    : T[K] extends () => MaybePromise<infer U> // Unwrap "callback" props like inertia.render('foo', { lazy: () => 'foo' })
+      ? U
+      : T[K]
 }
 
 type ReturnsTypesSharedData<T extends SharedData> = {} extends T

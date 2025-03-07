@@ -187,4 +187,20 @@ test.group('Types', () => {
 
     expectTypeOf<InferPageProps<Controller, 'index'>>().toEqualTypeOf<{ foo: number }>()
   })
+
+  test('infer page props with regular callback function', async ({ expectTypeOf }) => {
+    const inertia = await new InertiaFactory().create()
+
+    class Controller {
+      index() {
+        return inertia.render('foo', {
+          user: 'jul',
+          lazy: () => 'jul' as string,
+        })
+      }
+    }
+
+    type Result = InferPageProps<Controller, 'index'>
+    expectTypeOf<Result>().toEqualTypeOf<{ user: string; lazy: string }>()
+  })
 })
