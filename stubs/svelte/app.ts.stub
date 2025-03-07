@@ -21,6 +21,8 @@ createInertiaApp({
   },
 
   setup({ el, App, props }) {
+    if (!el) throw new Error('Missing root element. Make sure to add a div#app to your page')
+
     if (el.dataset.serverRendered === 'true') {
       hydrate(App, { target: el, props })
     } else {
