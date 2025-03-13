@@ -96,8 +96,16 @@
   "publishConfig": {
     "access": "public"
   },
-  "author": "Julien Ripouteau <julien@ripouteau.com>,adonisjs",
+  "author": "Julien Ripouteau <julien@ripouteau.com>",
   "license": "MIT",
+  "homepage": "https://github.com/adonisjs/inertia#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/inertia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/inertia/issues"
+  },
   "keywords": [
     "inertia",
     "adonisjs"
