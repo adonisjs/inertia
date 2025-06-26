@@ -114,7 +114,7 @@ export class InertiaPageTypesGenerator {
    */
   #generateImports(): string {
     const imports = this.#selectedStrategy!.getImports()
-    return imports.join('\n') + '\n\n'
+    return imports.length > 0 ? imports.join('\n') + '\n\n' : ''
   }
 
   /**
@@ -122,14 +122,7 @@ export class InertiaPageTypesGenerator {
    */
   #generatePageEntries(): string {
     return this.#pages
-      .map((page) => {
-        // For Svelte files, use the import directly without ['default']
-        if (page.extension === '.svelte') {
-          return `  '${page.name}': GetPageProps<typeof import('./${page.importPath}')>`
-        }
-        // For Vue and other files, use ['default'] access
-        return `  '${page.name}': GetPageProps<typeof import('./${page.importPath}')>`
-      })
+      .map((page) => `  '${page.name}': GetPageProps<typeof import('./${page.importPath}')>`)
       .join('\n')
   }
 
@@ -141,21 +134,34 @@ export class InertiaPageTypesGenerator {
     const getPagePropsType = this.#selectedStrategy!.getPagePropsType()
     const pageEntries = this.#generatePageEntries()
 
-    return dedent`
+    let content = dedent`
       /**
        * Generated file. Do not edit manually.
        * This file contains type definitions for all Inertia pages.
        */
+    `
 
-      ${imports}${getPagePropsType}
+    if (imports.trim()) content += '\n\n' + imports.trim()
 
+    content += '\n\n' + getPagePropsType
+    content +=
+      '\n\n' +
+      dedent`
       /**
        * Type-safe mapping of all Inertia pages and their expected props
        */
       export interface InertiaPages {
-      ${pageEntries}
-      }
     `
+
+    if (pageEntries.trim()) {
+      content += '\n' + pageEntries + '\n'
+    } else {
+      content += '\n'
+    }
+
+    content += '}\n'
+
+    return content
   }
 
   /**
