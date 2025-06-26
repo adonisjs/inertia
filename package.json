@@ -19,6 +19,7 @@
     "./plugins/edge": "./build/src/plugins/edge/plugin.js",
     "./plugins/api_client": "./build/src/plugins/japa/api_client.js",
     "./client": "./build/src/plugins/vite.js",
+    "./generators": "./build/generators.js",
     "./helpers": "./build/src/helpers.js"
   },
   "scripts": {
@@ -38,7 +39,7 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^7.8.2",
+    "@adonisjs/assembler": "^8.0.0-next.1",
     "@adonisjs/core": "6.17.1",
     "@adonisjs/eslint-config": "^2.1.0",
     "@adonisjs/prettier-config": "^1.4.5",
@@ -76,6 +77,7 @@
   "dependencies": {
     "@poppinss/utils": "^6.9.4",
     "@tuyau/utils": "^0.0.8",
+    "dedent": "^1.6.0",
     "edge-error": "^4.0.2",
     "html-entities": "^2.6.0",
     "locate-path": "^7.2.0",
@@ -148,6 +150,7 @@
   "tsup": {
     "entry": [
       "./index.ts",
+      "./generators.ts",
       "./src/types.ts",
       "./src/helpers.ts",
       "./src/plugins/vite.ts",

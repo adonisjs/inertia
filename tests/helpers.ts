@@ -64,11 +64,20 @@ export async function runJapaTest(app: ApplicationService, callback: Parameters<
 }
 
 /**
+ * Get active test or throw an error if not found
+ */
+export function getActiveTestOrThrow(): Test {
+  const test = getActiveTest()
+  if (!test) throw new Error('Cannot use this function outside a test')
+
+  return test
+}
+
+/**
  * Spin up a Vite server for the test
  */
 export async function setupVite(options: InlineConfig) {
-  const test = getActiveTest()
-  if (!test) throw new Error('Cannot use setupVite outside a test')
+  const test = getActiveTestOrThrow()
 
   /**
    * Create a dummy file to ensure the root directory exists
@@ -117,4 +126,91 @@ export async function setupApp() {
   ace.ui.switchMode('raw')
 
   return { ace, app }
+}
+
+/**
+ * Creates a basic React page
+ */
+export async function createFakeReactPage(path: string): Promise<void> {
+  const test = getActiveTestOrThrow()
+
+  const content = `
+    import React from 'react'
+
+    export default function Component() {
+      return <div>React Component</div>
+    }
+  `
+
+  await test.context.fs.create(path, content)
+}
+
+/**
+ * Creates a fake Svelte page
+ */
+export async function createFakeSveltePage(path: string): Promise<void> {
+  const test = getActiveTestOrThrow()
+
+  const content = `
+    <script lang="ts">
+      // Svelte component
+    </script>
+
+    <div>Svelte Component</div>
+  `
+
+  await test.context.fs.create(path, content)
+}
+
+/**
+ * Creates a fake Vue page
+ */
+export async function createFakeVuePage(path: string): Promise<void> {
+  const test = getActiveTestOrThrow()
+
+  const content = `
+    <template>
+      <div>Vue Component</div>
+    </template>
+
+    <script setup lang="ts">
+      // Vue component
+    </script>
+  `
+
+  await test.context.fs.create(path, content)
+}
+
+/**
+ * Creates a fake Solid page
+ */
+export async function createFakeSolidPage(path: string): Promise<void> {
+  const test = getActiveTestOrThrow()
+
+  const content = `
+    export default function Component() {
+      return <div>Solid Component</div>
+    }
+  `
+
+  await test.context.fs.create(path, content)
+}
+
+/**
+ * Creates a package.json with the specified framework dependencies
+ */
+export async function createPackageWithFramework(framework: 'react' | 'vue' | 'svelte' | 'solid') {
+  const test = getActiveTestOrThrow()
+
+  const frameworkDeps = {
+    react: { '@inertiajs/react': '^1.0.0' },
+    vue: { '@inertiajs/vue3': '^1.0.0' },
+    svelte: { '@inertiajs/svelte': '^1.0.0' },
+    solid: { 'inertia-adapter-solid': '^1.0.0' },
+  }
+
+  await test.context.fs.create(
+    'package.json',
+    JSON.stringify({ dependencies: frameworkDeps[framework] })
+  )
 }
