@@ -15,6 +15,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { ServerRenderer } from './server_renderer.js'
 import type {
   Data,
+  InertiaPages,
   MaybePromise,
   PageObject,
   PageProps,
@@ -287,14 +288,11 @@ export class Inertia {
   /**
    * Render a page using Inertia
    */
-  async render<
-    TPageProps extends Record<string, any> = {},
-    TViewProps extends Record<string, any> = {},
-  >(
-    component: string,
-    pageProps?: TPageProps,
+  async render<TComponent extends keyof InertiaPages, TViewProps extends Record<string, any> = {}>(
+    component: TComponent,
+    pageProps?: InertiaPages[TComponent],
     viewProps?: TViewProps
-  ): Promise<string | PageObject<TPageProps>> {
+  ): Promise<string | PageObject<InertiaPages[TComponent]>> {
     const pageObject = await this.#buildPageObject(component, pageProps)
     const isInertiaRequest = !!this.ctx.request.header(InertiaHeaders.Inertia)
 

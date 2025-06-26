@@ -28,19 +28,12 @@ export interface FrameworkStrategy {
    * Determines if this strategy should be used based on detected frameworks
    */
   shouldUse(frameworks: DetectedFrameworks): boolean
-
-  /**
-   * Whether to keep file extensions in import statements for this framework
-   */
-  shouldKeepExtensionInImport: boolean
 }
 
 /**
  * React framework strategy
  */
 export class ReactStrategy implements FrameworkStrategy {
-  shouldKeepExtensionInImport = false
-
   getImports(): string[] {
     return ["import type React from 'react'"]
   }
@@ -72,8 +65,6 @@ export class ReactStrategy implements FrameworkStrategy {
  * Vue framework strategy
  */
 export class VueStrategy implements FrameworkStrategy {
-  shouldKeepExtensionInImport = true
-
   getImports(): string[] {
     return []
   }
@@ -96,8 +87,6 @@ export class VueStrategy implements FrameworkStrategy {
  * Svelte framework strategy
  */
 export class SvelteStrategy implements FrameworkStrategy {
-  shouldKeepExtensionInImport = true
-
   getImports(): string[] {
     return ["import type { ComponentProps } from 'svelte'"]
   }
@@ -120,8 +109,6 @@ export class SvelteStrategy implements FrameworkStrategy {
  * Solid framework strategy
  */
 export class SolidStrategy implements FrameworkStrategy {
-  shouldKeepExtensionInImport = false
-
   getImports(): string[] {
     return []
   }

@@ -227,3 +227,8 @@ export type InferPageProps<
  * Signature for the method in the SSR entrypoint file
  */
 export type RenderInertiaSsrApp = (page: PageObject) => Promise<{ head: string[]; body: string }>
+
+/**
+ * Should be augmented by the user to include all Inertia pages
+ */
+export interface InertiaPages {}

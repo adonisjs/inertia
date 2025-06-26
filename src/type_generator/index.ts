@@ -94,17 +94,10 @@ export class InertiaPageTypesGenerator {
         // Remove file extension and create page name
         const pageName = slash(relativePath.replace(extname(relativePath), ''))
 
-        // Create import path relative to .adonisjs directory
-        const fullImportPath = slash(relative(join(this.#appRoot, '.adonisjs'), fullPagePath))
+        // Create import path relative to .adonisjs directory (always keep extension)
+        const importPath = slash(relative(join(this.#appRoot, '.adonisjs'), fullPagePath))
 
-        // Keep extension for files that require it according to the selected strategy
-        const extension = extname(relativePath)
-        const shouldKeepExtension = this.#selectedStrategy!.shouldKeepExtensionInImport
-        const importPath = shouldKeepExtension
-          ? fullImportPath
-          : fullImportPath.replace(extension, '')
-
-        this.#pages.push({ name: pageName, importPath, extension })
+        this.#pages.push({ name: pageName, importPath, extension: extname(relativePath) })
       }
     }
   }
@@ -143,23 +136,27 @@ export class InertiaPageTypesGenerator {
 
     if (imports.trim()) content += '\n\n' + imports.trim()
 
-    content += '\n\n' + getPagePropsType
-    content +=
-      '\n\n' +
-      dedent`
+    content += `\n\n${getPagePropsType}`
+    content += dedent`\n\n
       /**
        * Type-safe mapping of all Inertia pages and their expected props
        */
-      export interface InertiaPages {
+      export interface MyInertiaPages {
     `
 
     if (pageEntries.trim()) {
-      content += '\n' + pageEntries + '\n'
+      content += `\n${pageEntries}\n`
     } else {
       content += '\n'
     }
 
     content += '}\n'
+
+    content += dedent`\n
+      declare module '@adonisjs/inertia/types' {
+        interface InertiaPages extends MyInertiaPages {}
+      }
+    `
 
     return content
   }

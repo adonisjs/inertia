@@ -166,7 +166,7 @@ test.group('InertiaPageTypesGenerator', () => {
 
     const generatedContent = await fs.contents('.adonisjs/inertia.ts')
 
-    assert.isTrue(generatedContent.includes('export interface InertiaPages {'))
+    assert.isTrue(generatedContent.includes('export interface MyInertiaPages {'))
     assert.snapshot(generatedContent).match()
   })
 })
