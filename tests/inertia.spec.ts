@@ -496,7 +496,7 @@ test.group('Inertia | Ssr', () => {
   }) => {
     setupViewMacroMock()
 
-    const vite = new Vite(false, {
+    const vite = new Vite({
       buildDirectory: fs.basePath,
       manifestFile: 'manifest.json',
     })

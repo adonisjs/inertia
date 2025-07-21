@@ -76,7 +76,7 @@ export async function setupVite(options: InlineConfig) {
    */
   await test.context.fs.create('dummy.txt', 'dummy')
 
-  const vite = new Vite(true, {
+  const vite = new Vite({
     buildDirectory: test.context.fs.basePath,
     manifestFile: 'manifest.json',
   })
