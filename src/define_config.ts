@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { slash } from '@poppinss/utils'
+import string from '@poppinss/utils/string'
 import { configProvider } from '@adonisjs/core'
 import type { ConfigProvider } from '@adonisjs/core/types'
 
@@ -31,7 +31,7 @@ export function defineConfig<T extends SharedData>(
       rootView: config.rootView ?? 'inertia_layout',
       sharedData: config.sharedData! || {},
       history: { encrypt: config.history?.encrypt ?? false },
-      entrypoint: slash(
+      entrypoint: string.toUnixSlash(
         config.entrypoint ?? (await detector.detectEntrypoint('inertia/app/app.ts'))
       ),
       ssr: {

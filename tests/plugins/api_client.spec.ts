@@ -10,7 +10,7 @@
 import getPort from 'get-port'
 import { test } from '@japa/runner'
 import { AppFactory } from '@adonisjs/core/factories/app'
-import { ApplicationService } from '@adonisjs/core/types'
+import { type ApplicationService } from '@adonisjs/core/types'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
 import { defineConfig } from '../../index.js'

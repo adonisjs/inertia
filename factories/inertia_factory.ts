@@ -7,17 +7,17 @@
  * file that was distributed with this source code.
  */
 
-import { Vite } from '@adonisjs/vite'
-import { HttpContext } from '@adonisjs/core/http'
+import { type Vite } from '@adonisjs/vite'
+import { type HttpContext } from '@adonisjs/core/http'
 import { AppFactory } from '@adonisjs/core/factories/app'
-import { ApplicationService } from '@adonisjs/core/types'
+import { type ApplicationService } from '@adonisjs/core/types'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
 
 import { defineConfig } from '../index.js'
 import { Inertia } from '../src/inertia.js'
 import { InertiaHeaders } from '../src/headers.js'
 import { ServerRenderer } from '../src/server_renderer.js'
-import { AssetsVersion, InertiaConfig } from '../src/types.js'
+import { type AssetsVersion, type InertiaConfig } from '../src/types.js'
 
 type FactoryParameters = {
   ctx: HttpContext

@@ -60,7 +60,7 @@ test.group('Inertia', () => {
       component: 'foo',
       version: '1',
       props: { foo: 'bar' },
-      url: null,
+      url: '',
       clearHistory: false,
       encryptHistory: false,
     })
@@ -89,7 +89,7 @@ test.group('Inertia', () => {
       component: 'foo',
       version: '1',
       props: { foo: 'bar' },
-      url: null,
+      url: '',
       encryptHistory: false,
       clearHistory: false,
     })

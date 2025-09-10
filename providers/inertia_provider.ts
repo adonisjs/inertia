@@ -10,8 +10,8 @@
 /// <reference types="@adonisjs/vite/vite_provider" />
 
 import { configProvider } from '@adonisjs/core'
-import { RuntimeException } from '@poppinss/utils'
-import { BriskRoute, Route } from '@adonisjs/core/http'
+import { RuntimeException } from '@poppinss/utils/exception'
+import { BriskRoute, type Route } from '@adonisjs/core/http'
 import type { ApplicationService } from '@adonisjs/core/types'
 
 import InertiaMiddleware from '../src/inertia_middleware.js'

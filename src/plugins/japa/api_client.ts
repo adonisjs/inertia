@@ -8,8 +8,8 @@
  */
 
 import { configProvider } from '@adonisjs/core'
-import { RuntimeException } from '@poppinss/utils'
 import type { PluginFn } from '@japa/runner/types'
+import { RuntimeException } from '@poppinss/utils/exception'
 import { ApiRequest, ApiResponse } from '@japa/api-client'
 import type { ApplicationService } from '@adonisjs/core/types'
 

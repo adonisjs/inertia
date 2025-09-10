@@ -7,14 +7,13 @@
  * file that was distributed with this source code.
  */
 
-import { ConfigProvider } from '@adonisjs/core/types'
 import type { HttpContext } from '@adonisjs/core/http'
+import type { AsyncOrSync } from '@poppinss/utils/types'
+import { type ConfigProvider } from '@adonisjs/core/types'
 import type { Serialize, Simplify } from '@tuyau/utils/types'
 
 import type { VersionCache } from './version_cache.js'
-import { DeferProp, OptionalProp } from './props.js'
-
-export type MaybePromise<T> = T | Promise<T>
+import { type DeferProp, type OptionalProp } from './props.js'
 
 /**
  * Props that will be passed to inertia render method
@@ -25,7 +24,7 @@ export type PageProps = Record<string, unknown>
  * Shared data types
  */
 export type Data = string | number | object | boolean
-export type SharedDatumFactory = (ctx: HttpContext) => MaybePromise<Data>
+export type SharedDatumFactory = (ctx: HttpContext) => AsyncOrSync<Data>
 export type SharedData = Record<string, Data | SharedDatumFactory>
 
 /**
@@ -77,7 +76,7 @@ export interface InertiaConfig<T extends SharedData = SharedData> {
     /**
      * List of components that should be rendered on the server
      */
-    pages?: string[] | ((ctx: HttpContext, page: string) => MaybePromise<boolean>)
+    pages?: string[] | ((ctx: HttpContext, page: string) => AsyncOrSync<boolean>)
 
     /**
      * Path to the SSR entrypoint file
@@ -102,7 +101,7 @@ export interface ResolvedConfig<T extends SharedData = SharedData> {
   ssr: {
     enabled: boolean
     entrypoint: string
-    pages?: string[] | ((ctx: HttpContext, page: string) => MaybePromise<boolean>)
+    pages?: string[] | ((ctx: HttpContext, page: string) => AsyncOrSync<boolean>)
     bundle: string
   }
 }
@@ -158,17 +157,17 @@ type IsOptionalProp<T> =
 type InferProps<T> = {
   // First extract and unwrap lazy props. Also make them optional as they are lazy
   [K in keyof T as IsOptionalProp<T[K]> extends true ? K : never]+?: T[K] extends {
-    callback: () => MaybePromise<infer U>
+    callback: () => AsyncOrSync<infer U>
   }
     ? U
     : T[K]
 } & {
   // Then include all other props as it is
   [K in keyof T as IsOptionalProp<T[K]> extends true ? never : K]: T[K] extends {
-    callback: () => MaybePromise<infer U>
+    callback: () => AsyncOrSync<infer U>
   }
     ? U
-    : T[K] extends () => MaybePromise<infer U> // Unwrap "callback" props like inertia.render('foo', { lazy: () => 'foo' })
+    : T[K] extends () => AsyncOrSync<infer U> // Unwrap "callback" props like inertia.render('foo', { lazy: () => 'foo' })
       ? U
       : T[K]
 }
@@ -176,7 +175,7 @@ type InferProps<T> = {
 type ReturnsTypesSharedData<T extends SharedData> = {} extends T
   ? {}
   : InferProps<{
-      [K in keyof T]: T[K] extends (...args: any[]) => MaybePromise<infer U> ? U : T[K]
+      [K in keyof T]: T[K] extends (...args: any[]) => AsyncOrSync<infer U> ? U : T[K]
     }>
 
 /**

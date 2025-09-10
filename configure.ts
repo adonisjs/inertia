@@ -8,7 +8,7 @@
  */
 
 import string from '@poppinss/utils/string'
-import { Codemods } from '@adonisjs/core/ace/codemods'
+import { type Codemods } from '@adonisjs/core/ace/codemods'
 import type Configure from '@adonisjs/core/commands/configure'
 
 import { stubsRoot } from './stubs/main.js'

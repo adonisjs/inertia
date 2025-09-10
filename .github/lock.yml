@@ -1,5 +1,5 @@
 ---
-ignoreUnless: {{ STALE_BOT }}
+ignoreUnless: { { STALE_BOT } }
 ---
 # Configuration for Lock Threads - https://github.com/dessant/lock-threads-app
 

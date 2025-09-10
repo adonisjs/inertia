@@ -9,18 +9,11 @@
 
 /// <reference types="@adonisjs/core/providers/edge_provider" />
 
-import { Vite } from '@adonisjs/vite'
+import { type Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
 
 import { ServerRenderer } from './server_renderer.js'
-import type {
-  Data,
-  MaybePromise,
-  PageObject,
-  PageProps,
-  ResolvedConfig,
-  SharedData,
-} from './types.js'
+import type { Data, PageObject, PageProps, ResolvedConfig, SharedData } from './types.js'
 import {
   AlwaysProp,
   DeferProp,
@@ -30,6 +23,7 @@ import {
   OptionalProp,
 } from './props.js'
 import { InertiaHeaders } from './headers.js'
+import { type AsyncOrSync } from '@poppinss/utils/types'
 
 /**
  * Main class used to interact with Inertia
@@ -277,8 +271,8 @@ export class Inertia {
   }
 
   /**
-   * Share data for the current request.
-   * This data will override any shared data defined in the config.
+   * Share data for the current request. This method performs
+   * a shallow merge with the existing data
    */
   share(data: Record<string, Data>) {
     this.#sharedData = { ...this.#sharedData, ...data }
@@ -337,7 +331,7 @@ export class Inertia {
    *
    * @deprecated use `optional` instead
    */
-  lazy<T>(callback: () => MaybePromise<T>) {
+  lazy<T>(callback: () => AsyncOrSync<T>) {
     return new OptionalProp(callback)
   }
 
@@ -346,7 +340,7 @@ export class Inertia {
    *
    * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
    */
-  optional<T>(callback: () => MaybePromise<T>) {
+  optional<T>(callback: () => AsyncOrSync<T>) {
     return new OptionalProp(callback)
   }
 
@@ -355,7 +349,7 @@ export class Inertia {
    *
    * See https://v2.inertiajs.com/merging-props
    */
-  merge<T>(callback: () => MaybePromise<T>) {
+  merge<T>(callback: () => AsyncOrSync<T>) {
     return new MergeProp(callback)
   }
 
@@ -367,7 +361,7 @@ export class Inertia {
    *
    * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
    */
-  always<T>(callback: () => MaybePromise<T>) {
+  always<T>(callback: () => AsyncOrSync<T>) {
     return new AlwaysProp(callback)
   }
 
@@ -379,7 +373,7 @@ export class Inertia {
    *
    * See https://v2.inertiajs.com/deferred-props
    */
-  defer<T>(callback: () => MaybePromise<T>, group = 'default') {
+  defer<T>(callback: () => AsyncOrSync<T>, group = 'default') {
     return new DeferProp(callback, group)
   }
 

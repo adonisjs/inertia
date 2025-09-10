@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import { FileSystem } from '@japa/file-system'
+import { type FileSystem } from '@japa/file-system'
 import Configure from '@adonisjs/core/commands/configure'
 
 import { setupApp } from './helpers.js'

@@ -4,7 +4,7 @@ import { IgnitorFactory } from '@adonisjs/core/factories'
 import { defineConfig } from '../index.js'
 import { defineConfig as viteDefineConfig } from '@adonisjs/vite'
 import InertiaMiddleware from '../src/inertia_middleware.js'
-import { Route } from '@adonisjs/core/http'
+import { type Route } from '@adonisjs/core/http'
 
 const BASE_URL = new URL('./tmp/', import.meta.url)
 const IMPORTER = (filePath: string) => {

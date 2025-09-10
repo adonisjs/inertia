@@ -1,4 +1,4 @@
-import { expressions as expressionsList } from 'edge-parser'
+import { type expressions as expressionsList } from 'edge-parser'
 
 type ExpressionList = readonly (keyof typeof expressionsList | 'ObjectPattern' | 'ArrayPattern')[]
 

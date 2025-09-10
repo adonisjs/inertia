@@ -8,7 +8,7 @@
  */
 
 import { EdgeError } from 'edge-error'
-import { TagContract } from 'edge.js/types'
+import { type TagContract } from 'edge.js/types'
 
 import { isSubsetOf } from './utils.js'
 

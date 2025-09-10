@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { MaybePromise } from './types.js'
+import { type AsyncOrSync } from '@poppinss/utils/types'
 
 export const ignoreFirstLoadSymbol = Symbol('ignoreFirstLoad')
 
@@ -26,7 +26,7 @@ export abstract class MergeableProp {
 /**
  * Optional prop
  */
-export class OptionalProp<T extends MaybePromise<any>> {
+export class OptionalProp<T extends AsyncOrSync<any>> {
   [ignoreFirstLoadSymbol] = true
 
   constructor(public callback: T) {}
@@ -35,7 +35,7 @@ export class OptionalProp<T extends MaybePromise<any>> {
 /**
  * Defer prop
  */
-export class DeferProp<T extends MaybePromise<any>> extends MergeableProp {
+export class DeferProp<T extends AsyncOrSync<any>> extends MergeableProp {
   [ignoreFirstLoadSymbol] = true as const
 
   constructor(
@@ -53,7 +53,7 @@ export class DeferProp<T extends MaybePromise<any>> extends MergeableProp {
 /**
  * Merge prop
  */
-export class MergeProp<T extends MaybePromise<any>> extends MergeableProp {
+export class MergeProp<T extends AsyncOrSync<any>> extends MergeableProp {
   constructor(public callback: T) {
     super()
     this.shouldMerge = true
@@ -63,7 +63,7 @@ export class MergeProp<T extends MaybePromise<any>> extends MergeableProp {
 /**
  * Always prop
  */
-export class AlwaysProp<T extends MaybePromise<any>> extends MergeableProp {
+export class AlwaysProp<T extends AsyncOrSync<any>> extends MergeableProp {
   constructor(public callback: T) {
     super()
   }

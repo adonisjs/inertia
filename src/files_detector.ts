@@ -8,7 +8,7 @@
  */
 
 import { locatePath } from 'locate-path'
-import { Application } from '@adonisjs/core/app'
+import { type Application } from '@adonisjs/core/app'
 
 export class FilesDetector {
   constructor(protected app: Application<any>) {}

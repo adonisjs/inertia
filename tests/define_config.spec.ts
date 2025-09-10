@@ -12,7 +12,7 @@ import { test } from '@japa/runner'
 
 import { defineConfig } from '../index.js'
 import { setupApp } from './helpers.js'
-import { InferSharedProps } from '../src/types.js'
+import { type InferSharedProps } from '../src/types.js'
 
 test.group('Define Config', () => {
   test('detect bundle automatically - "{$self}"')

@@ -7,11 +7,11 @@
  * file that was distributed with this source code.
  */
 
-import { Vite } from '@adonisjs/vite'
-
 import { pathToFileURL } from 'node:url'
-import type { PageObject, RenderInertiaSsrApp, ResolvedConfig } from './types.js'
+import { type Vite } from '@adonisjs/vite'
 import type { ModuleRunner } from 'vite/module-runner'
+
+import type { PageObject, RenderInertiaSsrApp, ResolvedConfig } from './types.js'
 
 /**
  * Responsible for rendering page on the server

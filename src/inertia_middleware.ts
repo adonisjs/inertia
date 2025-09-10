@@ -92,7 +92,9 @@ export default class InertiaMiddleware {
     await next()
 
     const isInertiaRequest = !!request.header(InertiaHeaders.Inertia)
-    if (!isInertiaRequest) return
+    if (!isInertiaRequest) {
+      return
+    }
 
     response.header('Vary', InertiaHeaders.Inertia)
 
