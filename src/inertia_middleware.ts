@@ -9,105 +9,165 @@
 
 /// <reference types="@adonisjs/session/session_middleware" />
 
-import type { Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
-import type { NextFn } from '@adonisjs/core/types/http'
 
-import { Inertia } from './inertia.js'
+import { type Inertia } from './inertia.js'
 import { InertiaHeaders } from './headers.js'
-import type { ResolvedConfig } from './types.js'
+import { InertiaManager } from './inertia_manager.ts'
+import type { ComponentProps, InertiaPages, PageProps } from './types.js'
+import debug from './debug.ts'
 
-/**
- * HttpContext augmentations
- */
 declare module '@adonisjs/core/http' {
   export interface HttpContext {
-    inertia: Inertia
+    inertia: Inertia<InertiaPages extends Record<string, ComponentProps> ? InertiaPages : never>
   }
 }
 
 /**
- * Inertia middleware to handle the Inertia requests and
- * set appropriate headers/status
+ * HTTP methods that require special redirect handling
+ * These methods should use 303 status code for redirects
  */
-export default class InertiaMiddleware {
-  constructor(
-    protected config: ResolvedConfig,
-    protected vite?: Vite
-  ) {}
+const MUTATION_METHODS = ['PUT', 'PATCH', 'DELETE']
 
+/**
+ * Base middleware class for handling Inertia.js requests
+ *
+ * This middleware handles the initialization of the Inertia instance,
+ * manages request headers, handles redirects for mutation methods,
+ * and implements asset versioning.
+ *
+ * @example
+ * ```ts
+ * export default class InertiaMiddleware extends BaseInertiaMiddleware {
+ *   async share() {
+ *     return {
+ *       user: ctx.auth?.user
+ *     }
+ *   }
+ * }
+ * ```
+ */
+export default abstract class BaseInertiaMiddleware {
   /**
-   * Resolves the validation errors to be shared with Inertia
+   * Extract validation errors from the session and format them for Inertia
+   *
+   * Retrieves validation errors from the session flash messages and formats
+   * them according to Inertia's error bag conventions. Supports both simple
+   * error objects and error bags for multi-form scenarios.
+   *
+   * @param ctx - The HTTP context containing session data
+   * @returns Formatted validation errors, either as a simple object or error bags
+   *
+   * @example
+   * ```js
+   * const errors = middleware.getValidationErrors(ctx)
+   * // Returns: { email: 'Email is required', password: 'Password too short' }
+   * // Or with error bags: { login: { email: 'Email is required' } }
+   * ```
    */
-  #resolveValidationErrors(ctx: HttpContext) {
-    const { session, request } = ctx
-
-    // If the session middleware wasn't executed
-    // (on routes that are not in the router, for instance),
-    // then the session object will be undefined.
-    if (!session) {
+  getValidationErrors(ctx: HttpContext):
+    | Record<string, string>
+    | {
+        [errorBag: string]: Record<string, string>
+      } {
+    if (!ctx.session) {
       return {}
     }
 
-    /**
-     * If not a Vine Validation error, then return the entire error bag
-     */
-    if (!session.flashMessages.has('errorsBag.E_VALIDATION_ERROR')) {
-      return session.flashMessages.get('errorsBag')
-    }
-
-    /**
-     * Otherwise, resolve the validation errors. We only keep the first
-     * error message for each field
-     */
-    const errors = Object.entries(session.flashMessages.get('inputErrorsBag')).reduce(
-      (acc, [field, messages]) => {
-        acc[field] = Array.isArray(messages) ? messages[0] : messages
-        return acc
+    const inputErrors = ctx.session.flashMessages.get('inputErrorsBag')
+    const errors = Object.entries(inputErrors).reduce(
+      (result, [field, messages]) => {
+        result[field] = Array.isArray(messages) ? messages[0] : messages
+        return result
       },
       {} as Record<string, string>
     )
 
-    /**
-     * Also, nest the errors under the error bag key if asked
-     * See https://inertiajs.com/validation#error-bags
-     */
-    const errorBag = request.header(InertiaHeaders.ErrorBag)
-    return errorBag ? { [errorBag]: errors } : errors
+    const errorBag = ctx.request.header(InertiaHeaders.ErrorBag)
+    if (errorBag) {
+      return { [errorBag]: errors }
+    }
+    return errors
   }
 
   /**
-   * Share validation and flashed errors with Inertia
+   * Share data with all Inertia pages
+   *
+   * This method should return an object containing data that will be
+   * available to all Inertia pages as props.
+   *
+   * @example
+   * ```ts
+   * async share() {
+   *   return {
+   *     user: ctx.auth?.user,
+   *     flash: ctx.session?.flashMessages.all()
+   *   }
+   * }
+   * ```
    */
-  #shareErrors(ctx: HttpContext) {
-    ctx.inertia.share({ errors: ctx.inertia.always(() => this.#resolveValidationErrors(ctx)) })
+  abstract share?(ctx: HttpContext): PageProps | Promise<PageProps>
+
+  /**
+   * Initialize the Inertia instance for the current request
+   *
+   * This method creates an Inertia instance and attaches it to the
+   * HTTP context, making it available throughout the request lifecycle.
+   *
+   * @param ctx - The HTTP context object
+   *
+   * @example
+   * ```ts
+   * await middleware.init(ctx)
+   * ```
+   */
+  async init(ctx: HttpContext) {
+    debug('initiating inertia')
+    const inertiaContainer = await ctx.containerResolver.make(InertiaManager)
+    ctx.inertia =
+      inertiaContainer.createForRequest<
+        InertiaPages extends Record<string, ComponentProps> ? InertiaPages : never
+      >(ctx)
+    if (this.share) {
+      ctx.inertia.share(await this.share(ctx))
+    }
   }
 
-  async handle(ctx: HttpContext, next: NextFn) {
-    const { response, request } = ctx
-
-    ctx.inertia = new Inertia(ctx, this.config, this.vite)
-    this.#shareErrors(ctx)
-
-    await next()
-
-    const isInertiaRequest = !!request.header(InertiaHeaders.Inertia)
-    if (!isInertiaRequest) {
+  /**
+   * Clean up and finalize the Inertia response
+   *
+   * This method handles the final processing of Inertia requests including:
+   * - Setting appropriate response headers
+   * - Handling redirects for mutation methods (PUT/PATCH/DELETE)
+   * - Managing asset versioning conflicts
+   *
+   * @param ctx - The HTTP context object
+   *
+   * @example
+   * ```ts
+   * await middleware.dispose(ctx)
+   * ```
+   */
+  dispose(ctx: HttpContext) {
+    const requestInfo = ctx.inertia.requestInfo()
+    if (!requestInfo.isInertiaRequest) {
       return
     }
 
-    response.header('Vary', InertiaHeaders.Inertia)
+    debug('disposing as inertia request')
+    ctx.response.header('Vary', InertiaHeaders.Inertia)
 
     /**
-     * When redirecting a PUT/PATCH/DELETE request, we need to change the
-     * we must use a 303 status code instead of a 302 to force
-     * the browser to use a GET request after redirecting.
+     * When redirecting a PUT/PATCH/DELETE request, we must use a 303
+     * status code instead of a 302 to force the browser to use a GET
+     * request after redirecting.
      *
      * See https://inertiajs.com/redirects
      */
-    const method = request.method()
-    if (response.getStatus() === 302 && ['PUT', 'PATCH', 'DELETE'].includes(method)) {
-      response.status(303)
+    const method = ctx.request.method()
+    if (ctx.response.getStatus() === 302 && MUTATION_METHODS.includes(method)) {
+      debug('upgrading response status from 302 to 303')
+      ctx.response.status(303)
     }
 
     /**
@@ -115,11 +175,16 @@ export default class InertiaMiddleware {
      *
      * See https://inertiajs.com/the-protocol#asset-versioning
      */
-    const version = this.config.versionCache.getVersion().toString()
-    if (method === 'GET' && request.header(InertiaHeaders.Version, '') !== version) {
-      response.removeHeader(InertiaHeaders.Inertia)
-      response.header(InertiaHeaders.Location, request.url())
-      response.status(409)
+    const version = ctx.inertia.getVersion()
+    const clientVersion = requestInfo.version ?? ''
+    if (method === 'GET' && clientVersion !== version) {
+      debug('version mis-match. Reloading page')
+      if (ctx.session) {
+        ctx.session.reflash()
+      }
+      ctx.response.removeHeader(InertiaHeaders.Inertia)
+      ctx.response.header(InertiaHeaders.Location, ctx.request.url(true))
+      ctx.response.status(409)
     }
   }
 }

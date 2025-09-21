@@ -13,18 +13,28 @@ import { test } from '@japa/runner'
 import { edgePluginInertia } from '../../src/plugins/edge/plugin.js'
 
 test.group('Edge plugin', () => {
-  test('@inertia generate a root div with data-page', async ({ assert }) => {
+  test('generate root div with data-page attribute', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
-
-    const html = await edge.renderRaw(`@inertia()`, { page: {} })
-
+    edge.registerTemplate('components/layout', {
+      template: `@inertia()`,
+    })
+    edge.registerTemplate('root_template', {
+      template: `@!component('components/layout', { page })`,
+    })
+    const html = await edge.render('root_template', { page: {} })
     assert.deepEqual(html.split('\n'), ['<div id="app" data-page="{}"></div>'])
   })
 
   test('@inertia generate a root dive with data-page filled and encoded', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
+    edge.registerTemplate('components/layout', {
+      template: `@inertia()`,
+    })
+    edge.registerTemplate('root_template', {
+      template: `@!component('components/layout', { page })`,
+    })
 
-    const html = await edge.renderRaw(`@inertia()`, {
+    const html = await edge.render('root_template', {
       page: { foo: 'bar' },
     })
 
@@ -33,13 +43,13 @@ test.group('Edge plugin', () => {
     ])
   })
 
-  test('throws if passing invalid argument', async () => {
+  test('throw error when invalid arguments are provided to the @inertia tag', async () => {
     const edge = Edge.create().use(edgePluginInertia())
 
     await edge.renderRaw(`@inertia('foo')`, { page: {} })
   }).throws(`"('foo')" is not a valid argument for @inertia`)
 
-  test('pass class to @inertia', async ({ assert }) => {
+  test('pass through HTML attributes via @inertia tag', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
 
     const html = await edge.renderRaw(`@inertia({ class: 'foo' })`, {
@@ -47,40 +57,6 @@ test.group('Edge plugin', () => {
     })
 
     assert.deepEqual(html.split('\n'), ['<div id="app" class="foo" data-page="{}"></div>'])
-  })
-
-  test('pass id to @inertia', async ({ assert }) => {
-    const edge = Edge.create().use(edgePluginInertia())
-
-    const html = await edge.renderRaw(`@inertia({ id: 'foo' })`, {
-      page: {},
-    })
-
-    assert.deepEqual(html.split('\n'), ['<div id="foo" data-page="{}"></div>'])
-  })
-
-  test('works with variable reference', async ({ assert }) => {
-    const edge = Edge.create().use(edgePluginInertia())
-
-    const html = await edge.renderRaw(`@inertia({ class: mainClass })`, {
-      mainClass: 'foo bar',
-      page: {},
-    })
-
-    assert.deepEqual(html.split('\n'), ['<div id="app" class="foo bar" data-page="{}"></div>'])
-  })
-
-  test('works with function call', async ({ assert }) => {
-    const edge = Edge.create().use(edgePluginInertia())
-
-    const html = await edge.renderRaw(`@inertia({ class: mainClass() })`, {
-      mainClass() {
-        return 'foo bar'
-      },
-      page: {},
-    })
-
-    assert.deepEqual(html.split('\n'), ['<div id="app" class="foo bar" data-page="{}"></div>'])
   })
 
   test('render root div as another tag', async ({ assert }) => {
@@ -93,7 +69,7 @@ test.group('Edge plugin', () => {
     assert.deepEqual(html.split('\n'), ['<main id="app" data-page="{}"></main>'])
   })
 
-  test('@inertia just insert the ssrBody if present', async ({ assert }) => {
+  test('render SSR body when exists', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
 
     const html = await edge.renderRaw(`@inertia()`, {

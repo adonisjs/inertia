@@ -13,13 +13,27 @@ import { type TagContract } from 'edge.js/types'
 import { isSubsetOf } from './utils.js'
 
 /**
- * `@inertia` tag is used to generate the root element with
- * encoded page data.
+ * Edge tag that generates the root element for Inertia.js applications
  *
- * We can pass an object with `as`, `class` and `id` properties
- * - `as` is the tag name for the root element. Defaults to `div`
- * - `class` is the class name for the root element.
- * - `id` is the id for the root element. Defaults to `app`
+ * The @inertia tag creates a container element with encoded page data that Inertia.js
+ * uses to hydrate the client-side application. Supports customization through attributes.
+ *
+ * @example
+ * ```edge
+ * {{-- Basic usage with default div element and id="app" --}}
+ * @inertia()
+ *
+ * {{-- Custom element and attributes --}}
+ * @inertia({ as: 'main', id: 'app-root', class: 'min-h-screen' })
+ *
+ * {{-- Results in: --}}
+ * {{-- <main id="app-root" class="min-h-screen" data-page="{...encoded page data...}"></main> --}}
+ * ```
+ *
+ * Supported attributes:
+ * - `as`: HTML tag name for the root element (defaults to 'div')
+ * - `id`: Element ID (defaults to 'app')
+ * - `class`: CSS class names for the element
  */
 export const inertiaTag: TagContract = {
   block: false,
@@ -58,22 +72,41 @@ export const inertiaTag: TagContract = {
      * Stringify the object expression and pass it to the `inertia` helper
      */
     const attributes = parser.utils.stringify(parsed)
-    buffer.writeExpression(
-      `out += state.inertia(state.page, ${attributes})`,
+    buffer.outputExpression(
+      `state.inertia(state.page, ${attributes})`,
       filename,
-      loc.start.line
+      loc.start.line,
+      false
     )
   },
 }
 
 /**
- * `@inertiaHead` tag
+ * Edge tag that renders server-side rendered head content for Inertia.js
+ *
+ * The @inertiaHead tag outputs head tags (title, meta, etc.) that were generated
+ * during server-side rendering. Only relevant when SSR is enabled.
+ *
+ * @example
+ * ```edge
+ * <!DOCTYPE html>
+ * <html>
+ * <head>
+ *   <meta charset="utf-8">
+ *   <meta name="viewport" content="width=device-width, initial-scale=1">
+ *   @inertiaHead()
+ * </head>
+ * <body>
+ *   @inertia()
+ * </body>
+ * </html>
+ * ```
  */
 export const inertiaHeadTag: TagContract = {
   block: false,
   tagName: 'inertiaHead',
   seekable: false,
   compile(_, buffer, { filename, loc }) {
-    buffer.writeExpression(`out += state.inertiaHead(state.page)`, filename, loc.start.line)
+    buffer.outputExpression('state.inertiaHead(state.page)', filename, loc.start.line, false)
   },
 }

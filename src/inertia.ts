@@ -7,250 +7,183 @@
  * file that was distributed with this source code.
  */
 
+/// <reference types="@adonisjs/core/providers/app_provider" />
 /// <reference types="@adonisjs/core/providers/edge_provider" />
 
+import { createHash } from 'node:crypto'
 import { type Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
 
-import { ServerRenderer } from './server_renderer.js'
-import type { Data, PageObject, PageProps, ResolvedConfig, SharedData } from './types.js'
-import {
-  AlwaysProp,
-  DeferProp,
-  ignoreFirstLoadSymbol,
-  MergeableProp,
-  MergeProp,
-  OptionalProp,
-} from './props.js'
 import { InertiaHeaders } from './headers.js'
-import { type AsyncOrSync } from '@poppinss/utils/types'
+import { type ServerRenderer } from './server_renderer.js'
+import type {
+  PageProps,
+  PageObject,
+  AsPageProps,
+  RequestInfo,
+  InertiaConfig,
+  ComponentProps,
+} from './types.js'
+import {
+  defer,
+  merge,
+  always,
+  optional,
+  deepMerge,
+  buildStandardVisitProps,
+  buildPartialRequestProps,
+} from './props.ts'
+import debug from './debug.ts'
 
 /**
  * Main class used to interact with Inertia
+ *
+ * Provides a complete interface for handling Inertia.js requests, rendering pages,
+ * managing props, and controlling page navigation behavior.
+ *
+ * @example
+ * ```js
+ * const inertia = new Inertia(ctx, config, vite, serverRenderer)
+ *
+ * // Render a page
+ * const result = await inertia.render('Home', { user: { name: 'John' } })
+ *
+ * // Clear browser history
+ * inertia.clearHistory()
+ *
+ * // Redirect to a different location
+ * inertia.location('/dashboard')
+ * ```
  */
-export class Inertia {
-  #sharedData: SharedData = {}
-  #serverRenderer: ServerRenderer
+export class Inertia<Pages extends Record<string, ComponentProps>> {
+  #sharedState?: PageProps
+  #cachedRequestInfo?: RequestInfo
 
-  #shouldClearHistory = false
-  #shouldEncryptHistory = false
+  /**
+   * Optional server-side renderer for SSR functionality
+   */
+  #serverRenderer?: ServerRenderer
 
+  /**
+   * Vite instance for asset management and manifest handling
+   */
+  #vite?: Vite
+
+  /**
+   * Flag to control whether the next navigation should clear browser history
+   */
+  #shouldClearHistory
+
+  /**
+   * Flag to control whether browser history should be encrypted
+   */
+  #shouldEncryptHistory
+
+  /**
+   * Cached version string/number for asset versioning
+   */
+  #cachedVersion?: string
+
+  /**
+   * Defer prop evaluation until client-side rendering
+   *
+   * @example
+   * ```js
+   * {
+   *   expensiveData: inertia.defer(() => computeExpensiveData())
+   * }
+   * ```
+   */
+  defer = defer
+
+  /**
+   * Always include prop in both server and client renders
+   *
+   * @example
+   * ```js
+   * {
+   *   currentUser: inertia.always(() => getCurrentUser())
+   * }
+   * ```
+   */
+  always = always
+
+  /**
+   * Merge prop with existing client-side data
+   *
+   * @example
+   * ```js
+   * {
+   *   posts: inertia.merge(() => getPosts())
+   * }
+   * ```
+   */
+  merge = merge
+
+  /**
+   * Include prop only when specifically requested
+   *
+   * @example
+   * ```js
+   * {
+   *   optionalData: inertia.optional(() => getOptionalData())
+   * }
+   * ```
+   */
+  optional = optional
+
+  /**
+   * Deep merge prop with existing client-side data
+   *
+   * @example
+   * ```js
+   * {
+   *   settings: inertia.deepMerge(() => getSettings())
+   * }
+   * ```
+   */
+  deepMerge = deepMerge
+
+  /**
+   * Creates a new Inertia instance
+   *
+   * @param ctx - HTTP context for the current request
+   * @param config - Inertia configuration object
+   * @param vite - Vite instance for asset management
+   * @param serverRenderer - Optional server renderer for SSR
+   *
+   * @example
+   * ```js
+   * const inertia = new Inertia(ctx, {
+   *   rootView: 'app',
+   *   ssr: { enabled: true }
+   * }, vite, serverRenderer)
+   * ```
+   */
   constructor(
     protected ctx: HttpContext,
-    protected config: ResolvedConfig,
-    protected vite?: Vite
+    protected config: InertiaConfig,
+    vite?: Vite,
+    serverRenderer?: ServerRenderer
   ) {
-    this.#sharedData = config.sharedData
-    this.#serverRenderer = new ServerRenderer(config, vite)
-
+    if (debug.enabled) {
+      debug(
+        'instantiating inertia instance for request "%s" using config %O',
+        ctx.request.url(),
+        this.config
+      )
+    }
     this.#shouldClearHistory = false
-    this.#shouldEncryptHistory = config.history.encrypt
+    this.#vite = vite
+    this.#serverRenderer = serverRenderer
+    this.#shouldEncryptHistory = config.encryptHistory ?? false
+    this.#cachedVersion = this.config.assetsVersion ? String(this.config.assetsVersion) : undefined
   }
 
   /**
-   * Check if the current request is a partial request
-   */
-  #isPartial(component: string) {
-    return this.ctx.request.header(InertiaHeaders.PartialComponent) === component
-  }
-
-  /**
-   * Resolve the `only` partial request props.
-   * Only the props listed in the `x-inertia-partial-data` header
-   * will be returned
-   */
-  #resolveOnly(props: PageProps) {
-    const partialOnlyHeader = this.ctx.request.header(InertiaHeaders.PartialOnly)
-    const only = partialOnlyHeader!.split(',').filter(Boolean)
-    let newProps: PageProps = {}
-
-    for (const key of only) newProps[key] = props[key]
-
-    return newProps
-  }
-
-  /**
-   * Resolve the `except` partial request props.
-   * Remove the props listed in the `x-inertia-partial-except` header
-   */
-  #resolveExcept(props: PageProps) {
-    const partialExceptHeader = this.ctx.request.header(InertiaHeaders.PartialExcept)
-    const except = partialExceptHeader!.split(',').filter(Boolean)
-
-    for (const key of except) delete props[key]
-
-    return props
-  }
-
-  /**
-   * Resolve the props for the current request
-   * by filtering out the props that are not needed
-   * based on the request headers
-   */
-  #pickPropsToResolve(component: string, props: PageProps = {}) {
-    const isPartial = this.#isPartial(component)
-    let newProps = props
-
-    /**
-     * If it's not a partial request, keep everything as it is
-     * except the props that are marked as `ignoreFirstLoad`
-     */
-    if (!isPartial) {
-      newProps = Object.fromEntries(
-        Object.entries(props).filter(([_, value]) => {
-          if (value && (value as any)[ignoreFirstLoadSymbol]) return false
-
-          return true
-        })
-      )
-    }
-
-    /**
-     * Keep only the props that are listed in the `x-inertia-partial-data` header
-     */
-    const partialOnlyHeader = this.ctx.request.header(InertiaHeaders.PartialOnly)
-    if (isPartial && partialOnlyHeader) newProps = this.#resolveOnly(props)
-
-    /**
-     * Remove the props that are listed in the `x-inertia-partial-except` header
-     */
-    const partialExceptHeader = this.ctx.request.header(InertiaHeaders.PartialExcept)
-    if (isPartial && partialExceptHeader) newProps = this.#resolveExcept(newProps)
-
-    /**
-     * Resolve all the props that are marked as `AlwaysProp` since they
-     * should be resolved on every request, no matter if it's a partial
-     * request or not.
-     */
-    for (const [key, value] of Object.entries(props)) {
-      if (value instanceof AlwaysProp) newProps[key] = props[key]
-    }
-
-    return newProps
-  }
-
-  /**
-   * Resolve a single prop
-   */
-  async #resolveProp(key: string, value: any) {
-    if (
-      value instanceof OptionalProp ||
-      value instanceof MergeProp ||
-      value instanceof DeferProp ||
-      value instanceof AlwaysProp
-    ) {
-      return [key, await value.callback()]
-    }
-
-    return [key, value]
-  }
-
-  /**
-   * Resolve a single prop by calling the callback or resolving the promise
-   */
-  async #resolvePageProps(props: PageProps = {}) {
-    return Object.fromEntries(
-      await Promise.all(
-        Object.entries(props).map(async ([key, value]) => {
-          if (typeof value === 'function') {
-            const result = await value(this.ctx)
-            return this.#resolveProp(key, result)
-          }
-
-          return this.#resolveProp(key, value)
-        })
-      )
-    )
-  }
-
-  /**
-   * Resolve the deferred props listing. Will be returned only
-   * on the first visit to the page and will be used to make
-   * subsequent partial requests
-   */
-  #resolveDeferredProps(component: string, pageProps?: PageProps) {
-    if (this.#isPartial(component)) return {}
-
-    const deferredProps = Object.entries(pageProps || {})
-      .filter(([_, value]) => value instanceof DeferProp)
-      .map(([key, value]) => ({ key, group: (value as DeferProp<any>).getGroup() }))
-      .reduce(
-        (groups, { key, group }) => {
-          if (!groups[group]) groups[group] = []
-
-          groups[group].push(key)
-          return groups
-        },
-        {} as Record<string, string[]>
-      )
-
-    return Object.keys(deferredProps).length ? { deferredProps } : {}
-  }
-
-  /**
-   * Resolve the props that should be merged
-   */
-  #resolveMergeProps(pageProps?: PageProps) {
-    const inertiaResetHeader = this.ctx.request.header(InertiaHeaders.Reset) || ''
-    const resetProps = new Set(inertiaResetHeader.split(',').filter(Boolean))
-
-    const mergeProps = Object.entries(pageProps || {})
-      .filter(([_, value]) => value instanceof MergeableProp && value.shouldMerge)
-      .map(([key]) => key)
-      .filter((key) => !resetProps.has(key))
-
-    return mergeProps.length ? { mergeProps } : {}
-  }
-
-  /**
-   * Build the page object that will be returned to the client
+   * Resolve the root view template
    *
-   * See https://inertiajs.com/the-protocol#the-page-object
-   */
-  async #buildPageObject<TPageProps extends PageProps>(
-    component: string,
-    pageProps?: TPageProps
-  ): Promise<PageObject<TPageProps>> {
-    const propsToResolve = this.#pickPropsToResolve(component, {
-      ...this.#sharedData,
-      ...pageProps,
-    })
-
-    return {
-      component,
-      url: this.ctx.request.url(true),
-      version: this.config.versionCache.getVersion(),
-      props: await this.#resolvePageProps(propsToResolve),
-      clearHistory: this.#shouldClearHistory,
-      encryptHistory: this.#shouldEncryptHistory,
-      ...this.#resolveMergeProps(pageProps),
-      ...this.#resolveDeferredProps(component, pageProps),
-    }
-  }
-
-  /**
-   * If the page should be rendered on the server or not
-   *
-   * The ssr.pages config can be a list of pages or a function that returns a boolean
-   */
-  async #shouldRenderOnServer(component: string) {
-    const isSsrEnabled = this.config.ssr.enabled
-    if (!isSsrEnabled) return false
-
-    let isSsrEnabledForPage = false
-    if (typeof this.config.ssr.pages === 'function') {
-      isSsrEnabledForPage = await this.config.ssr.pages(this.ctx, component)
-    } else if (this.config.ssr.pages) {
-      isSsrEnabledForPage = this.config.ssr.pages?.includes(component)
-    } else {
-      isSsrEnabledForPage = true
-    }
-
-    return isSsrEnabledForPage
-  }
-
-  /**
-   * Resolve the root view
+   * Handles both static strings and dynamic functions for the root view.
    */
   #resolveRootView() {
     return typeof this.config.rootView === 'function'
@@ -259,131 +192,345 @@ export class Inertia {
   }
 
   /**
-   * Render the page on the server
+   * Constructs and serializes the page props for a given component
+   *
+   * Handles both full page loads and partial requests with prop filtering.
+   *
+   * @param component - The component name being rendered
+   * @param requestInfo - Information about the current request
+   * @param pageProps - Raw page props to be processed
    */
-  async #renderOnServer(pageObject: PageObject, viewProps?: Record<string, any>) {
-    const { head, body } = await this.#serverRenderer.render(pageObject)
+  #buildPageProps(component: string, requestInfo: RequestInfo, pageProps: PageProps) {
+    const finalProps = { ...this.#sharedState, ...pageProps }
+    if (requestInfo.partialComponent === component) {
+      const only = requestInfo.onlyProps
+      const except = requestInfo.exceptProps ?? []
+      const cherryPickProps = Object.keys(finalProps).filter((propName) => {
+        if (only) {
+          return only.includes(propName) && !except.includes(propName)
+        }
+        return !except.includes(propName)
+      })
 
-    return this.ctx.view.render(this.#resolveRootView(), {
-      ...viewProps,
-      page: { ssrHead: head, ssrBody: body, ...pageObject },
-    })
-  }
+      debug('building props for a partial reload %O', requestInfo)
+      debug('cherry picking props %s', cherryPickProps)
 
-  /**
-   * Share data for the current request. This method performs
-   * a shallow merge with the existing data
-   */
-  share(data: Record<string, Data>) {
-    this.#sharedData = { ...this.#sharedData, ...data }
-  }
-
-  /**
-   * Render a page using Inertia
-   */
-  async render<
-    TPageProps extends Record<string, any> = {},
-    TViewProps extends Record<string, any> = {},
-  >(
-    component: string,
-    pageProps?: TPageProps,
-    viewProps?: TViewProps
-  ): Promise<string | PageObject<TPageProps>> {
-    const pageObject = await this.#buildPageObject(component, pageProps)
-    const isInertiaRequest = !!this.ctx.request.header(InertiaHeaders.Inertia)
-
-    if (!isInertiaRequest) {
-      const shouldRenderOnServer = await this.#shouldRenderOnServer(component)
-      if (shouldRenderOnServer) return this.#renderOnServer(pageObject, viewProps)
-
-      return this.ctx.view.render(this.#resolveRootView(), { ...viewProps, page: pageObject })
+      return buildPartialRequestProps(finalProps, cherryPickProps)
     }
 
+    debug('building props for a standard visit %O', requestInfo)
+    return buildStandardVisitProps(finalProps)
+  }
+
+  /**
+   * Handle Inertia request by setting headers and returning page object
+   *
+   * @param pageObject - The page object to return
+   */
+  #handleInertiaRequest<Page extends keyof Pages & string>(
+    pageObject: PageObject<Pages[Page]>
+  ): PageObject<Pages[Page]> {
     this.ctx.response.header(InertiaHeaders.Inertia, 'true')
     return pageObject
   }
 
   /**
-   * Clear history state.
+   * Render page with server-side rendering
    *
-   * See https://v2.inertiajs.com/history-encryption#clearing-history
+   * @param pageObject - The page object to render
+   * @param viewProps - Additional props to pass to the root view template
+   */
+  async #renderWithSSR<Page extends keyof Pages & string>(
+    pageObject: PageObject<Pages[Page]>,
+    viewProps?: Record<string, any>
+  ): Promise<string> {
+    if (!this.#serverRenderer) {
+      throw new Error('Cannot server render pages without a server renderer')
+    }
+
+    debug('server-side rendering %O', pageObject)
+    const { head, body } = await this.#serverRenderer.render(pageObject)
+    return this.ctx.view.render(this.#resolveRootView(), {
+      page: { ssrHead: head, ssrBody: body, ...pageObject },
+      ...viewProps,
+    })
+  }
+
+  /**
+   * Render page with client-side rendering only
+   *
+   * @param pageObject - The page object to render
+   * @param viewProps - Additional props to pass to the root view template
+   */
+  async #renderClientSide<Page extends keyof Pages & string>(
+    pageObject: PageObject<Pages[Page]>,
+    viewProps?: Record<string, any>
+  ): Promise<string> {
+    debug('rendering shell for SPA %O', pageObject)
+    return this.ctx.view.render(this.#resolveRootView(), { page: pageObject, ...viewProps })
+  }
+
+  /**
+   * Extract Inertia-specific information from request headers
+   *
+   * Parses various Inertia headers to determine request type and props filtering.
+   *
+   * @example
+   * ```js
+   * const info = inertia.requestInfo()
+   * if (info.isInertiaRequest) {
+   *   // Handle as Inertia request
+   * }
+   * ```
+   */
+  requestInfo(reCompute?: boolean): RequestInfo {
+    if (reCompute) {
+      this.#cachedRequestInfo = undefined
+    }
+
+    this.#cachedRequestInfo = this.#cachedRequestInfo ?? {
+      version: this.ctx.request.header(InertiaHeaders.Version),
+      isInertiaRequest: !!this.ctx.request.header(InertiaHeaders.Inertia),
+      isPartialRequest: !!this.ctx.request.header(InertiaHeaders.PartialComponent),
+      partialComponent: this.ctx.request.header(InertiaHeaders.PartialComponent),
+      onlyProps: this.ctx.request.header(InertiaHeaders.PartialOnly)?.split(','),
+      exceptProps: this.ctx.request.header(InertiaHeaders.PartialExcept)?.split(','),
+      resetProps: this.ctx.request.header(InertiaHeaders.Reset)?.split(','),
+      errorBag: this.ctx.request.header(InertiaHeaders.ErrorBag),
+    }
+
+    return this.#cachedRequestInfo
+  }
+
+  /**
+   * Compute and cache the assets version
+   *
+   * Uses Vite manifest hash when available, otherwise defaults to '1'.
+   */
+  getVersion() {
+    if (this.#cachedVersion) {
+      return this.#cachedVersion
+    }
+
+    if (this.#vite?.hasManifestFile) {
+      this.#cachedVersion = createHash('md5')
+        .update(JSON.stringify(this.#vite.manifest))
+        .digest('hex')
+    } else {
+      this.#cachedVersion = '1'
+    }
+
+    return this.#cachedVersion
+  }
+
+  /**
+   * Determine if server-side rendering is enabled for a specific component
+   *
+   * Checks global SSR settings and component-specific configuration.
+   *
+   * @param component - The component name to check
+   *
+   * @example
+   * ```js
+   * const shouldSSR = await inertia.ssrEnabled('UserProfile')
+   * if (shouldSSR) {
+   *   // Render on server
+   * }
+   * ```
+   */
+  async ssrEnabled<Page extends keyof Pages & string>(component: Page): Promise<boolean> {
+    if (!this.config.ssr.enabled) {
+      return false
+    }
+
+    if (typeof this.config.ssr.pages === 'function') {
+      return this.config.ssr.pages(this.ctx, component)
+    }
+
+    if (this.config.ssr.pages) {
+      return this.config.ssr.pages?.includes(component)
+    }
+
+    return true
+  }
+
+  /**
+   * Share props across all pages
+   *
+   * Merges the provided props with existing shared state, making them available
+   * to all pages rendered by this Inertia instance. Shared props are included
+   * in every page render alongside page-specific props.
+   *
+   * @param sharedState - Props to share across all pages
+   *
+   * @example
+   * ```js
+   * // Share user data across all pages
+   * inertia.share({
+   *   user: getCurrentUser(),
+   *   flash: getFlashMessages()
+   * })
+   *
+   * // Chain multiple shares
+   * inertia
+   *   .share({ currentUser: user })
+   *   .share({ permissions: userPermissions })
+   * ```
+   */
+  share(sharedState: PageProps): this {
+    this.#sharedState = { ...this.#sharedState, ...sharedState }
+    return this
+  }
+
+  /**
+   * Build a page object with processed props and metadata
+   *
+   * Creates the complete page object that will be sent to the client or used for SSR.
+   *
+   * @param page - The page component name
+   * @param pageProps - Props to pass to the page component
+   *
+   * @example
+   * ```js
+   * const pageObject = await inertia.page('Dashboard', {
+   *   user: { name: 'John' },
+   *   posts: defer(() => getPosts())
+   * })
+   * ```
+   */
+  async page<Page extends keyof Pages & string>(
+    page: Page,
+    pageProps: AsPageProps<Pages[Page]>
+  ): Promise<PageObject<Pages[Page]>> {
+    const requestInfo = this.requestInfo()
+    const { props, mergeProps, deferredProps, deepMergeProps } = await this.#buildPageProps(
+      page,
+      requestInfo,
+      pageProps
+    )
+
+    return {
+      component: page,
+      url: this.ctx.request.url(true),
+      version: this.getVersion(),
+      clearHistory: this.#shouldClearHistory,
+      encryptHistory: this.#shouldEncryptHistory,
+      props: props as Pages[Page],
+      deferredProps,
+      mergeProps,
+      deepMergeProps,
+    } satisfies PageObject<Pages[Page]>
+  }
+
+  /**
+   * Render a page using Inertia
+   *
+   * This method handles three distinct rendering scenarios:
+   * 1. Inertia requests - Returns JSON page object for client-side navigation
+   * 2. Initial page loads with SSR - Returns HTML with server-rendered content
+   * 3. Initial page loads without SSR - Returns HTML for client-side hydration
+   *
+   * @param page - The page component name to render
+   * @param pageProps - Props to pass to the page component
+   * @param viewProps - Additional props to pass to the root view template
+   *
+   * @returns PageObject for Inertia requests, HTML string for initial page loads
+   *
+   * @example
+   * ```js
+   * // For Inertia requests, returns PageObject
+   * const result = await inertia.render('Profile', {
+   *   user: getCurrentUser(),
+   *   posts: defer(() => getUserPosts())
+   * })
+   *
+   * // For initial page loads, returns HTML string
+   * const html = await inertia.render('Home', { welcome: 'Hello World' })
+   * ```
+   */
+  async render<Page extends keyof Pages & string>(
+    page: Page,
+    pageProps: AsPageProps<Pages[Page]>,
+    viewProps?: Record<string, any>
+  ): Promise<string | PageObject<Pages[Page]>> {
+    const requestInfo = this.requestInfo()
+    const pageObject = await this.page(page, pageProps)
+
+    /**
+     * Handle Inertia AJAX requests - return JSON page object
+     */
+    const isInertiaRequest = requestInfo.isInertiaRequest
+    if (isInertiaRequest) {
+      return this.#handleInertiaRequest(pageObject)
+    }
+
+    /**
+     * Handle initial page loads - determine rendering strategy
+     */
+    const shouldUseSSR = await this.ssrEnabled(page)
+    if (shouldUseSSR) {
+      return this.#renderWithSSR(pageObject, viewProps)
+    }
+
+    /**
+     * Fallback to client-side rendering
+     */
+    return this.#renderClientSide(pageObject, viewProps)
+  }
+
+  /**
+   * Clear the browser history on the next navigation
+   *
+   * Instructs the client to clear the browser history stack when navigating.
+   *
+   * @example
+   * ```js
+   * inertia.clearHistory()
+   * return inertia.render('Dashboard', props)
+   * ```
    */
   clearHistory() {
     this.#shouldClearHistory = true
   }
 
   /**
-   * Encrypt history
+   * Control whether browser history should be encrypted
    *
-   * See https://v2.inertiajs.com/history-encryption
+   * Enables or disables encryption of sensitive data in browser history.
+   *
+   * @param encrypt - Whether to encrypt history (defaults to true)
+   *
+   * @example
+   * ```js
+   * // Enable encryption for sensitive pages
+   * inertia.encryptHistory(true)
+   *
+   * // Disable encryption for public pages
+   * inertia.encryptHistory(false)
+   * ```
    */
   encryptHistory(encrypt = true) {
     this.#shouldEncryptHistory = encrypt
   }
 
   /**
-   * Create a lazy prop
+   * Redirect to a different location
    *
-   * Lazy props are never resolved on first visit, but only when the client
-   * request a partial reload explicitely with this value.
+   * Sets the appropriate headers to redirect the client to a new URL.
+   * Uses a 409 status code which Inertia.js interprets as a redirect instruction.
    *
-   * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
+   * @param url - The URL to redirect to
    *
-   * @deprecated use `optional` instead
+   * @example
+   * ```js
+   * // Redirect after login
+   * inertia.location('/dashboard')
+   *
+   * // Redirect with full URL
+   * inertia.location('https://example.com/external')
+   * ```
    */
-  lazy<T>(callback: () => AsyncOrSync<T>) {
-    return new OptionalProp(callback)
-  }
-
-  /**
-   * Create an optional prop
-   *
-   * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
-   */
-  optional<T>(callback: () => AsyncOrSync<T>) {
-    return new OptionalProp(callback)
-  }
-
-  /**
-   * Create a mergeable prop
-   *
-   * See https://v2.inertiajs.com/merging-props
-   */
-  merge<T>(callback: () => AsyncOrSync<T>) {
-    return new MergeProp(callback)
-  }
-
-  /**
-   * Create an always prop
-   *
-   * Always props are resolved on every request, no matter if it's a partial
-   * request or not.
-   *
-   * See https://inertiajs.com/partial-reloads#lazy-data-evaluation
-   */
-  always<T>(callback: () => AsyncOrSync<T>) {
-    return new AlwaysProp(callback)
-  }
-
-  /**
-   * Create a deferred prop
-   *
-   * Deferred props feature allows you to defer the loading of certain
-   * page data until after the initial page render.
-   *
-   * See https://v2.inertiajs.com/deferred-props
-   */
-  defer<T>(callback: () => AsyncOrSync<T>, group = 'default') {
-    return new DeferProp(callback, group)
-  }
-
-  /**
-   * This method can be used to redirect the user to an external website
-   * or even a non-inertia route of your application.
-   *
-   * See https://inertiajs.com/redirects#external-redirects
-   */
-  async location(url: string) {
+  location(url: string) {
     this.ctx.response.header(InertiaHeaders.Location, url)
     this.ctx.response.status(409)
   }

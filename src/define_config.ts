@@ -7,41 +7,50 @@
  * file that was distributed with this source code.
  */
 
-import string from '@poppinss/utils/string'
-import { configProvider } from '@adonisjs/core'
-import type { ConfigProvider } from '@adonisjs/core/types'
-
-import { VersionCache } from './version_cache.js'
-import { FilesDetector } from './files_detector.js'
-import type { InertiaConfig, ResolvedConfig, SharedData } from './types.js'
+import lodash from '@poppinss/utils/lodash'
+import type { InertiaConfig, InertiaConfigInput } from './types.js'
 
 /**
- * Define the Inertia configuration
+ * Define the Inertia configuration with default values
+ *
+ * This function merges user-provided configuration with sensible defaults
+ * to create a complete Inertia configuration object.
+ *
+ * @param config - User configuration input to override defaults
+ *
+ * @example
+ * ```js
+ * const config = defineConfig({
+ *   rootView: 'layouts/app',
+ *   ssr: {
+ *     enabled: true,
+ *     bundle: 'build/ssr/ssr.js'
+ *   }
+ * })
+ * ```
+ *
+ * @example
+ * ```js
+ * // Minimal configuration
+ * const config = defineConfig({
+ *   rootView: 'app'
+ * })
+ * ```
  */
-export function defineConfig<T extends SharedData>(
-  config: InertiaConfig<T>
-): ConfigProvider<ResolvedConfig<T>> {
-  return configProvider.create(async (app) => {
-    const detector = new FilesDetector(app)
-    const versionCache = new VersionCache(app.appRoot, config.assetsVersion)
-    await versionCache.computeVersion()
-
-    return {
-      versionCache,
-      rootView: config.rootView ?? 'inertia_layout',
-      sharedData: config.sharedData! || {},
-      history: { encrypt: config.history?.encrypt ?? false },
-      entrypoint: string.toUnixSlash(
-        config.entrypoint ?? (await detector.detectEntrypoint('inertia/app/app.ts'))
-      ),
-      ssr: {
-        enabled: config.ssr?.enabled ?? false,
-        pages: config.ssr?.pages,
-        entrypoint:
-          config.ssr?.entrypoint ?? (await detector.detectSsrEntrypoint('inertia/app/ssr.ts')),
-
-        bundle: config.ssr?.bundle ?? (await detector.detectSsrBundle('ssr/ssr.js')),
+export function defineConfig(config: InertiaConfigInput): InertiaConfig {
+  return lodash.merge(
+    {
+      rootView: 'inertia_layout',
+      entrypoint: 'inertia/app/app.ts',
+      history: {
+        encrypt: false,
       },
-    }
-  })
+      ssr: {
+        enabled: false,
+        bundle: 'ssr/ssr.js',
+        entrypoint: 'inertia/app/ssr.ts',
+      },
+    },
+    config
+  )
 }

@@ -1,0 +1,2023 @@
+/*
+ * @adonisjs/inertia
+ *
+ * (c) AdonisJS
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+import { test } from '@japa/runner'
+import { BaseTransformer } from '@adonisjs/core/transformers'
+
+import { always, deepMerge, defer, merge, optional } from '../src/props.ts'
+import { InertiaFactory } from '../factories/inertia_factory.ts'
+
+test.group('Inertia.page', () => {
+  test('build page with component props as it is', async ({ assert }) => {
+    type Props = {
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: {
+        id: 1,
+        timestamps: true,
+      },
+      posts: [{ id: 1, title: 'Hello world' }],
+      paginated: {
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      },
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('partial reload props defined as values', async ({ assert }) => {
+    type Props = {
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['user'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: () => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      },
+      posts: [{ id: 1, title: 'Hello world' }],
+      paginated: {
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      },
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional values', async ({ assert }) => {
+    type Props = {
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: {
+        id: 1,
+        timestamps: true,
+      },
+      posts: [{ id: 1 }],
+      paginated: {
+        data: [{ id: 1 }],
+        total: 10,
+      },
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional props', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      posts: [{ id: 1, title: 'Hello world' }],
+    })
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional props via deferred helper', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: defer(() => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }),
+      posts: [{ id: 1 }],
+      paginated: defer(() => {
+        return {
+          data: [{ id: 1 }],
+        }
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {
+          "default": [
+            "user",
+            "paginated",
+          ],
+        },
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "posts": [
+            {
+              "id": 1,
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('compute deferred props during partial reload', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: defer(() => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }),
+      posts: [{ id: 1 }],
+      paginated: defer(() => {
+        return {
+          data: [{ id: 1 }],
+        }
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+              },
+            ],
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional props via optional helper', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: optional(() => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }),
+      posts: [{ id: 1 }],
+      paginated: optional(() => {
+        return {
+          data: [{ id: 1 }],
+        }
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "posts": [
+            {
+              "id": 1,
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('compute optional props via optional helper during partial reload', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated', 'user'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: optional(() => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }),
+      posts: [{ id: 1 }],
+      paginated: optional(() => {
+        return {
+          data: [{ id: 1 }],
+        }
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+              },
+            ],
+          },
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with required and optional props via always helper', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: always({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: always([{ id: 1, title: 'Hello world' }]),
+      paginated: always({
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('always include props computed using always helper during partial reload', async ({
+    assert,
+  }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: always({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: always([{ id: 1, title: 'Hello world' }]),
+      paginated: always({
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('allow defining required and optional props via mergeable helper', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: merge({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: merge([{ id: 1, title: 'Hello world' }]),
+      paginated: merge({
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [
+          "user",
+          "posts",
+          "paginated",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('allow defining required and optional props via deep merge helper', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: deepMerge({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: merge([{ id: 1, title: 'Hello world' }]),
+      paginated: deepMerge({
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [
+          "user",
+          "paginated",
+        ],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [
+          "posts",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('partial reload mergeable props', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: merge({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: merge([{ id: 1, title: 'Hello world' }]),
+      paginated: merge({
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [
+          "paginated",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('partial reload deep mergeable props', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: deepMerge({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: merge([{ id: 1, title: 'Hello world' }]),
+      paginated: deepMerge({
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [
+          "paginated",
+        ],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional props via mergeable and defer helper', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: defer(() => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }).merge(),
+      posts: merge([{ id: 1, title: 'Hello world' }]),
+      paginated: defer(() => {
+        return {
+          data: [{ id: 1, title: 'Hello world' }],
+          total: 10,
+        }
+      }).merge(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {
+          "default": [
+            "user",
+            "paginated",
+          ],
+        },
+        "encryptHistory": false,
+        "mergeProps": [
+          "user",
+          "posts",
+          "paginated",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('partial reload deferred and mergeable props', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: defer(() => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }).merge(),
+      posts: merge([{ id: 1, title: 'Hello world' }]),
+      paginated: defer(() => {
+        return {
+          data: [{ id: 1, title: 'Hello world' }],
+          total: 10,
+        }
+      }).merge(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [
+          "paginated",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+})
+
+test.group('Inertia.page | Transformers', () => {
+  test('build page with component props using transformers', async ({ assert }) => {
+    type Props = {
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: UserTransformer.transform({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: PostsTransformer.transform([{ id: 1, title: 'Hello world' }]),
+      paginated: PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('partial reload props using transformers', async ({ assert }) => {
+    type Props = {
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['user'])
+      .create()
+
+    const page = await inertia.page('home', {
+      user: UserTransformer.transform({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: PostsTransformer.transform([{ id: 1, title: 'Hello world' }]),
+      paginated: PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional values using transformers', async ({ assert }) => {
+    type Props = {
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title?: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: UserTransformer.transform({
+        id: 1,
+        timestamps: true,
+      }),
+      posts: PostsTransformer.transform([{ id: 1 }]),
+      paginated: PostsTransformer.paginate([{ id: 1 }], {
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional props using transformers', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      posts: PostsTransformer.transform([{ id: 1, title: 'Hello world' }]),
+    })
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional props using transformers via deferred helper', async ({
+    assert,
+  }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title?: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: defer(() => {
+        return UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      }),
+      posts: PostsTransformer.transform([{ id: 1 }]),
+      paginated: defer(() => {
+        return PostsTransformer.paginate([{ id: 1 }], {})
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {
+          "default": [
+            "user",
+            "paginated",
+          ],
+        },
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "posts": [
+            {
+              "id": 1,
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('compute deferred props using transformers during partial reload', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title?: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: defer(() => {
+        return UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      }),
+      posts: PostsTransformer.transform([{ id: 1 }]),
+      paginated: defer(() => {
+        return PostsTransformer.paginate([{ id: 1 }], {})
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+              },
+            ],
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional props using transformers via optional helper', async ({
+    assert,
+  }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title?: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: optional(() => {
+        return UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      }),
+      posts: PostsTransformer.transform([{ id: 1 }]),
+      paginated: optional(() => {
+        return PostsTransformer.paginate([{ id: 1 }], {})
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "posts": [
+            {
+              "id": 1,
+            },
+          ],
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('compute optional props using transformers via optional helper during partial reload', async ({
+    assert,
+  }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated', 'user'])
+      .create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title?: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: optional(() => {
+        return UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      }),
+      posts: PostsTransformer.transform([{ id: 1 }]),
+      paginated: optional(() => {
+        return PostsTransformer.paginate([{ id: 1 }], {})
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+              },
+            ],
+          },
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with required and optional props using transformers via always helper', async ({
+    assert,
+  }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: always(
+        UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      ),
+      posts: always(PostsTransformer.transform([{ id: 1, title: 'Hello world' }])),
+      paginated: always(
+        PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+          total: 10,
+        })
+      ),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('always include props computed using transformers via always helper during partial reload', async ({
+    assert,
+  }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: always(
+        UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      ),
+      posts: always(PostsTransformer.transform([{ id: 1, title: 'Hello world' }])),
+      paginated: always(
+        PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+          total: 10,
+        })
+      ),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('allow defining required and optional props using transformers via mergeable helper', async ({
+    assert,
+  }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: merge(
+        UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      ),
+      posts: merge(PostsTransformer.transform([{ id: 1, title: 'Hello world' }])),
+      paginated: merge(
+        PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+          total: 10,
+        })
+      ),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [
+          "user",
+          "posts",
+          "paginated",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('partial reload mergeable props using transformers', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: merge(
+        UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      ),
+      posts: merge(PostsTransformer.transform([{ id: 1, title: 'Hello world' }])),
+      paginated: merge(
+        PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+          total: 10,
+        })
+      ),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [
+          "paginated",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('build page with optional props using transformers via mergeable and defer helper', async ({
+    assert,
+  }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: defer(() => {
+        return UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      }).merge(),
+      posts: merge(PostsTransformer.transform([{ id: 1, title: 'Hello world' }])),
+      paginated: defer(() => {
+        return PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+          total: 10,
+        })
+      }).merge(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {
+          "default": [
+            "user",
+            "paginated",
+          ],
+        },
+        "encryptHistory": false,
+        "mergeProps": [
+          "user",
+          "posts",
+          "paginated",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+          "posts": [
+            {
+              "id": 1,
+              "title": "Hello world",
+            },
+          ],
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('partial reload deferred and mergeable props using transformers', async ({ assert }) => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated?: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>()
+      .partialReload('home')
+      .only(['paginated'])
+      .create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const page = await inertia.page('home', {
+      user: defer(() => {
+        return UserTransformer.transform({
+          id: 1,
+          timestamps: true,
+        })
+      }).merge(),
+      posts: merge(PostsTransformer.transform([{ id: 1, title: 'Hello world' }])),
+      paginated: defer(() => {
+        return PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+          total: 10,
+        })
+      }).merge(),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [
+          "paginated",
+        ],
+        "props": {
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "total": 10,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+})

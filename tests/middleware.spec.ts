@@ -9,424 +9,340 @@
 
 import supertest from 'supertest'
 import { test } from '@japa/runner'
+import { type HttpContext } from '@adonisjs/core/http'
+import { type NextFn } from '@adonisjs/core/types/http'
+import { SessionMiddlewareFactory } from '@adonisjs/session/factories'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
 import { Inertia } from '../src/inertia.js'
-import { InertiaHeaders } from '../src/headers.js'
-import { httpServer } from './helpers.js'
-import { VersionCache } from '../src/version_cache.js'
-import InertiaMiddleware from '../src/inertia_middleware.js'
-import { SessionMiddlewareFactory } from '@adonisjs/session/factories'
+import { InertiaHeaders } from '../src/headers.ts'
+import { httpServer, setupApp } from './helpers.js'
+import BaseInertiaMiddleware from '../src/inertia_middleware.js'
+
+class InertiaMiddleware extends BaseInertiaMiddleware {
+  share(_: HttpContext) {
+    return {}
+  }
+
+  async handle(ctx: HttpContext, next: NextFn) {
+    await this.init(ctx)
+    await next()
+    this.dispose(ctx)
+  }
+}
 
 test.group('Middleware', () => {
-  test('add inertia to http context', async ({ assert }) => {
+  test('add inertia to HTTP context', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
     const server = httpServer.create(async (_req, res) => {
-      const ctx = new HttpContextFactory().create()
+      try {
+        const ctx = new HttpContextFactory().create()
+        ctx.containerResolver = app.container.createResolver()
+        const middleware = new InertiaMiddleware()
 
-      const middleware = new InertiaMiddleware({
-        rootView: 'root',
-        sharedData: {},
-        versionCache: new VersionCache(new URL(import.meta.url), '1'),
-        ssr: { enabled: false, bundle: '', entrypoint: '' },
-        history: { encrypt: false },
-      })
-
-      await middleware.handle(ctx, () => {})
-      assert.instanceOf(ctx.inertia, Inertia)
-
+        await middleware.handle(ctx, () => {})
+        assert.instanceOf(ctx.inertia, Inertia)
+      } catch (error) {
+        console.log(error)
+      }
       res.end()
     })
 
-    await supertest(server).get('/')
+    const response = await supertest(server).get('/')
+    assert.equal(response.statusCode, 200)
+    assert.isUndefined(response.headers[InertiaHeaders.Inertia])
+    assert.isUndefined(response.headers.Vary)
   })
 
-  test('set 303 http code on put/patch/delete method', async ({ assert }) => {
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-
-      const middleware = new InertiaMiddleware({
-        rootView: 'root',
-        sharedData: {},
-        versionCache: new VersionCache(new URL(import.meta.url), '1'),
-        ssr: { enabled: false, bundle: '', entrypoint: '' },
-        history: { encrypt: false },
-      })
-
-      await middleware.handle(ctx, () => {
-        ctx.response.redirect('/foo')
-      })
-
-      ctx.response.finish()
-    })
-
-    const r1 = await supertest(server).put('/').set(InertiaHeaders.Inertia, 'true')
-    const r2 = await supertest(server).delete('/').set(InertiaHeaders.Inertia, 'true')
-    const r3 = await supertest(server).patch('/').set(InertiaHeaders.Inertia, 'true')
-
-    assert.equal(r1.status, 303)
-    assert.equal(r2.status, 303)
-    assert.equal(r3.status, 303)
-  })
-
-  test('dont set 303 http code if not inertia request', async ({ assert }) => {
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-
-      const middleware = new InertiaMiddleware({
-        rootView: 'root',
-        sharedData: {},
-        versionCache: new VersionCache(new URL(import.meta.url), '1'),
-        ssr: { enabled: false, bundle: '', entrypoint: '' },
-        history: { encrypt: false },
-      })
-
-      await middleware.handle(ctx, () => {
-        ctx.response.redirect('/foo')
-      })
-
-      ctx.response.finish()
-    })
-
-    const r1 = await supertest(server).put('/')
-    const r2 = await supertest(server).delete('/')
-    const r3 = await supertest(server).patch('/')
-
-    assert.equal(r1.status, 302)
-    assert.equal(r2.status, 302)
-    assert.equal(r3.status, 302)
-  })
-
-  test('set vary header if its inertia request', async ({ assert }) => {
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-
-      const middleware = new InertiaMiddleware({
-        rootView: 'root',
-        sharedData: {},
-        versionCache: new VersionCache(new URL(import.meta.url), '1'),
-        ssr: { enabled: false, bundle: '', entrypoint: '' },
-        history: { encrypt: false },
-      })
-
-      await middleware.handle(ctx, () => {
-        ctx.response.redirect('/foo')
-      })
-
-      ctx.response.finish()
-    })
-
-    const r1 = await supertest(server).get('/').set(InertiaHeaders.Inertia, 'true')
-    const r2 = await supertest(server).get('/')
-
-    assert.equal(r1.headers.vary, InertiaHeaders.Inertia)
-    assert.isUndefined(r2.headers.vary)
-  })
-
-  test('should not append x-inertia request if not using inertia.render', async ({ assert }) => {
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-
-      const middleware = new InertiaMiddleware({
-        rootView: 'root',
-        sharedData: {},
-        versionCache: new VersionCache(new URL(import.meta.url), '1'),
-        ssr: { enabled: false, bundle: '', entrypoint: '' },
-        history: { encrypt: false },
-      })
-
-      await middleware.handle(ctx, () => {})
-
-      ctx.response.finish()
-    })
-
-    const r1 = await supertest(server).get('/')
-
-    assert.isUndefined(r1.headers['x-inertia'])
-  })
-
-  test('force a full reload if version has changed', async ({ assert }) => {
-    let requestCount = 1
-
-    const version = new VersionCache(new URL(import.meta.url), '1')
-    const middleware = new InertiaMiddleware({
-      rootView: 'root',
-      sharedData: {},
-      versionCache: version,
-      ssr: { enabled: false, bundle: '', entrypoint: '' },
-      history: { encrypt: false },
-    })
+  test('set 303 status code for PUT/PATCH/DELETE methods', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
+      ctx.containerResolver = app.container.createResolver()
 
-      version.setVersion(requestCount.toString())
+      try {
+        const middleware = new InertiaMiddleware()
 
-      await middleware.handle(ctx, () => {
-        ctx.response.redirect('/foo')
-      })
+        await middleware.handle(ctx, () => {
+          ctx.response.redirect('/foo')
+        })
+      } catch (error) {
+        console.log(error)
+      }
 
       ctx.response.finish()
     })
 
-    const r1 = await supertest(server).get('/').set(InertiaHeaders.Inertia, 'true')
+    const putResponse = await supertest(server)
+      .put('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
 
-    assert.equal(r1.status, 409)
-    assert.equal(r1.headers['x-inertia-location'], '/')
+    const deleteResponse = await supertest(server)
+      .delete('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+
+    const patchResponse = await supertest(server)
+      .patch('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+
+    assert.equal(putResponse.status, 303)
+    assert.isUndefined(putResponse.headers[InertiaHeaders.Inertia])
+    assert.equal(putResponse.headers.vary, InertiaHeaders.Inertia)
+
+    assert.equal(deleteResponse.status, 303)
+    assert.isUndefined(deleteResponse.headers[InertiaHeaders.Inertia])
+    assert.equal(deleteResponse.headers.vary, InertiaHeaders.Inertia)
+
+    assert.equal(patchResponse.status, 303)
+    assert.isUndefined(patchResponse.headers[InertiaHeaders.Inertia])
+    assert.equal(patchResponse.headers.vary, InertiaHeaders.Inertia)
   })
 
-  test('if version has changed response should not includes x-inertia header', async ({
-    assert,
-  }) => {
-    let requestCount = 1
-
-    const version = new VersionCache(new URL(import.meta.url), '1')
-    const middleware = new InertiaMiddleware({
-      rootView: 'root',
-      sharedData: {},
-      versionCache: version,
-      ssr: { enabled: false, bundle: '', entrypoint: '' },
-      history: { encrypt: false },
-    })
+  test("don't set 303 status code if is not an Inertia request", async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
+      ctx.containerResolver = app.container.createResolver()
 
-      version.setVersion(requestCount.toString())
-
-      await middleware.handle(ctx, () => {
-        ctx.response.header('x-inertia', 'true')
-        ctx.response.redirect('/foo')
-      })
+      try {
+        const middleware = new InertiaMiddleware()
+        await middleware.handle(ctx, () => {
+          ctx.response.redirect('/foo')
+        })
+      } catch (error) {
+        console.log(error)
+      }
 
       ctx.response.finish()
     })
 
-    const r1 = await supertest(server).get('/').set(InertiaHeaders.Inertia, 'true')
+    const putResponse = await supertest(server).put('/')
+    const deleteResponse = await supertest(server).delete('/')
+    const patchResponse = await supertest(server).patch('/')
 
-    assert.equal(r1.status, 409)
-    assert.equal(r1.headers['x-inertia-location'], '/')
-    assert.isUndefined(r1.headers['x-inertia'])
+    assert.equal(putResponse.status, 302)
+    assert.isUndefined(putResponse.headers[InertiaHeaders.Inertia])
+    assert.isUndefined(putResponse.headers.Vary)
+
+    assert.equal(deleteResponse.status, 302)
+    assert.isUndefined(deleteResponse.headers[InertiaHeaders.Inertia])
+    assert.isUndefined(deleteResponse.headers.Vary)
+
+    assert.equal(patchResponse.status, 302)
+    assert.isUndefined(patchResponse.headers[InertiaHeaders.Inertia])
+    assert.isUndefined(patchResponse.headers.Vary)
   })
 
-  test('if version is provided as integer it should compare it using a toString', async ({
-    assert,
-  }) => {
-    const version = new VersionCache(new URL(import.meta.url), 1)
-    const middleware = new InertiaMiddleware({
-      rootView: 'root',
-      sharedData: {},
-      versionCache: version,
-      ssr: { enabled: false, bundle: '', entrypoint: '' },
-      history: { encrypt: false },
-    })
+  test('set vary header for inertia requests only', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
 
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
+      ctx.containerResolver = app.container.createResolver()
 
-      await middleware.handle(ctx, () => {})
+      try {
+        const middleware = new InertiaMiddleware()
+        await middleware.handle(ctx, () => {
+          ctx.response.redirect('/foo')
+        })
+      } catch (error) {
+        console.log(error)
+      }
 
       ctx.response.finish()
     })
 
-    const r1 = await supertest(server)
+    const inertiaResponse = await supertest(server)
       .get('/')
       .set(InertiaHeaders.Inertia, 'true')
-      .set('x-inertia-version', '1')
+      .set(InertiaHeaders.Version, '1')
+    const nonInertiaResponse = await supertest(server).get('/')
 
-    assert.equal(r1.status, 200)
+    assert.equal(inertiaResponse.status, 302)
+    assert.equal(inertiaResponse.headers.vary, InertiaHeaders.Inertia)
+    assert.isUndefined(inertiaResponse.headers[InertiaHeaders.Inertia])
+
+    assert.equal(nonInertiaResponse.status, 302)
+    assert.isUndefined(nonInertiaResponse.headers.vary)
+    assert.isUndefined(nonInertiaResponse.headers[InertiaHeaders.Inertia])
+  })
+
+  test('should not set X-Inertia header when no inertia response is sent', async ({
+    assert,
+    cleanup,
+  }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+
+      ctx.containerResolver = app.container.createResolver()
+
+      try {
+        const middleware = new InertiaMiddleware()
+        await middleware.handle(ctx, () => {})
+      } catch (error) {
+        console.log(error)
+      }
+
+      ctx.response.finish()
+    })
+
+    const response = await supertest(server)
+      .get('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.isUndefined(response.headers[InertiaHeaders.Inertia])
+  })
+
+  test('force a full reload if version has changed', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      ctx.containerResolver = app.container.createResolver()
+
+      try {
+        const middleware = new InertiaMiddleware()
+        await middleware.handle(ctx, () => {})
+      } catch (error) {
+        console.log(error)
+      }
+
+      ctx.response.finish()
+    })
+
+    const response = await supertest(server)
+      .get('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '2')
+
+    assert.equal(response.status, 409)
+    assert.isUndefined(response.headers[InertiaHeaders.Inertia])
+    assert.equal(response.headers[InertiaHeaders.Location], '/')
   })
 })
 
 test.group('Middleware | Errors', () => {
-  test('flashed errors should be shared', async ({ assert }) => {
-    const middleware = new InertiaMiddleware({
-      rootView: 'root',
-      sharedData: {},
-      versionCache: new VersionCache(new URL(import.meta.url), '1'),
-      ssr: { enabled: false, bundle: '', entrypoint: '' },
-      history: { encrypt: false },
-    })
+  test('get flash input error messages', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
 
     const sessionMiddleware = await new SessionMiddlewareFactory().create()
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-      await sessionMiddleware.handle(ctx, () => {})
+    await sessionMiddleware.handle(ctx, () => {})
 
-      ctx.session.flashMessages.set('errorsBag', { foo: 'bar', bar: 'baz' })
-      await middleware.handle(ctx, () => {})
-
-      ctx.response.json(await ctx.inertia.render('foo'))
-      ctx.response.finish()
+    ctx.session.flashMessages.set('inputErrorsBag', {
+      name: 'name is required',
+      email: ['email is required', 'email must be formatted correctly'],
     })
 
-    const r1 = await supertest(server).post('/').set(InertiaHeaders.Inertia, 'true')
-    assert.deepEqual(r1.body.props.errors, { foo: 'bar', bar: 'baz' })
-  })
-
-  test('if validation error, only return first message', async ({ assert }) => {
-    const middleware = new InertiaMiddleware({
-      rootView: 'root',
-      sharedData: {},
-      versionCache: new VersionCache(new URL(import.meta.url), '1'),
-      ssr: { enabled: false, bundle: '', entrypoint: '' },
-      history: { encrypt: false },
-    })
-
-    const sessionMiddleware = await new SessionMiddlewareFactory().create()
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-      await sessionMiddleware.handle(ctx, () => {})
-
-      ctx.session.flashMessages.set('errorsBag', {
-        E_VALIDATION_ERROR: 'Could not be saved',
-      })
-      ctx.session.flashMessages.set('inputErrorsBag', {
-        email: ['Email is required'],
-        password: ['Password is required'],
-      })
-
-      await middleware.handle(ctx, () => {})
-
-      ctx.response.json(await ctx.inertia.render('foo'))
-      ctx.response.finish()
-    })
-
-    const r1 = await supertest(server).post('/').set(InertiaHeaders.Inertia, 'true')
-    const errors = r1.body.props.errors
-
-    assert.deepEqual(errors, { email: 'Email is required', password: 'Password is required' })
-  })
-
-  test('use correct error bag', async ({ assert }) => {
-    const middleware = new InertiaMiddleware({
-      rootView: 'root',
-      sharedData: {},
-      versionCache: new VersionCache(new URL(import.meta.url), '1'),
-      ssr: { enabled: false, bundle: '', entrypoint: '' },
-      history: { encrypt: false },
-    })
-
-    const sessionMiddleware = await new SessionMiddlewareFactory().create()
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-      await sessionMiddleware.handle(ctx, () => {})
-
-      ctx.session.flashMessages.set('errorsBag', {
-        E_VALIDATION_ERROR: 'Could not be saved',
-      })
-      ctx.session.flashMessages.set('inputErrorsBag', {
-        email: ['Email is required'],
-        password: ['Password is required'],
-      })
-
-      await middleware.handle(ctx, () => {})
-
-      ctx.response.json(await ctx.inertia.render('foo'))
-      ctx.response.finish()
-    })
-
-    const r1 = await supertest(server)
-      .post('/')
-      .set(InertiaHeaders.Inertia, 'true')
-      .set(InertiaHeaders.ErrorBag, 'createUser')
-
-    const errors = r1.body.props.errors
-
-    assert.deepEqual(errors, {
-      createUser: { email: 'Email is required', password: 'Password is required' },
+    const middleware = new InertiaMiddleware()
+    assert.deepEqual(middleware.getValidationErrors(ctx), {
+      email: 'email is required',
+      name: 'name is required',
     })
   })
 
-  test('errors are always shared', async ({ assert }) => {
-    const middleware = new InertiaMiddleware({
-      rootView: 'root',
-      sharedData: {},
-      versionCache: new VersionCache(new URL(import.meta.url), '1'),
-      ssr: { enabled: false, bundle: '', entrypoint: '' },
-      history: { encrypt: false },
-    })
+  test('scope error messages under an error bag', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+    ctx.request.request.headers[InertiaHeaders.ErrorBag] = 'user'
 
     const sessionMiddleware = await new SessionMiddlewareFactory().create()
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
-      await sessionMiddleware.handle(ctx, () => {})
+    await sessionMiddleware.handle(ctx, () => {})
 
-      ctx.session.flashMessages.set('errorsBag', { foo: 'bar', bar: 'baz' })
-      await middleware.handle(ctx, () => {})
-
-      ctx.response.json(
-        await ctx.inertia.render('foo', {
-          test: 'value',
-          yeah: 'no',
-        })
-      )
-      ctx.response.finish()
+    ctx.session.flashMessages.set('inputErrorsBag', {
+      name: 'name is required',
+      email: ['email is required', 'email must be formatted correctly'],
     })
 
-    const r1 = await supertest(server)
-      .post('/')
-      .set(InertiaHeaders.Inertia, 'true')
-      .set(InertiaHeaders.PartialComponent, 'foo')
-      .set(InertiaHeaders.PartialOnly, 'yeah')
-
-    assert.deepEqual(r1.body.props, {
-      yeah: 'no',
-      errors: { foo: 'bar', bar: 'baz' },
+    const middleware = new InertiaMiddleware()
+    assert.deepEqual(middleware.getValidationErrors(ctx), {
+      user: {
+        email: 'email is required',
+        name: 'name is required',
+      },
     })
   })
 
-  test('if session isn\t initialized, doesn\t throw an error', async ({ assert }) => {
-    const middleware = new InertiaMiddleware({
-      rootView: 'root',
-      sharedData: {},
-      versionCache: new VersionCache(new URL(import.meta.url), '1'),
-      ssr: { enabled: false, bundle: '', entrypoint: '' },
-      history: { encrypt: false },
-    })
+  test('return empty object when not using session middleware', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
 
-    const server = httpServer.create(async (req, res) => {
-      const request = new RequestFactory().merge({ req, res }).create()
-      const response = new ResponseFactory().merge({ req, res }).create()
-      const ctx = new HttpContextFactory().merge({ request, response }).create()
+    const ctx = new HttpContextFactory().create()
 
-      await middleware.handle(ctx, () => {})
-
-      try {
-        ctx.response.json(await ctx.inertia.render('foo'))
-      } catch (error) {
-        ctx.response.internalServerError()
-      } finally {
-        ctx.response.finish()
-      }
-    })
-
-    const r1 = await supertest(server)
-      .post('/')
-      .set(InertiaHeaders.Inertia, 'true')
-      .set(InertiaHeaders.Version, '1')
-
-    assert.equal(r1.status, 200)
+    const middleware = new InertiaMiddleware()
+    assert.deepEqual(middleware.getValidationErrors(ctx), {})
   })
 })

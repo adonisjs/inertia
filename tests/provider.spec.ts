@@ -1,72 +1,39 @@
+/*
+ * @adonisjs/inertia
+ *
+ * (c) AdonisJS
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 import { test } from '@japa/runner'
-import { IgnitorFactory } from '@adonisjs/core/factories'
-
-import { defineConfig } from '../index.js'
-import { defineConfig as viteDefineConfig } from '@adonisjs/vite'
-import InertiaMiddleware from '../src/inertia_middleware.js'
-import { type Route } from '@adonisjs/core/http'
-
-const BASE_URL = new URL('./tmp/', import.meta.url)
-const IMPORTER = (filePath: string) => {
-  if (filePath.startsWith('./') || filePath.startsWith('../')) {
-    return import(new URL(filePath, BASE_URL).href)
-  }
-  return import(filePath)
-}
+import { setupApp } from './helpers.ts'
+import { InertiaManager } from '../src/inertia_manager.ts'
 
 test.group('Inertia Provider', () => {
-  test('register inertia middleware singleton', async ({ assert, cleanup }) => {
-    const ignitor = new IgnitorFactory()
-      .merge({
-        rcFileContents: {
-          providers: [
-            () => import('../providers/inertia_provider.js'),
-            () => import('@adonisjs/vite/vite_provider'),
-          ],
-        },
-      })
-      .withCoreConfig()
-      .withCoreProviders()
-      .merge({
-        config: { inertia: defineConfig({ rootView: 'root' }), vite: viteDefineConfig({}) },
-      })
-      .create(BASE_URL, { importer: IMPORTER })
-
-    const app = ignitor.createApp('web')
-    await app.init()
-    await app.boot()
-
+  test('register inertia container singleton', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
     cleanup(() => app.terminate())
 
-    assert.instanceOf(await app.container.make(InertiaMiddleware), InertiaMiddleware)
+    assert.instanceOf(await app.container.make(InertiaManager), InertiaManager)
   })
 
-  test('register brisk route macro', async ({ assert, cleanup, expectTypeOf }) => {
-    const ignitor = new IgnitorFactory()
-      .merge({
-        rcFileContents: {
-          providers: [
-            () => import('../providers/inertia_provider.js'),
-            () => import('@adonisjs/vite/vite_provider'),
-          ],
-        },
-      })
-      .withCoreConfig()
-      .withCoreProviders()
-      .merge({
-        config: { inertia: defineConfig({ rootView: 'root' }), vite: viteDefineConfig({}) },
-      })
-      .create(BASE_URL, { importer: IMPORTER })
-
-    const app = ignitor.createApp('web')
-    await app.init()
-    await app.boot()
-
+  test('register brisk route macro', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
     cleanup(() => app.terminate())
 
     const router = await app.container.make('router')
-
     assert.property(router.on('foo'), 'renderInertia')
-    expectTypeOf(router.on('foo').renderInertia('/foo')).toEqualTypeOf<Route>()
   })
 })

@@ -14,7 +14,34 @@ import debug from '../../debug.js'
 import { inertiaHeadTag, inertiaTag } from './tags.js'
 
 /**
- * Register the Inertia tags and globals within Edge
+ * Edge.js plugin that registers Inertia.js tags and global functions
+ *
+ * This plugin adds the @inertia and @inertiaHead tags to Edge templates,
+ * along with global helper functions for rendering Inertia pages.
+ *
+ * @returns Edge plugin function that registers Inertia functionality
+ *
+ * @example
+ * ```js
+ * // Configure in config/edge.ts
+ * import { edgePluginInertia } from '@adonisjs/inertia/plugins/edge'
+ *
+ * edge.use(edgePluginInertia())
+ * ```
+ *
+ * @example
+ * ```edge
+ * {{-- Use in Edge templates --}}
+ * <!DOCTYPE html>
+ * <html>
+ * <head>
+ *   @inertiaHead()
+ * </head>
+ * <body>
+ *   @inertia({ id: 'app', class: 'min-h-screen' })
+ * </body>
+ * </html>
+ * ```
  */
 export const edgePluginInertia: () => PluginFn<undefined> = () => {
   return (edge) => {
@@ -26,7 +53,9 @@ export const edgePluginInertia: () => PluginFn<undefined> = () => {
     edge.global(
       'inertia',
       (page: Record<string, unknown> = {}, attributes: Record<string, any> = {}) => {
-        if (page.ssrBody) return page.ssrBody
+        if (page.ssrBody) {
+          return page.ssrBody
+        }
 
         const className = attributes?.class ? ` class="${attributes.class}"` : ''
         const id = attributes?.id ? ` id="${attributes.id}"` : ' id="app"'

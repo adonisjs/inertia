@@ -9,28 +9,36 @@
 
 import getPort from 'get-port'
 import { test } from '@japa/runner'
-import { AppFactory } from '@adonisjs/core/factories/app'
-import { type ApplicationService } from '@adonisjs/core/types'
+import { type HttpContext } from '@adonisjs/core/http'
+import { type NextFn } from '@adonisjs/core/types/http'
 import { HttpContextFactory, RequestFactory, ResponseFactory } from '@adonisjs/core/factories/http'
 
-import { defineConfig } from '../../index.js'
-import { VersionCache } from '../../src/version_cache.js'
-import InertiaMiddleware from '../../src/inertia_middleware.js'
+import { httpServer, runJapaTest, setupApp } from '../helpers.js'
+import BaseInertiaMiddleware from '../../src/inertia_middleware.js'
 import { InertiaFactory } from '../../factories/inertia_factory.js'
-import { httpServer, runJapaTest } from '../helpers.js'
 
-const app = new AppFactory().create(new URL('./', import.meta.url), () => {}) as ApplicationService
+class InertiaMiddleware extends BaseInertiaMiddleware {
+  share(_: HttpContext) {
+    return {}
+  }
 
-test.group('Japa plugin | Api Client', (group) => {
-  group.setup(async () => {
-    app.useConfig({ inertia: defineConfig({ assetsVersion: '1' }) })
+  async handle(ctx: HttpContext, next: NextFn) {
+    await this.init(ctx)
+    await next()
+    this.dispose(ctx)
+  }
+}
 
-    await app.init()
-    await app.boot()
-  })
-
-  test('withInertia() should send the x-inertia header', async ({ assert }) => {
+test.group('Japa plugin | Api Client', () => {
+  test('withInertia() should set the X-Inertia request header', async ({ assert, cleanup }) => {
     assert.plan(1)
+    const { app } = await setupApp([
+      {
+        file: () => import('../../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
 
     const server = httpServer.create(async (req, res) => {
       assert.deepEqual(req.headers['x-inertia'], 'true')
@@ -46,8 +54,16 @@ test.group('Japa plugin | Api Client', (group) => {
     })
   })
 
-  test('withInertia() should send the x-inertia-version header', async ({ assert }) => {
+  test('withInertia() should set the X-Inertia-Version header', async ({ assert, cleanup }) => {
     assert.plan(1)
+
+    const { app } = await setupApp([
+      {
+        file: () => import('../../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
 
     const server = httpServer.create(async (req, res) => {
       assert.deepEqual(req.headers['x-inertia-version'], '1')
@@ -63,24 +79,35 @@ test.group('Japa plugin | Api Client', (group) => {
     })
   })
 
-  test('assertions should works', async () => {
+  test('assert inertia response', async ({ cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
-      const inertia = await new InertiaFactory().merge({ ctx: ctx }).create()
+      ctx.containerResolver = app.container.createResolver()
 
-      const middleware = new InertiaMiddleware({
-        versionCache: new VersionCache(new URL(import.meta.url), '1'),
-        rootView: 'root',
-        sharedData: {},
-        ssr: { enabled: false, bundle: '', entrypoint: '' },
-        history: { encrypt: false },
-      })
+      const inertia = new InertiaFactory<{
+        'Pages/Home': {}
+      }>()
+        .merge({ ctx: ctx })
+        .create()
 
-      await middleware.handle(ctx, async () => {
-        response.send(await inertia.render('Pages/Home', { username: 'foo', foo: 'bar' }))
-      })
+      const middleware = new InertiaMiddleware()
+      try {
+        await middleware.handle(ctx, async () => {
+          response.send(await inertia.render('Pages/Home', { username: 'foo', foo: 'bar' }))
+        })
+      } catch (error) {
+        console.log(error)
+      }
 
       response.finish()
     })
@@ -90,35 +117,41 @@ test.group('Japa plugin | Api Client', (group) => {
     server.listen(port)
 
     await runJapaTest(app, async ({ client }) => {
-      const r1 = await client.get(url).withInertia()
+      const response = await client.get(url).withInertia()
 
-      r1.assertStatus(200)
-      r1.assertInertiaComponent('Pages/Home')
+      response.assertStatus(200)
+      response
+        .assertInertiaComponent('Pages/Home')
         .assertInertiaProps({ username: 'foo', foo: 'bar' })
         .assertInertiaPropsContains({ foo: 'bar' })
 
-      const r2 = await client.get(url).withInertiaPartialReload('Pages/Home', ['username'])
+      const request = client.get(url)
+      const response1 = await (request.withInertiaPartialReload as any)('Pages/Home', ['username'])
 
-      r2.assertInertiaComponent('Pages/Home')
+      response1
+        .assertInertiaComponent('Pages/Home')
         .assertInertiaProps({ username: 'foo' })
         .assertInertiaPropsContains({ username: 'foo' })
     })
   })
 
-  test('assertions should throws if not valid', async () => {
+  test('throw assertion errors on invalid expectations', async ({ cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
-      const inertia = await new InertiaFactory().merge({ ctx: ctx }).create()
+      ctx.containerResolver = app.container.createResolver()
+      const inertia = new InertiaFactory().merge({ ctx: ctx }).create()
 
-      const middleware = new InertiaMiddleware({
-        versionCache: new VersionCache(new URL(import.meta.url), '1'),
-        rootView: 'root',
-        sharedData: {},
-        ssr: { enabled: false, bundle: '', entrypoint: '' },
-        history: { encrypt: false },
-      })
+      const middleware = new InertiaMiddleware()
 
       await middleware.handle(ctx, async () => {
         response.send(await inertia.render('Pages/Home', { username: 'foo', foo: 'bar' }))
@@ -132,28 +165,31 @@ test.group('Japa plugin | Api Client', (group) => {
     server.listen(port)
 
     await runJapaTest(app, async ({ client, assert }) => {
-      const r1 = await client.get(url).withInertia()
+      const response = await client.get(url).withInertia()
 
-      assert.throws(() => r1.assertInertiaComponent('Bar/Login'))
-      assert.throws(() => r1.assertInertiaProps({ username: 'nopew' }))
-      assert.throws(() => r1.assertInertiaPropsContains({ foo: 'nopew' }))
+      assert.throws(() => response.assertInertiaComponent('Bar/Login'))
+      assert.throws(() => response.assertInertiaProps({ username: 'nopew' }))
+      assert.throws(() => response.assertInertiaPropsContains({ foo: 'nopew' }))
     })
   })
 
-  test('api client properties should contains correct data', async () => {
+  test('api client properties should contain correct data', async ({ cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
     const server = httpServer.create(async (req, res) => {
       const request = new RequestFactory().merge({ req, res }).create()
       const response = new ResponseFactory().merge({ req, res }).create()
       const ctx = new HttpContextFactory().merge({ request, response }).create()
-      const inertia = await new InertiaFactory().merge({ ctx: ctx }).create()
+      ctx.containerResolver = app.container.createResolver()
+      const inertia = new InertiaFactory().merge({ ctx: ctx }).create()
 
-      const middleware = new InertiaMiddleware({
-        versionCache: new VersionCache(new URL(import.meta.url), '1'),
-        rootView: 'root',
-        sharedData: {},
-        ssr: { enabled: false, bundle: '', entrypoint: '' },
-        history: { encrypt: false },
-      })
+      const middleware = new InertiaMiddleware()
 
       await middleware.handle(ctx, async () => {
         response.send(await inertia.render('Pages/Home', { username: 'foo', foo: 'bar' }))
@@ -167,10 +203,10 @@ test.group('Japa plugin | Api Client', (group) => {
     server.listen(port)
 
     await runJapaTest(app, async ({ client, assert }) => {
-      const r1 = await client.get(url).withInertia()
+      const response = await client.get(url).withInertia()
 
-      assert.deepEqual(r1.inertiaComponent, 'Pages/Home')
-      assert.deepEqual(r1.inertiaProps, { username: 'foo', foo: 'bar' })
+      assert.deepEqual(response.inertiaComponent, 'Pages/Home')
+      assert.deepEqual(response.inertiaProps, { username: 'foo', foo: 'bar' })
     })
   })
 })

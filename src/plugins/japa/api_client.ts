@@ -7,91 +7,214 @@
  * file that was distributed with this source code.
  */
 
-import { configProvider } from '@adonisjs/core'
 import type { PluginFn } from '@japa/runner/types'
-import { RuntimeException } from '@poppinss/utils/exception'
 import { ApiRequest, ApiResponse } from '@japa/api-client'
 import type { ApplicationService } from '@adonisjs/core/types'
 
-import type { PageProps, ResolvedConfig } from '../../types.js'
+import { InertiaHeaders } from '../../headers.ts'
+import type { PageProps, InertiaPages, InertiaConfig } from '../../types.js'
 
 declare module '@japa/api-client' {
+  /**
+   * Extended ApiRequest interface with Inertia.js specific methods
+   *
+   * Adds methods to configure requests for testing Inertia applications,
+   * including setting required headers and configuring partial reloads.
+   */
   export interface ApiRequest {
     /**
-     * Set `X-Inertia` header on the request
+     * Set `X-Inertia` header on the request to mark it as an Inertia request
+     *
+     * This method configures the request to be treated as an Inertia AJAX request
+     * by setting the required headers that Inertia.js uses for identification.
+     *
+     * @returns The ApiRequest instance for method chaining
+     *
+     * @example
+     * ```js
+     * const response = await client
+     *   .get('/dashboard')
+     *   .withInertia()
+     * ```
      */
-    withInertia(): this
+    withInertia(this: ApiRequest): this
 
     /**
-     * Set `X-Inertia-Partial-Data` and `X-Inertia-Partial-Component` headers on the request
+     * Set headers for partial data requests (partial reloads)
+     *
+     * Configures the request to only fetch specific props from a component,
+     * simulating Inertia's partial reload functionality in tests.
+     *
+     * @param component - The component name to partially reload
+     * @param props - Array of prop names to include in the partial request
+     * @returns The ApiRequest instance for method chaining
+     *
+     * @example
+     * ```js
+     * const response = await client
+     *   .get('/users')
+     *   .withInertiaPartialReload('Users/Index', ['users', 'pagination'])
+     * ```
      */
-    withInertiaPartialReload(component: string, data: string[]): this
+    withInertiaPartialReload<K extends keyof InertiaPages>(
+      this: ApiRequest,
+      component: K,
+      props: (keyof InertiaPages[K])[]
+    ): this
   }
 
+  /**
+   * Extended ApiResponse interface with Inertia.js specific properties and assertions
+   *
+   * Provides getters for accessing Inertia response data and assertion methods
+   * for validating Inertia responses in tests.
+   */
   export interface ApiResponse {
     /**
-     * The inertia component
+     * The name of the Inertia component returned in the response
+     *
+     * @example
+     * ```js
+     * console.log(response.inertiaComponent) // 'Users/Index'
+     * ```
      */
-    inertiaComponent?: string
+    inertiaComponent?: keyof InertiaPages
 
     /**
-     * The inertia response props
+     * The props data returned in the Inertia response
+     *
+     * @example
+     * ```js
+     * console.log(response.inertiaProps.users) // [{ id: 1, name: 'John' }]
+     * ```
      */
     inertiaProps: Record<string, any>
 
     /**
-     * Assert component name of inertia response
+     * Assert that the response contains the expected Inertia component
+     *
+     * @param component - Expected component name
+     * @returns The ApiResponse instance for method chaining
+     *
+     * @throws AssertionError when component names don't match
+     *
+     * @example
+     * ```js
+     * response.assertInertiaComponent('Users/Index')
+     * ```
      */
-    assertInertiaComponent(component: string): this
+    assertInertiaComponent(this: ApiResponse, component: string): this
 
     /**
-     * Assert props to be exactly the same as the given props
+     * Assert that the response props exactly match the provided props
+     *
+     * @param props - Expected props object to match exactly
+     * @returns The ApiResponse instance for method chaining
+     *
+     * @throws AssertionError when props don't match exactly
+     *
+     * @example
+     * ```js
+     * response.assertInertiaProps({
+     *   users: [{ id: 1, name: 'John' }],
+     *   total: 1
+     * })
+     * ```
      */
-    assertInertiaProps(props: PageProps): this
+    assertInertiaProps(this: ApiResponse, props: PageProps): this
 
     /**
-     * Assert inertia props contains a subset of the given props
+     * Assert that the response props contain a subset of the provided props
+     *
+     * @param props - Expected subset of props to be present
+     * @returns The ApiResponse instance for method chaining
+     *
+     * @throws AssertionError when expected props are not found
+     *
+     * @example
+     * ```js
+     * response.assertInertiaPropsContains({
+     *   user: { name: 'John' }
+     * })
+     * ```
      */
-    assertInertiaPropsContains(props: PageProps): this
+    assertInertiaPropsContains(this: ApiResponse, props: PageProps): this
   }
 }
 
 /**
  * Ensure the response is an inertia response, otherwise throw an error
+ *
+ * @throws Error when the response is not an Inertia response
  */
 function ensureIsInertiaResponse(this: ApiResponse) {
   if (!this.header('x-inertia')) {
     throw new Error(
-      'Response is not an Inertia response. Make sure to call `withInertia()` on the request'
+      'Not an Inertia response. Make sure to use "withInertia()" method when making the request'
     )
   }
 }
 
+function ensureHasAssert(assertLib: unknown): asserts assertLib {
+  if (!assertLib) {
+    throw new Error(
+      'Response assertions are not available. Make sure to install the @japa/assert plugin'
+    )
+  }
+}
+
+/**
+ * Japa plugin that extends the API client with Inertia.js testing capabilities
+ *
+ * This plugin adds methods to ApiRequest and ApiResponse classes to support
+ * testing Inertia applications, including partial reloads and response assertions.
+ *
+ * @param app - The AdonisJS application service instance
+ * @returns Japa plugin function
+ *
+ * @example
+ * ```js
+ * // Configure in tests/bootstrap.ts
+ * import { inertiaApiClient } from '@adonisjs/inertia/plugins/japa/api_client'
+ *
+ * export const plugins: Config['plugins'] = [
+ *   assert(),
+ *   apiClient(app),
+ *   inertiaApiClient(app)
+ * ]
+ * ```
+ *
+ * @example
+ * ```js
+ * // Use in tests
+ * test('renders dashboard page', async ({ client }) => {
+ *   const response = await client
+ *     .get('/dashboard')
+ *     .withInertia()
+ *
+ *   response.assertInertiaComponent('Dashboard')
+ *   response.assertInertiaPropsContains({
+ *     user: { name: 'John' }
+ *   })
+ * })
+ * ```
+ */
 export function inertiaApiClient(app: ApplicationService): PluginFn {
   return async () => {
-    const inertiaConfigProvider = app.config.get<any>('inertia')
-    const config = await configProvider.resolve<ResolvedConfig>(app, inertiaConfigProvider)
-    if (!config) {
-      throw new RuntimeException(
-        'Invalid "config/inertia.ts" file. Make sure you are using the "defineConfig" method'
-      )
-    }
+    const inertiaConfig = app.config.get<InertiaConfig>('inertia')
 
-    ApiRequest.macro('withInertia', function (this: ApiRequest) {
-      this.header('x-inertia', 'true')
-      this.header('x-inertia-version', config.versionCache.getVersion().toString())
+    ApiRequest.macro('withInertia', function () {
+      this.header(InertiaHeaders.Inertia, 'true')
+      this.header(InertiaHeaders.Version, String(inertiaConfig.assetsVersion ?? '1'))
       return this
     })
 
-    ApiRequest.macro(
-      'withInertiaPartialReload',
-      function (this: ApiRequest, component: string, data: string[]) {
-        this.withInertia()
-        this.header('X-Inertia-Partial-Data', data.join(','))
-        this.header('X-Inertia-Partial-Component', component)
-        return this
-      }
-    )
+    ApiRequest.macro('withInertiaPartialReload', function (component, data) {
+      this.withInertia()
+      this.header(InertiaHeaders.PartialComponent, component)
+      this.header(InertiaHeaders.PartialOnly, data.join(','))
+      return this
+    })
 
     /**
      * Response getters
@@ -109,39 +232,25 @@ export function inertiaApiClient(app: ApplicationService): PluginFn {
     /**
      * Response assertions
      */
-    ApiResponse.macro('assertInertiaComponent', function (this: ApiResponse, component: string) {
+    ApiResponse.macro('assertInertiaComponent', function (component) {
       ensureIsInertiaResponse.call(this)
-
-      this.assert!.deepEqual(this.body().component, component)
+      ensureHasAssert(this.assert)
+      this.assert.equal(this.body().component, component)
       return this
     })
 
-    ApiResponse.macro(
-      'assertInertiaProps',
-      function (this: ApiResponse, props: Record<string, unknown>) {
-        if (!this.assert) {
-          throw new Error(
-            'Response assertions are not available. Make sure to install the @japa/assert plugin'
-          )
-        }
-        ensureIsInertiaResponse.call(this)
-        this.assert.deepEqual(this.body().props, props)
-        return this
-      }
-    )
+    ApiResponse.macro('assertInertiaProps', function (props) {
+      ensureIsInertiaResponse.call(this)
+      ensureHasAssert(this.assert)
+      this.assert.deepEqual(this.body().props, props)
+      return this
+    })
 
-    ApiResponse.macro(
-      'assertInertiaPropsContains',
-      function (this: ApiResponse, props: Record<string, unknown>) {
-        if (!this.assert) {
-          throw new Error(
-            'Response assertions are not available. Make sure to install the @japa/assert plugin'
-          )
-        }
-        ensureIsInertiaResponse.call(this)
-        this.assert.containsSubset(this.body().props, props)
-        return this
-      }
-    )
+    ApiResponse.macro('assertInertiaPropsContains', function (props) {
+      ensureIsInertiaResponse.call(this)
+      ensureHasAssert(this.assert)
+      this.assert.containSubset(this.body().props, props)
+      return this
+    })
   }
 }

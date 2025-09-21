@@ -13,17 +13,16 @@
   "exports": {
     ".": "./build/index.js",
     "./types": "./build/src/types.js",
-    "./services/main": "./build/services/inertia.js",
     "./inertia_middleware": "./build/src/inertia_middleware.js",
     "./inertia_provider": "./build/providers/inertia_provider.js",
     "./plugins/edge": "./build/src/plugins/edge/plugin.js",
     "./plugins/api_client": "./build/src/plugins/japa/api_client.js",
-    "./client": "./build/src/plugins/vite.js",
-    "./helpers": "./build/src/helpers.js"
+    "./vite": "./build/src/client/vite.js",
+    "./factories": "./build/factories/main.js"
   },
   "scripts": {
     "pretest": "npm run lint",
-    "test": "cross-env NODE_DEBUG=adonisjs:inertia c8 npm run quick:test",
+    "test": "c8 npm run quick:test",
     "typecheck": "tsc --noEmit",
     "clean": "del-cli build",
     "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
@@ -38,12 +37,12 @@
     "format": "prettier --write .",
     "prepublishOnly": "npm run build",
     "lint": "eslint",
-    "quick:test": "node --import=@poppinss/ts-exec --enable-source-maps bin/test.ts",
+    "quick:test": "cross-env NODE_DEBUG=adonisjs:inertia node --import=@poppinss/ts-exec --enable-source-maps bin/test.ts",
     "docs": "typedoc"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^8.0.0-next.7",
-    "@adonisjs/core": "^7.0.0-next.0",
+    "@adonisjs/assembler": "^8.0.0-next.9",
+    "@adonisjs/core": "^7.0.0-next.1",
     "@adonisjs/eslint-config": "^3.0.0-next.1",
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/session": "^8.0.0-next.0",
@@ -59,13 +58,11 @@
     "@poppinss/ts-exec": "^1.4.1",
     "@release-it/conventional-changelog": "^10.0.1",
     "@types/node": "^24.3.1",
-    "@types/qs": "^6.14.0",
     "@types/supertest": "^6.0.3",
     "c8": "^10.1.3",
     "copyfiles": "^2.4.1",
     "cross-env": "^10.0.0",
     "del-cli": "^6.0.0",
-    "edge-parser": "^9.0.4",
     "edge.js": "^6.3.0",
     "eslint": "^9.35.0",
     "get-port": "^7.1.0",
@@ -78,11 +75,8 @@
   },
   "dependencies": {
     "@poppinss/utils": "^7.0.0-next.3",
-    "@tuyau/utils": "^0.0.9",
     "edge-error": "^4.0.2",
-    "html-entities": "^2.6.0",
-    "locate-path": "^7.2.0",
-    "qs": "^6.14.0"
+    "html-entities": "^2.6.0"
   },
   "peerDependencies": {
     "@adonisjs/assembler": "^8.0.0-next.7",
@@ -101,10 +95,10 @@
       "optional": true
     }
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "author": "Julien Ripouteau <julien@ripouteau.com>",
+  "keywords": [
+    "inertia",
+    "adonisjs"
+  ],
   "license": "MIT",
   "homepage": "https://github.com/adonisjs/inertia#readme",
   "repository": {
@@ -114,11 +108,14 @@
   "bugs": {
     "url": "https://github.com/adonisjs/inertia/issues"
   },
-  "keywords": [
-    "inertia",
-    "adonisjs"
+  "author": "Julien Ripouteau <julien@ripouteau.com>",
+  "contributors": [
+    "Harminder Virk <virk@adonisjs.com>"
   ],
-  "prettier": "@adonisjs/prettier-config",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "release-it": {
     "git": {
       "requireUpstream": true,
@@ -143,23 +140,12 @@
       }
     }
   },
-  "c8": {
-    "reporter": [
-      "text",
-      "html"
-    ],
-    "exclude": [
-      "tests/**",
-      "tests_helpers/**"
-    ]
-  },
   "tsup": {
     "entry": [
       "./index.ts",
       "./src/types.ts",
-      "./src/helpers.ts",
-      "./src/plugins/vite.ts",
-      "./services/inertia.ts",
+      "./src/client/vite.ts",
+      "./factories/main.ts",
       "./src/inertia_middleware.ts",
       "./providers/inertia_provider.ts",
       "./src/plugins/edge/plugin.ts",
@@ -171,5 +157,16 @@
     "dts": false,
     "sourcemaps": false,
     "target": "esnext"
-  }
+  },
+  "c8": {
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "exclude": [
+      "tests/**",
+      "tests_helpers/**"
+    ]
+  },
+  "prettier": "@adonisjs/prettier-config"
 }

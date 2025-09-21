@@ -7,4 +7,4 @@
  * file that was distributed with this source code.
  */
 
-export const stubsRoot = import.meta.dirname
+export { InertiaFactory } from './inertia_factory.ts'

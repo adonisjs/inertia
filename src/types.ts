@@ -8,221 +8,505 @@
  */
 
 import type { HttpContext } from '@adonisjs/core/http'
-import type { AsyncOrSync } from '@poppinss/utils/types'
-import { type ConfigProvider } from '@adonisjs/core/types'
-import type { Serialize, Simplify } from '@tuyau/utils/types'
-
-import type { VersionCache } from './version_cache.js'
-import { type DeferProp, type OptionalProp } from './props.js'
+import { type ContainerResolver } from '@adonisjs/core/container'
+import type { JSONDataTypes } from '@adonisjs/core/types/transformers'
+import type { AsyncOrSync, DeepPartial, Prettify } from '@poppinss/utils/types'
+import {
+  type DEEP_MERGE,
+  type ALWAYS_PROP,
+  type OPTIONAL_PROP,
+  type TO_BE_MERGED,
+  type DEFERRED_PROP,
+} from './symbols.ts'
 
 /**
- * Props that will be passed to inertia render method
+ * Representation of a resource item, collection and paginator that can be serialized
+ *
+ * @template T - The type that the serializable object resolves to
  */
-export type PageProps = Record<string, unknown>
+export type SerializableOf<T> = {
+  /**
+   * Serializes the object using the container resolver
+   *
+   * @param container - The container resolver instance
+   * @param depth - Current serialization depth
+   * @param maxDepth - Maximum allowed serialization depth
+   * @returns Promise that resolves to the serialized object
+   */
+  serialize(container: ContainerResolver<any>, depth: number, maxDepth?: number): Promise<T>
+}
 
 /**
- * Shared data types
+ * Union type representing unpacked page prop values that can be either JSON data or serializable objects
+ *
+ * @template T - The JSON data type, defaults to JSONDataTypes
  */
-export type Data = string | number | object | boolean
-export type SharedDatumFactory = (ctx: HttpContext) => AsyncOrSync<Data>
-export type SharedData = Record<string, Data | SharedDatumFactory>
+export type UnPackedPageProps<T extends JSONDataTypes = JSONDataTypes> = T | SerializableOf<T>
 
 /**
- * Allowed values for the assets version
+ * Utility type that extracts the resolved type from a SerializableOf wrapper
+ * If the type is already unwrapped, returns it as-is
+ *
+ * @template T - The type to unwrap, potentially wrapped in SerializableOf
+ */
+export type UnpackProp<T> = T extends SerializableOf<infer A> ? A : T
+
+/**
+ * Information extracted from Inertia request headers
+ * Contains metadata about the current request type and filtering preferences
+ */
+export type RequestInfo = {
+  /** Asset version sent by the client for cache busting */
+  version?: string
+  /** Whether this is an Inertia AJAX request */
+  isInertiaRequest: boolean
+  /** Whether this is a partial data request */
+  isPartialRequest: boolean
+  /** Component name for partial reloads */
+  partialComponent?: string
+  /** Props to include in partial requests */
+  onlyProps?: string[]
+  /** Props to exclude in partial requests */
+  exceptProps?: string[]
+  /** Props to reset during merging */
+  resetProps?: string[]
+  /** Error bag identifier for validation errors */
+  errorBag?: string
+}
+
+/**
+ * Represents a prop that is always included in responses and cannot be removed during cherry-picking
+ *
+ * @template T - The type of the prop value
+ */
+export type AlwaysProp<T extends UnPackedPageProps> = {
+  /** The actual value of the prop */
+  value: T
+  /** Brand symbol to identify this as an always prop */
+  [ALWAYS_PROP]: true
+}
+
+/**
+ * Represents a prop that is never included in standard visits but can be explicitly requested
+ * The prop value is computed lazily when requested
+ *
+ * @template T - The type of the computed prop value
+ */
+export type OptionalProp<T extends UnPackedPageProps> = {
+  /** Function that computes the prop value when requested */
+  compute: () => AsyncOrSync<T>
+  /** Brand symbol to identify this as an optional prop */
+  [OPTIONAL_PROP]: true
+}
+
+/**
+ * Represents a deferred prop that is never included in standard visits but must be shared with
+ * the client during standard visits. Can be explicitly requested and supports merging
+ *
+ * @template T - The type of the computed prop value
+ */
+export type DeferProp<T extends UnPackedPageProps> = {
+  group: string
+  /** Function that computes the prop value when requested */
+  compute: () => AsyncOrSync<T>
+  /** Creates a mergeable version of this deferred prop */
+  merge(): MergeableProp<DeferProp<T>>
+  /** Brand symbol to identify this as a deferred prop */
+  [DEFERRED_PROP]: true
+}
+
+/**
+ * Represents a prop that should be merged with existing props on the page rather than replaced
+ *
+ * @template T - The type of the prop value to be merged
+ */
+export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>> = {
+  /** The prop value to be merged */
+  value: T
+  /** Brand symbol to identify this prop for merging */
+  [TO_BE_MERGED]: true
+  [DEEP_MERGE]: boolean
+}
+
+/**
+ * Lazy props are never included during standard Inertia visits
+ * These props must be explicitly requested by the client
+ *
+ * @template T - The data type of the prop value
+ */
+type PagePropsLazyDataTypes<T extends JSONDataTypes> =
+  /**
+   * - Never included on standard visit
+   * - Must be shared with the client during standard visit
+   * - Can be explicitly requested for
+   * - Can be dropped during cherry-picking
+   */
+  | DeferProp<T | SerializableOf<T>>
+
+  /**
+   * - Never included on standard visit
+   * - Can be explicitly requested for
+   * - Can be dropped during cherry-picking
+   */
+  | OptionalProp<T | SerializableOf<T>>
+
+/**
+ * Eager props are always included during standard Inertia visits, but
+ * can be removed via cherry-picking when only specific props are requested
+ *
+ * @template T - The data type of the prop value
+ */
+type PagePropsEagerDataTypes<T extends JSONDataTypes> =
+  /**
+   * - Always included on standard visit.
+   * - Can be dropped during cherry-picking
+   */
+  | T
+
+  /**
+   * - Always included on standard visit.
+   * - Can be dropped during cherry-picking
+   */
+  | SerializableOf<T>
+
+  /**
+   * - Always included on standard visit.
+   * - Can be dropped during cherry-picking
+   */
+  | (() => AsyncOrSync<T | SerializableOf<T>>)
+
+  /**
+   * - Always included on standard visit
+   * - Cannot be dropped during cherry-picking
+   */
+  | AlwaysProp<T | SerializableOf<T>>
+
+/**
+ * Following is the list of acceptable Page props data types
+ * Combines both eager and lazy prop data types for comprehensive prop handling
+ *
+ * @template T - The data type extending JSONDataTypes, defaults to JSONDataTypes
+ */
+export type PagePropsDataTypes<T extends JSONDataTypes = JSONDataTypes> =
+  | PagePropsEagerDataTypes<T>
+  | PagePropsLazyDataTypes<T>
+
+/**
+ * Record type representing all page props that can be passed to an Inertia page
+ * Maps prop names to their corresponding data types, including branded types for special behavior
+ */
+export type PageProps = Record<
+  string,
+  PagePropsDataTypes | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>
+>
+
+/**
+ * Record type representing component props as they appear on the frontend after serialization
+ * Maps prop names to JSON-serializable values that components can consume directly
+ */
+export type ComponentProps = Record<string, JSONDataTypes>
+
+/**
+ * Utility type to extract optional and deferred prop keys from a props object
+ * Identifies props that are not required and may not be present in the component
+ *
+ * @template Props - The page props object type to analyze
+ */
+export type GetOptionalProps<Props> = {
+  [K in keyof Props]: Props[K] extends OptionalProp<any>
+    ? K
+    : Props[K] extends DeferProp<any>
+      ? K
+      : [undefined] extends Props[K]
+        ? K
+        : Props[K] extends MergeableProp<infer A>
+          ? A extends DeferProp<any>
+            ? K
+            : never
+          : never
+}[keyof Props]
+
+/**
+ * Utility type to extract required prop keys from a props object
+ * Identifies props that are always present and required by the component
+ *
+ * @template Props - The page props object type to analyze
+ */
+export type GetRequiredProps<Props> = {
+  [K in keyof Props]: Props[K] extends OptionalProp<any>
+    ? never
+    : Props[K] extends DeferProp<any>
+      ? never
+      : [undefined] extends Props[K]
+        ? never
+        : Props[K] extends MergeableProp<infer A>
+          ? A extends DeferProp<any>
+            ? never
+            : K
+          : K
+}[keyof Props]
+
+/**
+ * Utility type to simplify value of a required prop by unwrapping branded types
+ * Extracts the actual value type from wrapped prop types like AlwaysProp, functions, etc.
+ *
+ * @template Value - The prop value type to unwrap
+ */
+export type GetRequiredPropValue<Value> =
+  Value extends AlwaysProp<infer A>
+    ? UnpackProp<A>
+    : Value extends MergeableProp<infer B>
+      ? UnpackProp<B>
+      : Value extends () => AsyncOrSync<infer C>
+        ? UnpackProp<C>
+        : UnpackProp<Value>
+
+/**
+ * Utility type to simplify value of an optional prop by unwrapping branded types
+ * Extracts the actual value type from wrapped optional prop types like DeferProp, OptionalProp, etc.
+ *
+ * @template Value - The optional prop value type to unwrap
+ */
+export type GetOptionalPropValue<Value> =
+  Value extends DeferProp<infer A>
+    ? UnpackProp<A>
+    : Value extends MergeableProp<infer B>
+      ? B extends DeferProp<infer BA>
+        ? UnpackProp<BA>
+        : UnpackProp<B>
+      : Value extends OptionalProp<infer C>
+        ? UnpackProp<C>
+        : Value extends () => AsyncOrSync<infer D>
+          ? UnpackProp<D>
+          : UnpackProp<Value>
+
+/**
+ * Converts the Page props to Component props that will be available to the frontend
+ * app after serialization. Maps server-side prop definitions to client-side prop types
+ *
+ * @template Props - The page props object with branded prop types
+ */
+export type ToComponentProps<Props extends PageProps> = Prettify<
+  {
+    [K in GetRequiredProps<Props>]: GetRequiredPropValue<Props[K]>
+  } & {
+    [K in GetOptionalProps<Props>]?: GetOptionalPropValue<Props[K]>
+  }
+>
+
+/**
+ * Converts the Component props to Page props to allow computing the same values
+ * via branded types and lazy evaluated callbacks and promises
+ * Maps client-side prop types back to server-side prop definitions
+ *
+ * @template Props - The component props object with JSON data types
+ */
+export type AsPageProps<Props extends ComponentProps> = Prettify<
+  {
+    [K in {
+      [O in keyof Props]: [undefined] extends [Props[O]] ? O : never
+    }[keyof Props]]?:
+      | PagePropsDataTypes<Props[K]>
+      | MergeableProp<UnPackedPageProps<Props[K]> | DeferProp<UnPackedPageProps<Props[K]>>>
+  } & {
+    [K in {
+      [O in keyof Props]: [undefined] extends [Props[O]] ? never : O
+    }[keyof Props]]: PagePropsEagerDataTypes<Props[K]> | MergeableProp<UnPackedPageProps<Props[K]>>
+  }
+>
+
+/**
+ * Allowed values for the assets version used for cache busting
+ * Can be a string, number, or undefined for auto-detection
  */
 export type AssetsVersion = string | number | undefined
 
-export interface InertiaConfig<T extends SharedData = SharedData> {
+/**
+ * Resolved configuration returned by the `defineConfig` helper
+ * Contains all settings needed to configure Inertia.js integration
+ */
+export type InertiaConfig = {
   /**
-   * Path to the Edge view that will be used as the root view for Inertia responses.
-   * @default root (resources/views/inertia_layout.edge)
+   * Root Edge template to use for rendering the shell for the inertia
+   * application
    */
-  rootView?: string | ((ctx: HttpContext) => string)
+  rootView: string | ((ctx: HttpContext) => string)
 
   /**
-   * Path to your client-side entrypoint file.
+   * The entrypoint file to load in order to boot the frontend application.
    */
-  entrypoint?: string
+  entrypoint: string
 
   /**
-   * The version of your assets. Every client request will be checked against this version.
-   * If the version is not the same, the client will do a full reload.
+   * A fixed asset version value to use. Otherwise, it will be read from the
+   * Vite manifest file.
    */
   assetsVersion?: AssetsVersion
 
   /**
-   * Data that should be shared with all rendered pages
+   * History encryption settings. https://inertiajs.com/history-encryption
    */
-  sharedData?: T
+  encryptHistory: boolean
 
   /**
-   * History encryption
-   *
-   * See https://v2.inertiajs.com/history-encryption
+   * Configuration settings for server-side rendering of the frontend
+   * app
    */
-  history?: {
-    encrypt?: boolean
-  }
-
-  /**
-   * Options to configure SSR
-   */
-  ssr?: {
-    /**
-     * Enable or disable SSR
-     */
-    enabled: boolean
-
-    /**
-     * List of components that should be rendered on the server
-     */
-    pages?: string[] | ((ctx: HttpContext, page: string) => AsyncOrSync<boolean>)
-
-    /**
-     * Path to the SSR entrypoint file
-     */
-    entrypoint?: string
-
-    /**
-     * Path to the SSR bundled file that will be used in production
-     */
-    bundle?: string
-  }
-}
-
-/**
- * Resolved inertia configuration
- */
-export interface ResolvedConfig<T extends SharedData = SharedData> {
-  rootView: string | ((ctx: HttpContext) => string)
-  versionCache: VersionCache
-  sharedData: T
-  history: { encrypt: boolean }
   ssr: {
+    /**
+     * Enable/disable the SSR. Disabled by default
+     */
     enabled: boolean
-    entrypoint: string
+
+    /**
+     * Cherry pick the pages you want to render server side
+     */
     pages?: string[] | ((ctx: HttpContext, page: string) => AsyncOrSync<boolean>)
+
+    /**
+     * The entrypoint file to load in order to boot the frontend application on
+     * the server
+     */
+    entrypoint: string
+
+    /**
+     * The SSR bundle output to load during production. This bundle is created
+     * using Vite
+     */
     bundle: string
   }
 }
 
-export interface PageObject<TPageProps extends PageProps = PageProps> {
-  ssrHead?: string
-  ssrBody?: string
+/**
+ * Input configuration type allowing partial configuration objects
+ * Used when defining configuration where all properties are optional and can be deeply partial
+ */
+export type InertiaConfigInput = DeepPartial<InertiaConfig>
 
+/**
+ * Represents a page object that is passed between server and client
+ *
+ * @template Props - The props type for the page component
+ */
+export type PageObject<Props extends PageProps = PageProps> = {
   /**
-   * The name of the JavaScript page component.
+   * The name/path of the component to render
    */
   component: string
 
   /**
-   * The current asset version.
+   * Version identifier sent to the client with every request. Inertia
+   * will trigger a full page refresh (in case of version mis-match)
    */
   version: string | number
 
   /**
-   * The page props (data).
+   * Props data to pass to the component. These should be JSON values
    */
-  props: TPageProps
+  props: Props
 
   /**
-   * The page URL.
+   * Current URL of the page
    */
   url: string
 
   /**
-   * List of deferred props that will be loaded with subsequent requests
+   * Grouped deferred props that can be loaded after the initial page
+   * load
    */
-  deferredProps?: Record<string, string[]>
+  deferredProps?: {
+    [group: string]: string[]
+  }
 
   /**
-   * List of mergeable props that will be merged with subsequent requests
+   * An array with the keys of props that should be merged with the
+   * existing props on the page
    */
   mergeProps?: string[]
 
   /**
-   * Whether or not to encrypt the current page's history state.
+   * An array with the keys of props that should be deeply merged with the
+   * existing props on the page
+   */
+  deepMergeProps?: string[]
+
+  /**
+   * Encrypt history flag to be sent to the client with every request.
    */
   encryptHistory?: boolean
 
   /**
-   *  Whether or not to clear any encrypted history state.
+   * Optionally clear the browser history
    */
   clearHistory?: boolean
 }
 
-type IsOptionalProp<T> =
-  T extends OptionalProp<any> ? true : T extends DeferProp<any> ? true : false
-
-type InferProps<T> = {
-  // First extract and unwrap lazy props. Also make them optional as they are lazy
-  [K in keyof T as IsOptionalProp<T[K]> extends true ? K : never]+?: T[K] extends {
-    callback: () => AsyncOrSync<infer U>
-  }
-    ? U
-    : T[K]
-} & {
-  // Then include all other props as it is
-  [K in keyof T as IsOptionalProp<T[K]> extends true ? never : K]: T[K] extends {
-    callback: () => AsyncOrSync<infer U>
-  }
-    ? U
-    : T[K] extends () => AsyncOrSync<infer U> // Unwrap "callback" props like inertia.render('foo', { lazy: () => 'foo' })
-      ? U
-      : T[K]
-}
-
-type ReturnsTypesSharedData<T extends SharedData> = {} extends T
-  ? {}
-  : InferProps<{
-      [K in keyof T]: T[K] extends (...args: any[]) => AsyncOrSync<infer U> ? U : T[K]
-    }>
-
 /**
- * Infer shared data types from the config provider
- */
-export type InferSharedProps<T extends ConfigProvider<ResolvedConfig>> = ReturnsTypesSharedData<
-  Awaited<ReturnType<T['resolver']>>['sharedData']
->
-
-/**
- * The shared props inferred from the user config user-land.
- * Should be module augmented by the user
+ * The shared props inferred from the user-land
+ * Should be augmented in the host application to define globally available props
+ *
+ * @example
+ * ```typescript
+ * declare module '@adonisjs/inertia/types' {
+ *   interface SharedProps {
+ *     user: { id: number; name: string } | null
+ *     flash: { success?: string; error?: string }
+ *   }
+ * }
+ * ```
  */
 export interface SharedProps {}
 
 /**
- * Helper for infering the page props from a Controller method that returns
- * inertia.render
+ * Discovered known pages with their props
+ * Should be augmented in the host application to define page-specific prop types
  *
- * InferPageProps will also include the shared props
- *
- * ```ts
- * // Your Adonis Controller
- * class MyController {
- *  index() {
- *   return inertia.render('foo', { foo: 1 })
- *  }
- * }
- *
- * // Your React component
- * export default MyReactComponent(props: InferPageProps<Controller, 'index'>) {
+ * @example
+ * ```typescript
+ * declare module '@adonisjs/inertia/types' {
+ *   interface InertiaPages {
+ *     'users/index': { users: User[] }
+ *     'users/show': { user: User }
+ *   }
  * }
  * ```
  */
-export type InferPageProps<
-  Controller,
-  Method extends keyof Controller,
-> = Controller[Method] extends (...args: any[]) => any
-  ? Simplify<
-      Serialize<
-        InferProps<Extract<Awaited<ReturnType<Controller[Method]>>, PageObject>['props']> &
-          SharedProps
-      >
-    >
-  : never
+export interface InertiaPages {}
 
 /**
- * Signature for the method in the SSR entrypoint file
+ * Function signature for the SSR render method that should be exported
+ * from the SSR entrypoint file to render Inertia pages on the server
+ *
+ * @param page - The page object containing component and props data
+ * @returns Promise resolving to an object with head tags and body HTML
  */
 export type RenderInertiaSsrApp = (page: PageObject) => Promise<{ head: string[]; body: string }>
+
+/**
+ * Type helper to infer the return type of InertiaMiddleware.share method
+ * and augment the SharedProps interface automatically
+ *
+ * @template T - The middleware class type that extends BaseInertiaMiddleware
+ *
+ * @example
+ * ```typescript
+ * class InertiaMiddleware extends BaseInertiaMiddleware {
+ *   async share() {
+ *     return {
+ *       user: { id: 1, name: 'John' },
+ *       flash: { success: 'Welcome!' }
+ *     }
+ *   }
+ * }
+ *
+ * // Automatically infer and augment SharedProps
+ * type InferredSharedProps = InferSharedProps<InertiaMiddleware>
+ * ```
+ */
+export type InferSharedProps<T> = T extends {
+  share(...args: any[]): infer R
+}
+  ? Awaited<R> extends PageProps
+    ? ToComponentProps<Awaited<R>>
+    : never
+  : never

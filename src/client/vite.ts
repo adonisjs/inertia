@@ -9,7 +9,13 @@
 
 import type { PluginOption } from 'vite'
 
+/**
+ * Configuration options for the Inertia Vite plugin
+ */
 export type InertiaPluginOptions = {
+  /**
+   * Server-side rendering configuration
+   */
   ssr?:
     | {
         /**
@@ -32,6 +38,40 @@ export type InertiaPluginOptions = {
 
 /**
  * Inertia plugin for Vite that is tailored for AdonisJS
+ *
+ * Configures Vite for Inertia.js development with proper build settings,
+ * SSR support, and AdonisJS-specific optimizations.
+ *
+ * @param options - Configuration options for the plugin
+ * @returns Vite plugin configuration object
+ *
+ * @example
+ * ```js
+ * // Basic configuration
+ * import inertia from '@adonisjs/inertia/plugins/vite'
+ *
+ * export default defineConfig({
+ *   plugins: [inertia()]
+ * })
+ * ```
+ *
+ * @example
+ * ```js
+ * // With SSR enabled
+ * import inertia from '@adonisjs/inertia/plugins/vite'
+ *
+ * export default defineConfig({
+ *   plugins: [
+ *     inertia({
+ *       ssr: {
+ *         enabled: true,
+ *         entrypoint: 'inertia/app/ssr.ts',
+ *         output: 'build/ssr'
+ *       }
+ *     })
+ *   ]
+ * })
+ * ```
  */
 export default function inertia(options?: InertiaPluginOptions): PluginOption {
   return {
@@ -46,11 +86,12 @@ export default function inertia(options?: InertiaPluginOptions): PluginOption {
        * that is not available in production.
        * See https://github.com/remix-run/remix/issues/4081
        */
-      if (command === 'build') process.env.NODE_ENV = 'production'
+      if (command === 'build') {
+        process.env.NODE_ENV = 'production'
+      }
 
       return {
         builder: {},
-
         build: { outDir: 'build/public/assets' },
         environments: {
           ...(options?.ssr?.enabled && {
