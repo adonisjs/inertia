@@ -88,6 +88,9 @@
     "edge.js": "^6.0.0"
   },
   "peerDependenciesMeta": {
+    "@adonisjs/assembler": {
+      "optional": true
+    },
     "@japa/api-client": {
       "optional": true
     },
