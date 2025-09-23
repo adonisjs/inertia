@@ -33,14 +33,14 @@
  */
 export async function resolvePageComponent<T>(
   path: string | string[],
-  pages: Record<string, Promise<T> | (() => Promise<T>)>
+  pages: Record<string, Promise<T> | (() => Promise<T>) | T>
 ): Promise<T> {
   for (const p of Array.isArray(path) ? path : [path]) {
     const page = pages[p]
     if (typeof page === 'undefined') {
       continue
     }
-    return typeof page === 'function' ? page() : page
+    return typeof page === 'function' ? (page as unknown as () => Promise<T>)() : page
   }
   throw new Error(`Page not found: ${path}`)
 }
