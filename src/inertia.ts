@@ -314,7 +314,7 @@ export class Inertia<Pages extends Record<string, ComponentProps>> {
 
     if (this.#vite?.hasManifestFile) {
       this.#cachedVersion = createHash('md5')
-        .update(JSON.stringify(this.#vite.manifest))
+        .update(JSON.stringify(this.#vite.manifest()))
         .digest('hex')
     } else {
       this.#cachedVersion = '1'
