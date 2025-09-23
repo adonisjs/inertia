@@ -65,7 +65,7 @@ export type InertiaPluginOptions = {
  *     inertia({
  *       ssr: {
  *         enabled: true,
- *         entrypoint: 'inertia/app/ssr.ts',
+ *         entrypoint: 'inertia/ssr.tsx',
  *         output: 'build/ssr'
  *       }
  *     })

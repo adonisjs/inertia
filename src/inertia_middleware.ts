@@ -74,7 +74,7 @@ export default abstract class BaseInertiaMiddleware {
       return {}
     }
 
-    const inputErrors = ctx.session.flashMessages.get('inputErrorsBag')
+    const inputErrors = ctx.session.flashMessages.get('inputErrorsBag', {})
     const errors = Object.entries(inputErrors).reduce(
       (result, [field, messages]) => {
         result[field] = Array.isArray(messages) ? messages[0] : messages
