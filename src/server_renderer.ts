@@ -80,7 +80,7 @@ export class ServerRenderer {
    * const { head, body } = await renderer.render(pageObject)
    * ```
    */
-  async render(pageObject: PageObject) {
+  async render(pageObject: PageObject<any>) {
     let render: { default: RenderInertiaSsrApp }
     const devServer = this.#vite.getDevServer()
 

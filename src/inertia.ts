@@ -55,7 +55,7 @@ import debug from './debug.ts'
  * inertia.location('/dashboard')
  * ```
  */
-export class Inertia<Pages extends Record<string, ComponentProps>> {
+export class Inertia<Pages> {
   #sharedState?: PageProps
   #cachedRequestInfo?: RequestInfo
 
@@ -400,7 +400,7 @@ export class Inertia<Pages extends Record<string, ComponentProps>> {
    */
   async page<Page extends keyof Pages & string>(
     page: Page,
-    pageProps: AsPageProps<Pages[Page]>
+    pageProps: Pages[Page] extends ComponentProps ? AsPageProps<Pages[Page]> : never
   ): Promise<PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
     const { props, mergeProps, deferredProps, deepMergeProps } = await this.#buildPageProps(
@@ -450,7 +450,7 @@ export class Inertia<Pages extends Record<string, ComponentProps>> {
    */
   async render<Page extends keyof Pages & string>(
     page: Page,
-    pageProps: AsPageProps<Pages[Page]>,
+    pageProps: Pages[Page] extends ComponentProps ? AsPageProps<Pages[Page]> : never,
     viewProps?: Record<string, any>
   ): Promise<string | PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()

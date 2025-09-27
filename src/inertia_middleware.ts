@@ -19,7 +19,7 @@ import debug from './debug.ts'
 
 declare module '@adonisjs/core/http' {
   export interface HttpContext {
-    inertia: Inertia<InertiaPages extends Record<string, ComponentProps> ? InertiaPages : never>
+    inertia: Inertia<InertiaPages>
   }
 }
 

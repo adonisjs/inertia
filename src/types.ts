@@ -388,7 +388,7 @@ export type InertiaConfigInput = DeepPartial<InertiaConfig>
  *
  * @template Props - The props type for the page component
  */
-export type PageObject<Props extends PageProps = PageProps> = {
+export type PageObject<Props> = {
   /**
    * The name/path of the component to render
    */
@@ -480,7 +480,9 @@ export interface InertiaPages {}
  * @param page - The page object containing component and props data
  * @returns Promise resolving to an object with head tags and body HTML
  */
-export type RenderInertiaSsrApp = (page: PageObject) => Promise<{ head: string[]; body: string }>
+export type RenderInertiaSsrApp = (
+  page: PageObject<any>
+) => Promise<{ head: string[]; body: string }>
 
 /**
  * Type helper to infer the return type of InertiaMiddleware.share method
