@@ -89,6 +89,7 @@ export const indexPages = function (config: { framework: 'vue3' | 'react' }) {
          */
         as(vfs, buffer, __, helpers) {
           const filesList = vfs.asList()
+          buffer.writeLine(`import '@adonisjs/inertia/types'`)
           buffer.writeLine(TYPES_EXTRACTION_HELPER[config.framework])
           buffer.write(`declare module '@adonisjs/inertia/types' {`).indent()
           buffer.write(`export interface InertiaPages {`).indent()
