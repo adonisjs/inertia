@@ -21,6 +21,7 @@ import {
   type ComponentProps,
   type UnPackedPageProps,
 } from './types.ts'
+import { type ContainerResolver } from '@adonisjs/core/container'
 
 /**
  * Type guard to check if a value is a plain object
@@ -308,8 +309,11 @@ export function isOptionalProp<T extends UnPackedPageProps>(
  * @param value - The prop value to serialize
  * @returns Promise resolving to the serialized JSON data
  */
-async function unpackPropValue(value: UnPackedPageProps<JSONDataTypes>) {
-  return serialize(value) as Promise<JSONDataTypes>
+async function unpackPropValue(
+  value: UnPackedPageProps<JSONDataTypes>,
+  containerResolver: ContainerResolver<any>
+) {
+  return serialize(value, containerResolver) as Promise<JSONDataTypes>
 }
 
 /**
@@ -335,7 +339,10 @@ async function unpackPropValue(value: UnPackedPageProps<JSONDataTypes>) {
  * // Returns: { props: { user: {...} }, deferredProps: { default: ['posts'] }, mergeProps: ['settings'] }
  * ```
  */
-export async function buildStandardVisitProps(pageProps: PageProps) {
+export async function buildStandardVisitProps(
+  pageProps: PageProps,
+  containerResolver: ContainerResolver<any>
+) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
   const newProps: ComponentProps = {}
@@ -431,12 +438,12 @@ export async function buildStandardVisitProps(pageProps: PageProps) {
     unpackedValues.map(async ({ key, value }) => {
       if (typeof value === 'function') {
         return Promise.resolve(value())
-          .then((r) => unpackPropValue(r))
+          .then((r) => unpackPropValue(r, containerResolver))
           .then((jsonValue) => {
             newProps[key] = jsonValue
           })
       } else {
-        return unpackPropValue(value).then((jsonValue) => {
+        return unpackPropValue(value, containerResolver).then((jsonValue) => {
           newProps[key] = jsonValue
         })
       }
@@ -474,7 +481,11 @@ export async function buildStandardVisitProps(pageProps: PageProps) {
  * // Returns: { props: { posts: [...], stats: [...] }, mergeProps: [], deferredProps: {} }
  * ```
  */
-export async function buildPartialRequestProps(pageProps: PageProps, cherryPickProps: string[]) {
+export async function buildPartialRequestProps(
+  pageProps: PageProps,
+  cherryPickProps: string[],
+  containerResolver: ContainerResolver<any>
+) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
   const newProps: ComponentProps = {}
@@ -567,12 +578,12 @@ export async function buildPartialRequestProps(pageProps: PageProps, cherryPickP
     unpackedValues.map(async ({ key, value }) => {
       if (typeof value === 'function') {
         return Promise.resolve(value())
-          .then((r) => unpackPropValue(r))
+          .then((r) => unpackPropValue(r, containerResolver))
           .then((jsonValue) => {
             newProps[key] = jsonValue
           })
       } else {
-        return unpackPropValue(value).then((jsonValue) => {
+        return unpackPropValue(value, containerResolver).then((jsonValue) => {
           newProps[key] = jsonValue
         })
       }

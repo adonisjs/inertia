@@ -215,11 +215,11 @@ export class Inertia<Pages> {
       debug('building props for a partial reload %O', requestInfo)
       debug('cherry picking props %s', cherryPickProps)
 
-      return buildPartialRequestProps(finalProps, cherryPickProps)
+      return buildPartialRequestProps(finalProps, cherryPickProps, this.ctx.containerResolver)
     }
 
     debug('building props for a standard visit %O', requestInfo)
-    return buildStandardVisitProps(finalProps)
+    return buildStandardVisitProps(finalProps, this.ctx.containerResolver)
   }
 
   /**
