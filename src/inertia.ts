@@ -23,6 +23,7 @@ import type {
   RequestInfo,
   InertiaConfig,
   ComponentProps,
+  SharedProps,
 } from './types.js'
 import {
   defer,
@@ -400,7 +401,9 @@ export class Inertia<Pages> {
    */
   async page<Page extends keyof Pages & string>(
     page: Page,
-    pageProps: Pages[Page] extends ComponentProps ? AsPageProps<Pages[Page]> : never
+    pageProps: Pages[Page] extends ComponentProps
+      ? AsPageProps<Omit<Pages[Page], keyof SharedProps>>
+      : never
   ): Promise<PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
     const { props, mergeProps, deferredProps, deepMergeProps } = await this.#buildPageProps(
@@ -450,7 +453,9 @@ export class Inertia<Pages> {
    */
   async render<Page extends keyof Pages & string>(
     page: Page,
-    pageProps: Pages[Page] extends ComponentProps ? AsPageProps<Pages[Page]> : never,
+    pageProps: Pages[Page] extends ComponentProps
+      ? AsPageProps<Omit<Pages[Page], keyof SharedProps>>
+      : never,
     viewProps?: Record<string, any>
   ): Promise<string | PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
