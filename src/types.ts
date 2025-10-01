@@ -333,11 +333,6 @@ export type InertiaConfig = {
   rootView: string | ((ctx: HttpContext) => string)
 
   /**
-   * The entrypoint file to load in order to boot the frontend application.
-   */
-  entrypoint: string
-
-  /**
    * A fixed asset version value to use. Otherwise, it will be read from the
    * Vite manifest file.
    */

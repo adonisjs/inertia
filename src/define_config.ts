@@ -41,14 +41,13 @@ export function defineConfig(config: InertiaConfigInput): InertiaConfig {
   return lodash.merge(
     {
       rootView: 'inertia_layout',
-      entrypoint: 'inertia/app/app.ts',
       history: {
         encrypt: false,
       },
       ssr: {
         enabled: false,
         bundle: 'ssr/ssr.js',
-        entrypoint: 'inertia/app/ssr.ts',
+        entrypoint: 'inertia/ssr.tsx',
       },
     },
     config
