@@ -214,9 +214,10 @@ export function deepMerge<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
  * This function is useful for runtime type checking and conditional prop handling.
  *
  * @param propValue - The object to check for deferred prop characteristics
+ * @returns True if the prop value is a deferred prop
  *
  * @example
- * ```javascript
+ * ```js
  * const prop = defer(() => ({ data: 'value' }))
  *
  * if (isDeferredProp(prop)) {
@@ -238,9 +239,10 @@ export function isDeferredProp<T extends UnPackedPageProps>(
  * existing props rather than replaced during updates.
  *
  * @param propValue - The object to check for mergeable prop characteristics
+ * @returns True if the prop value is a mergeable prop
  *
  * @example
- * ```javascript
+ * ```js
  * const prop = merge({ items: [1, 2, 3] })
  *
  * if (isMergeableProp(prop)) {
@@ -262,9 +264,10 @@ export function isMergeableProp<T extends UnPackedPageProps | DeferProp<UnPacked
  * responses, regardless of cherry-picking or selective prop requests.
  *
  * @param propValue - The object to check for always prop characteristics
+ * @returns True if the prop value is an always prop
  *
  * @example
- * ```javascript
+ * ```js
  * const prop = always({ userId: 123, permissions: ['read', 'write'] })
  *
  * if (isAlwaysProp(prop)) {
@@ -286,9 +289,10 @@ export function isAlwaysProp<T extends UnPackedPageProps>(
  * when explicitly requested by the client, never in standard visits.
  *
  * @param propValue - The object to check for optional prop characteristics
+ * @returns True if the prop value is an optional prop
  *
  * @example
- * ```javascript
+ * ```js
  * const prop = optional(() => ({ detailedData: 'expensive computation' }))
  *
  * if (isOptionalProp(prop)) {
@@ -307,6 +311,7 @@ export function isOptionalProp<T extends UnPackedPageProps>(
  * Helper function to unpack prop values using the transformer serialize function.
  *
  * @param value - The prop value to serialize
+ * @param containerResolver - Container resolver for dependency injection
  * @returns Promise resolving to the serialized JSON data
  */
 async function unpackPropValue(
@@ -327,7 +332,8 @@ async function unpackPropValue(
  * - Regular props: Included normally
  *
  * @param pageProps - The page props to process
- * @returns Object containing processed props, deferred props list, and merge props list
+ * @param containerResolver - Container resolver for dependency injection
+ * @returns Promise resolving to object containing processed props, deferred props list, and merge props list
  *
  * @example
  * ```js
@@ -470,7 +476,8 @@ export async function buildStandardVisitProps(
  *
  * @param pageProps - The page props to process
  * @param cherryPickProps - Array of prop names to include
- * @returns Object containing processed props and merge props list
+ * @param containerResolver - Container resolver for dependency injection
+ * @returns Promise resolving to object containing processed props and merge props list
  *
  * @example
  * ```js

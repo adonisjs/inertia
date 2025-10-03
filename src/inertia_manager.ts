@@ -62,6 +62,7 @@ export class InertiaManager {
    * Creates a new Inertia instance for a specific HTTP request
    *
    * @param ctx - HTTP context for the current request
+   * @returns A new Inertia instance configured for the given request
    *
    * @example
    * ```js

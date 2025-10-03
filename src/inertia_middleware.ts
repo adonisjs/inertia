@@ -96,8 +96,11 @@ export default abstract class BaseInertiaMiddleware {
    * This method should return an object containing data that will be
    * available to all Inertia pages as props.
    *
+   * @param ctx - The HTTP context object
+   * @returns Props to share across all pages
+   *
    * @example
-   * ```ts
+   * ```js
    * async share() {
    *   return {
    *     user: ctx.auth?.user,

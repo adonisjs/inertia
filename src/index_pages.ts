@@ -51,14 +51,17 @@ type ExtractProps<T> =
  *
  * @param config - Configuration object specifying the frontend framework
  * @param config.framework - The frontend framework ('vue3' or 'react')
+ * @returns Assembler hook object with run method for generating page types
  *
  * @example
+ * ```js
  * // In your adonisrc.ts file
  * export default defineConfig({
  *   assembler: {
  *     onBuildStarting: [indexPages({ framework: 'vue3' })]
  *   }
  * })
+ * ```
  */
 export const indexPages = function (config: { framework: 'vue3' | 'react' }) {
   if (!SUPPORTED_FRAMEWORKS.includes(config.framework)) {

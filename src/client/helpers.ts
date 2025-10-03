@@ -14,6 +14,8 @@
  *
  * @param path - The page path(s) to resolve. Can be a single string or array of strings
  * @param pages - Registry of page components where keys are paths and values are either promises or functions returning promises
+ * @param layout - Optional layout component to assign to the resolved page
+ * @returns Promise resolving to the page component
  *
  * @example
  * ```js
@@ -29,18 +31,40 @@
  * })
  * ```
  *
- * @throws {Error} When none of the provided paths can be resolved in the pages registry
+ * @throws Error When none of the provided paths can be resolved in the pages registry
  */
 export async function resolvePageComponent<T>(
   path: string | string[],
-  pages: Record<string, Promise<T> | (() => Promise<T>) | T>
+  pages: Record<string, Promise<T> | (() => Promise<T>) | T>,
+  layout?: any
 ): Promise<T> {
   for (const p of Array.isArray(path) ? path : [path]) {
     const page = pages[p]
     if (typeof page === 'undefined') {
       continue
     }
-    return typeof page === 'function' ? (page as unknown as () => Promise<T>)() : page
+    const resolvedPage = (await (typeof page === 'function'
+      ? (page as unknown as () => Promise<T>)()
+      : page)) as any
+
+    if (!resolvedPage) {
+      throw new Error(
+        `Invalid page exported from "${path}". Make sure to default export a function`
+      )
+    }
+
+    if ('default' in resolvedPage === false) {
+      throw new Error(
+        `Invalid page exported from "${path}". Make sure to default export a function`
+      )
+    }
+
+    if (layout && !resolvedPage.default.layout) {
+      resolvedPage.default.layout = layout
+    }
+
+    return resolvedPage
   }
-  throw new Error(`Page not found: ${path}`)
+
+  throw new Error(`Page not found: "${path}"`)
 }

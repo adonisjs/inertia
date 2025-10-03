@@ -185,6 +185,8 @@ export class Inertia<Pages> {
    * Resolve the root view template
    *
    * Handles both static strings and dynamic functions for the root view.
+   *
+   * @returns The resolved root view template name
    */
   #resolveRootView() {
     return typeof this.config.rootView === 'function'
@@ -200,6 +202,7 @@ export class Inertia<Pages> {
    * @param component - The component name being rendered
    * @param requestInfo - Information about the current request
    * @param pageProps - Raw page props to be processed
+   * @returns Promise resolving to processed props object with metadata
    */
   #buildPageProps(component: string, requestInfo: RequestInfo, pageProps: PageProps) {
     const finalProps = { ...this.#sharedState, ...pageProps }
@@ -227,6 +230,7 @@ export class Inertia<Pages> {
    * Handle Inertia request by setting headers and returning page object
    *
    * @param pageObject - The page object to return
+   * @returns The page object with appropriate headers set
    */
   #handleInertiaRequest<Page extends keyof Pages & string>(
     pageObject: PageObject<Pages[Page]>
@@ -240,6 +244,7 @@ export class Inertia<Pages> {
    *
    * @param pageObject - The page object to render
    * @param viewProps - Additional props to pass to the root view template
+   * @returns Promise resolving to the rendered HTML string
    */
   async #renderWithSSR<Page extends keyof Pages & string>(
     pageObject: PageObject<Pages[Page]>,
@@ -262,6 +267,7 @@ export class Inertia<Pages> {
    *
    * @param pageObject - The page object to render
    * @param viewProps - Additional props to pass to the root view template
+   * @returns Promise resolving to the rendered HTML string
    */
   async #renderClientSide<Page extends keyof Pages & string>(
     pageObject: PageObject<Pages[Page]>,
@@ -275,6 +281,9 @@ export class Inertia<Pages> {
    * Extract Inertia-specific information from request headers
    *
    * Parses various Inertia headers to determine request type and props filtering.
+   *
+   * @param reCompute - Whether to recompute the request info instead of using cached version
+   * @returns The request information object containing Inertia-specific data
    *
    * @example
    * ```js
@@ -307,6 +316,8 @@ export class Inertia<Pages> {
    * Compute and cache the assets version
    *
    * Uses Vite manifest hash when available, otherwise defaults to '1'.
+   *
+   * @returns The computed version string for asset versioning
    */
   getVersion() {
     if (this.#cachedVersion) {
@@ -330,6 +341,7 @@ export class Inertia<Pages> {
    * Checks global SSR settings and component-specific configuration.
    *
    * @param component - The component name to check
+   * @returns Promise resolving to true if SSR is enabled for the component
    *
    * @example
    * ```js
@@ -363,6 +375,7 @@ export class Inertia<Pages> {
    * in every page render alongside page-specific props.
    *
    * @param sharedState - Props to share across all pages
+   * @returns The Inertia instance for method chaining
    *
    * @example
    * ```js
@@ -390,6 +403,7 @@ export class Inertia<Pages> {
    *
    * @param page - The page component name
    * @param pageProps - Props to pass to the page component
+   * @returns Promise resolving to the complete page object
    *
    * @example
    * ```js
@@ -436,8 +450,7 @@ export class Inertia<Pages> {
    * @param page - The page component name to render
    * @param pageProps - Props to pass to the page component
    * @param viewProps - Additional props to pass to the root view template
-   *
-   * @returns PageObject for Inertia requests, HTML string for initial page loads
+   * @returns Promise resolving to PageObject for Inertia requests, HTML string for initial page loads
    *
    * @example
    * ```js

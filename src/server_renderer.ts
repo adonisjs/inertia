@@ -69,7 +69,7 @@ export class ServerRenderer {
    * @returns Promise resolving to an object with rendered head and body HTML
    *
    * @example
-   * ```typescript
+   * ```js
    * const pageObject = {
    *   component: 'Home',
    *   props: { user: { name: 'John' } },

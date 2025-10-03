@@ -17,6 +17,7 @@ import type { InertiaConfig, InertiaConfigInput } from './types.js'
  * to create a complete Inertia configuration object.
  *
  * @param config - User configuration input to override defaults
+ * @returns Complete Inertia configuration object with defaults applied
  *
  * @example
  * ```js
