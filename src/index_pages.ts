@@ -33,7 +33,7 @@ const TYPES_EXTRACTION_HELPER = {
   vue3: `import type { VNodeProps, AllowedComponentProps, ComponentInstance } from 'vue'
 
 type ExtractProps<T> = Omit<
-  ComponentInstance<T>['$props'][K],
+  ComponentInstance<T>['$props'],
   keyof VNodeProps | keyof AllowedComponentProps
 >`,
   react: `import type React from 'react'
