@@ -33,7 +33,7 @@ export type InertiaPluginOptions = {
          */
         output?: string
       }
-    | { enabled: false }
+    | { enabled: false; entrypoint?: string; output?: string }
 }
 
 /**
