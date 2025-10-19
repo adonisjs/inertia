@@ -10,7 +10,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { type ContainerResolver } from '@adonisjs/core/container'
 import type { JSONDataTypes } from '@adonisjs/core/types/transformers'
-import type { AsyncOrSync, DeepPartial, Prettify } from '@poppinss/utils/types'
+import type { AsyncOrSync, DeepPartial, Prettify } from '@adonisjs/core/types/common'
 import {
   type DEEP_MERGE,
   type ALWAYS_PROP,

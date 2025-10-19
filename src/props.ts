@@ -8,7 +8,7 @@
  */
 
 import { serialize } from '@adonisjs/core/transformers'
-import { type AsyncOrSync } from '@poppinss/utils/types'
+import { type AsyncOrSync } from '@adonisjs/core/types/common'
 import { type JSONDataTypes } from '@adonisjs/core/types/transformers'
 
 import { ALWAYS_PROP, DEEP_MERGE, DEFERRED_PROP, OPTIONAL_PROP, TO_BE_MERGED } from './symbols.ts'

@@ -37,9 +37,14 @@ type ExtractProps<T> = Omit<
   keyof VNodeProps | keyof AllowedComponentProps
 >`,
   react: `import type React from 'react'
+  import type { Prettify } from '@adonisjs/core/types/common'
 
 type ExtractProps<T> =
-  T extends React.FC<infer Props> ? Props : T extends React.Component<infer Props> ? Props : never`,
+  T extends React.FC<infer Props>
+    ? Prettify<Omit<Props, 'children'>>
+    : T extends React.Component<infer Props>
+      ? Prettify<Omit<Props, 'children'>>
+      : never`,
 }
 
 /**
