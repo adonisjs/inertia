@@ -37,7 +37,7 @@ type ExtractProps<T> = Omit<
   keyof VNodeProps | keyof AllowedComponentProps
 >`,
   react: `import type React from 'react'
-  import type { Prettify } from '@adonisjs/core/types/common'
+import type { Prettify } from '@adonisjs/core/types/common'
 
 type ExtractProps<T> =
   T extends React.FC<infer Props>
