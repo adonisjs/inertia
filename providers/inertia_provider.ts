@@ -13,7 +13,13 @@ import { BriskRoute, type Route } from '@adonisjs/core/http'
 import type { ApplicationService } from '@adonisjs/core/types'
 
 import { InertiaManager } from '../src/inertia_manager.ts'
-import type { AsPageProps, InertiaConfig, InertiaPages } from '../src/types.js'
+import type {
+  AsPageProps,
+  ComponentProps,
+  InertiaConfig,
+  InertiaPages,
+  SharedProps,
+} from '../src/types.js'
 
 declare module '@adonisjs/core/http' {
   export interface BriskRoute {
@@ -45,7 +51,9 @@ declare module '@adonisjs/core/http' {
      */
     renderInertia<Page extends keyof InertiaPages>(
       component: Page,
-      props: AsPageProps<InertiaPages[Page]>,
+      props: InertiaPages[Page] extends ComponentProps
+        ? AsPageProps<Omit<InertiaPages[Page], keyof SharedProps>>
+        : never,
       viewProps?: Record<string, any>
     ): Route
   }
