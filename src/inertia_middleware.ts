@@ -132,7 +132,7 @@ export default abstract class BaseInertiaMiddleware {
         InertiaPages extends Record<string, ComponentProps> ? InertiaPages : never
       >(ctx)
     if (this.share) {
-      ctx.inertia.share(await this.share(ctx))
+      ctx.inertia.share(() => this.share!(ctx))
     }
   }
 
