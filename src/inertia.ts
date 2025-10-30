@@ -35,6 +35,7 @@ import {
   buildPartialRequestProps,
 } from './props.ts'
 import debug from './debug.ts'
+import { type AsyncOrSync } from '@poppinss/utils/types'
 
 /**
  * Main class used to interact with Inertia
@@ -57,7 +58,7 @@ import debug from './debug.ts'
  * ```
  */
 export class Inertia<Pages> {
-  #sharedState?: PageProps
+  #sharedStateProviders?: (PageProps | (() => AsyncOrSync<PageProps>))[]
   #cachedRequestInfo?: RequestInfo
 
   /**
@@ -186,7 +187,11 @@ export class Inertia<Pages> {
    *
    * Handles both static strings and dynamic functions for the root view.
    *
-   * @returns The resolved root view template name
+   * @example
+   * ```js
+   * const viewName = this.#resolveRootView()
+   * this.ctx.view.render(viewName, { page: pageObject })
+   * ```
    */
   #resolveRootView() {
     return typeof this.config.rootView === 'function'
@@ -198,14 +203,44 @@ export class Inertia<Pages> {
    * Constructs and serializes the page props for a given component
    *
    * Handles both full page loads and partial requests with prop filtering.
+   * Merges shared state providers with page-specific props, and handles
+   * prop cherry-picking for partial reloads based on the `only` and `except` parameters.
    *
    * @param component - The component name being rendered
    * @param requestInfo - Information about the current request
    * @param pageProps - Raw page props to be processed
-   * @returns Promise resolving to processed props object with metadata
+   *
+   * @example
+   * ```js
+   * const result = await this.#buildPageProps('Dashboard', requestInfo, {
+   *   user: { name: 'John' },
+   *   posts: defer(() => getPosts())
+   * })
+   * ```
    */
-  #buildPageProps(component: string, requestInfo: RequestInfo, pageProps: PageProps) {
-    const finalProps = { ...this.#sharedState, ...pageProps }
+  async #buildPageProps(component: string, requestInfo: RequestInfo, pageProps: PageProps) {
+    let finalProps: PageProps
+
+    /**
+     * Shared state could be defined as functions that must be lazily evaluated.
+     * Therefore we invoke all the functions and create a final merged shared
+     * state.
+     */
+    if (this.#sharedStateProviders) {
+      const sharedState = await Promise.all(
+        this.#sharedStateProviders.map((provider) => {
+          return typeof provider === 'function' ? provider() : provider
+        })
+      ).then((resolvedSharedState) => {
+        return resolvedSharedState.reduce<PageProps>((result, state) => {
+          return { ...result, ...state }
+        }, {})
+      })
+      finalProps = { ...sharedState, ...pageProps }
+    } else {
+      finalProps = { ...pageProps }
+    }
+
     if (requestInfo.partialComponent === component) {
       const only = requestInfo.onlyProps
       const except = requestInfo.exceptProps ?? []
@@ -227,10 +262,18 @@ export class Inertia<Pages> {
   }
 
   /**
-   * Handle Inertia request by setting headers and returning page object
+   * Handle Inertia AJAX request by setting appropriate headers
+   *
+   * Sets the `X-Inertia` header to 'true' indicating this is an Inertia response,
+   * then returns the page object which will be serialized as JSON.
    *
    * @param pageObject - The page object to return
-   * @returns The page object with appropriate headers set
+   *
+   * @example
+   * ```js
+   * const pageObj = await this.page('Dashboard', props)
+   * return this.#handleInertiaRequest(pageObj)
+   * ```
    */
   #handleInertiaRequest<Page extends keyof Pages & string>(
     pageObject: PageObject<Pages[Page]>
@@ -391,8 +434,11 @@ export class Inertia<Pages> {
    *   .share({ permissions: userPermissions })
    * ```
    */
-  share(sharedState: PageProps): this {
-    this.#sharedState = { ...this.#sharedState, ...sharedState }
+  share(sharedState: PageProps | (() => AsyncOrSync<PageProps>)): this {
+    if (!this.#sharedStateProviders) {
+      this.#sharedStateProviders = []
+    }
+    this.#sharedStateProviders.push(sharedState)
     return this
   }
 

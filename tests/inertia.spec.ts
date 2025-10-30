@@ -126,6 +126,47 @@ test.group('Inertia', () => {
     })
   })
 
+  test('define sharedData in as an async function', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const result: any = await inertia
+      .share(async () => {
+        return {
+          foo: 'bar',
+        }
+      })
+      .share({
+        bar: 'baz',
+      })
+      .render('foo', { errors: [1, 2] })
+
+    assert.deepEqual(result.props, {
+      foo: 'bar',
+      bar: 'baz',
+      errors: [1, 2],
+    })
+  })
+
+  test('make sure shared state is merged in correct order', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const result: any = await inertia
+      .share(async () => {
+        return {
+          foo: 'bar',
+        }
+      })
+      .share({
+        foo: 'baz',
+      })
+      .render('foo', { errors: [1, 2] })
+
+    assert.deepEqual(result.props, {
+      foo: 'baz',
+      errors: [1, 2],
+    })
+  })
+
   test('render props should take precedence over sharedData', async ({ assert }) => {
     const inertia = new InertiaFactory().create()
 
