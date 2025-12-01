@@ -27,7 +27,7 @@
     "test": "c8 npm run quick:test",
     "typecheck": "tsc --noEmit",
     "clean": "del-cli build",
-    "compile": "tsup-node && tsc --emitDeclarationOnly --declaration",
+    "compile": "tsdown && tsc --emitDeclarationOnly --declaration",
     "copy:templates": "copyfiles --up 1 \"stubs/**/*.stub\" build",
     "prebuild": "npm run lint && npm run clean",
     "build": "npm run compile",
@@ -75,7 +75,7 @@
     "react": "^19.2.0",
     "release-it": "^19.0.6",
     "supertest": "^7.1.4",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.17.0-beta.4",
     "typescript": "~5.9.3",
     "vite": "^7.2.6"
   },
@@ -160,7 +160,7 @@
       }
     }
   },
-  "tsup": {
+  "tsdown": {
     "entry": [
       "./index.ts",
       "./src/types.ts",
@@ -176,7 +176,10 @@
     "outDir": "./build",
     "clean": true,
     "format": "esm",
+    "minify": "dce-only",
+    "fixedExtension": false,
     "dts": false,
+    "treeshake": false,
     "sourcemaps": false,
     "target": "esnext"
   },
