@@ -1055,7 +1055,9 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "total": 10,
+            "meta": {
+              "total": 10,
+            },
           },
           "posts": [
             {
@@ -1194,7 +1196,9 @@ test.group('Inertia.page | Transformers', () => {
                 "id": 1,
               },
             ],
-            "total": 10,
+            "meta": {
+              "total": 10,
+            },
           },
           "posts": [
             {
@@ -1390,6 +1394,7 @@ test.group('Inertia.page | Transformers', () => {
                 "id": 1,
               },
             ],
+            "meta": {},
           },
         },
         "url": "",
@@ -1525,6 +1530,7 @@ test.group('Inertia.page | Transformers', () => {
                 "id": 1,
               },
             ],
+            "meta": {},
           },
           "user": {
             "id": 1,
@@ -1601,7 +1607,9 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "total": 10,
+            "meta": {
+              "total": 10,
+            },
           },
           "posts": [
             {
@@ -1687,7 +1695,9 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "total": 10,
+            "meta": {
+              "total": 10,
+            },
           },
           "posts": [
             {
@@ -1774,7 +1784,9 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "total": 10,
+            "meta": {
+              "total": 10,
+            },
           },
           "posts": [
             {
@@ -1860,7 +1872,9 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "total": 10,
+            "meta": {
+              "total": 10,
+            },
           },
         },
         "url": "",
@@ -1942,7 +1956,9 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "total": 10,
+            "meta": {
+              "total": 10,
+            },
           },
           "posts": [
             {
@@ -2028,7 +2044,9 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "total": 10,
+            "meta": {
+              "total": 10,
+            },
           },
         },
         "url": "",
