@@ -9,9 +9,9 @@
 
 import React from 'react'
 import type { UserRegistry } from '@tuyau/core/types'
+import { AreAllOptional } from '@poppinss/utils/types'
 import { Link as InertiaLink } from '@inertiajs/react'
 import { useTuyau } from './context.tsx'
-import { AreAllOptional } from '@poppinss/utils/types'
 
 /**
  * Get parameter tuple type for a route

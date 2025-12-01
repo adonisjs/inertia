@@ -9,10 +9,11 @@
 
 import { test } from '@japa/runner'
 import { createTuyau } from '@tuyau/core/client'
-import { Link } from '../../src/client/react/link.tsx'
-import { TuyauProvider } from '../../src/client/react/context.tsx'
-import { useRouter } from '../../src/client/react/router.ts'
 import { type AdonisEndpoint } from '@tuyau/core/types'
+
+import { Link } from '../../src/client/react/link.tsx'
+import { useRouter } from '../../src/client/react/router.ts'
+import { TuyauProvider } from '../../src/client/react/context.tsx'
 
 const routes = {
   'users.index': {

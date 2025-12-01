@@ -342,7 +342,9 @@ test.group('To page props | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -603,7 +605,9 @@ test.group('To page props | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -645,7 +649,9 @@ test.group('To page props | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -687,7 +693,9 @@ test.group('To page props | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -729,7 +737,9 @@ test.group('To page props | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 

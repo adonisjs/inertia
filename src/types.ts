@@ -20,20 +20,13 @@ import {
 } from './symbols.ts'
 
 /**
- * Representation of a resource item, collection and paginator that can be serialized
+ * Representation of a resource item, collection and paginator that can be resolved to
+ * get normalized objects
  *
- * @template T - The type that the serializable object resolves to
+ * @template T - The type that the resource resolves to
  */
-export type SerializableOf<T> = {
-  /**
-   * Serializes the object using the container resolver
-   *
-   * @param container - The container resolver instance
-   * @param depth - Current serialization depth
-   * @param maxDepth - Maximum allowed serialization depth
-   * @returns Promise that resolves to the serialized object
-   */
-  serialize(container: ContainerResolver<any>, depth: number, maxDepth?: number): Promise<T>
+export type ResolvableOf<T> = {
+  resolve(container: ContainerResolver<any>, depth: number, maxDepth?: number): Promise<T>
 }
 
 /**
@@ -41,7 +34,7 @@ export type SerializableOf<T> = {
  *
  * @template T - The JSON data type, defaults to JSONDataTypes
  */
-export type UnPackedPageProps<T extends JSONDataTypes = JSONDataTypes> = T | SerializableOf<T>
+export type UnPackedPageProps<T extends JSONDataTypes = JSONDataTypes> = T | ResolvableOf<T>
 
 /**
  * Utility type that extracts the resolved type from a SerializableOf wrapper
@@ -49,7 +42,7 @@ export type UnPackedPageProps<T extends JSONDataTypes = JSONDataTypes> = T | Ser
  *
  * @template T - The type to unwrap, potentially wrapped in SerializableOf
  */
-export type UnpackProp<T> = T extends SerializableOf<infer A> ? A : T
+export type UnpackProp<T> = T extends ResolvableOf<infer A> ? A : T
 
 /**
  * Information extracted from Inertia request headers
@@ -141,14 +134,14 @@ type PagePropsLazyDataTypes<T extends JSONDataTypes> =
    * - Can be explicitly requested for
    * - Can be dropped during cherry-picking
    */
-  | DeferProp<T | SerializableOf<T>>
+  | DeferProp<T | ResolvableOf<T>>
 
   /**
    * - Never included on standard visit
    * - Can be explicitly requested for
    * - Can be dropped during cherry-picking
    */
-  | OptionalProp<T | SerializableOf<T>>
+  | OptionalProp<T | ResolvableOf<T>>
 
 /**
  * Eager props are always included during standard Inertia visits, but
@@ -167,19 +160,19 @@ type PagePropsEagerDataTypes<T extends JSONDataTypes> =
    * - Always included on standard visit.
    * - Can be dropped during cherry-picking
    */
-  | SerializableOf<T>
+  | ResolvableOf<T>
 
   /**
    * - Always included on standard visit.
    * - Can be dropped during cherry-picking
    */
-  | (() => AsyncOrSync<T | SerializableOf<T>>)
+  | (() => AsyncOrSync<T | ResolvableOf<T>>)
 
   /**
    * - Always included on standard visit
    * - Cannot be dropped during cherry-picking
    */
-  | AlwaysProp<T | SerializableOf<T>>
+  | AlwaysProp<T | ResolvableOf<T>>
 
 /**
  * Following is the list of acceptable Page props data types

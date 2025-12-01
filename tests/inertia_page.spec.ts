@@ -1006,7 +1006,9 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -1081,7 +1083,9 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -1544,7 +1548,9 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -1625,7 +1631,9 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -1709,7 +1717,9 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -1792,7 +1802,9 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -1868,7 +1880,9 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 
@@ -1956,7 +1970,9 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        total: number
+        meta: {
+          total: number
+        }
       }
     }
 

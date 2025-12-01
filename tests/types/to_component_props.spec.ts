@@ -62,23 +62,27 @@ test.group('To component props', () => {
       paginated:
         | {
             data: { id: number; title: string }[]
-            total: number
+            meta: {
+              total: number
+            }
           }
         | undefined
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
-      user:
+      user?:
         | {
             id: number
             timestamps: boolean
           }
         | undefined
       posts: { id: number; title: string }[]
-      paginated:
+      paginated?:
         | {
             data: { id: number; title: string }[]
-            total: number
+            meta: {
+              total: number
+            }
           }
         | undefined
     }>()
@@ -160,7 +164,6 @@ test.group('To component props', () => {
       posts: Collection<PostsTransformer, 1, 'toObject'>
       paginated: Paginator<
         Collection<PostsTransformer, 1, 'toObject'>,
-        'data',
         {
           total: number
         }
@@ -175,8 +178,9 @@ test.group('To component props', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-      } & {
-        total: number
+        meta: {
+          total: number
+        }
       }
     }>()
   })
@@ -206,7 +210,6 @@ test.group('To component props', () => {
       paginated:
         | Paginator<
             Collection<PostsTransformer, 1, 'toObject'>,
-            'data',
             {
               total: number
             }
@@ -215,19 +218,20 @@ test.group('To component props', () => {
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
-      user:
+      user?:
         | {
             id: number
             timestamps: boolean
           }
         | undefined
       posts: { id: number; title: string }[]
-      paginated:
-        | ({
+      paginated?:
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   })
@@ -259,7 +263,6 @@ test.group('To component props', () => {
       paginated: () => Promise<
         | Paginator<
             Collection<PostsTransformer, 1, 'toObject'>,
-            'data',
             {
               total: number
             }
@@ -277,11 +280,12 @@ test.group('To component props', () => {
         | undefined
       posts: { id: number; title: string }[]
       paginated:
-        | ({
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   })
@@ -311,7 +315,6 @@ test.group('To component props', () => {
       paginated: MergeableProp<
         | Paginator<
             Collection<PostsTransformer, 1, 'toObject'>,
-            'data',
             {
               total: number
             }
@@ -329,11 +332,12 @@ test.group('To component props', () => {
         | undefined
       posts: { id: number; title: string }[]
       paginated:
-        | ({
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   })
@@ -457,7 +461,6 @@ test.group('To component props | Deferred', () => {
       paginated: DeferProp<
         Paginator<
           Collection<PostsTransformer, 1, 'toObject'>,
-          'data',
           {
             total: number
           }
@@ -473,8 +476,9 @@ test.group('To component props | Deferred', () => {
       posts?: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-      } & {
-        total: number
+        meta: {
+          total: number
+        }
       }
     }>()
   })
@@ -506,7 +510,6 @@ test.group('To component props | Deferred', () => {
       paginated: DeferProp<
         | Paginator<
             Collection<PostsTransformer, 1, 'toObject'>,
-            'data',
             {
               total: number
             }
@@ -524,11 +527,12 @@ test.group('To component props | Deferred', () => {
         | undefined
       posts?: { id: number; title: string }[]
       paginated?:
-        | ({
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   })
@@ -561,7 +565,6 @@ test.group('To component props | Deferred', () => {
         DeferProp<
           | Paginator<
               Collection<PostsTransformer, 1, 'toObject'>,
-              'data',
               {
                 total: number
               }
@@ -580,11 +583,12 @@ test.group('To component props | Deferred', () => {
         | undefined
       posts?: { id: number; title: string }[]
       paginated?:
-        | ({
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   })
@@ -710,7 +714,6 @@ test.group('To component props | Optional', () => {
       paginated: OptionalProp<
         Paginator<
           Collection<PostsTransformer, 1, 'toObject'>,
-          'data',
           {
             total: number
           }
@@ -726,8 +729,9 @@ test.group('To component props | Optional', () => {
       posts?: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-      } & {
-        total: number
+        meta: {
+          total: number
+        }
       }
     }>()
   })
@@ -759,7 +763,6 @@ test.group('To component props | Optional', () => {
       paginated: OptionalProp<
         | Paginator<
             Collection<PostsTransformer, 1, 'toObject'>,
-            'data',
             {
               total: number
             }
@@ -777,11 +780,12 @@ test.group('To component props | Optional', () => {
         | undefined
       posts?: { id: number; title: string }[]
       paginated?:
-        | ({
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   })
@@ -812,7 +816,6 @@ test.group('To component props | Optional', () => {
         DeferProp<
           | Paginator<
               Collection<PostsTransformer, 1, 'toObject'>,
-              'data',
               {
                 total: number
               }
@@ -831,11 +834,12 @@ test.group('To component props | Optional', () => {
         | undefined
       posts?: { id: number; title: string }[]
       paginated?:
-        | ({
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   }).skip(true, 'Have to check if Inertia supports this')
@@ -961,7 +965,6 @@ test.group('To component props | Always', () => {
       paginated: AlwaysProp<
         Paginator<
           Collection<PostsTransformer, 1, 'toObject'>,
-          'data',
           {
             total: number
           }
@@ -977,8 +980,9 @@ test.group('To component props | Always', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-      } & {
-        total: number
+        meta: {
+          total: number
+        }
       }
     }>()
   })
@@ -1010,7 +1014,6 @@ test.group('To component props | Always', () => {
       paginated: AlwaysProp<
         | Paginator<
             Collection<PostsTransformer, 1, 'toObject'>,
-            'data',
             {
               total: number
             }
@@ -1028,11 +1031,12 @@ test.group('To component props | Always', () => {
         | undefined
       posts: { id: number; title: string }[]
       paginated:
-        | ({
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   })
@@ -1063,7 +1067,6 @@ test.group('To component props | Always', () => {
         DeferProp<
           | Paginator<
               Collection<PostsTransformer, 1, 'toObject'>,
-              'data',
               {
                 total: number
               }
@@ -1082,11 +1085,12 @@ test.group('To component props | Always', () => {
         | undefined
       posts?: { id: number; title: string }[]
       paginated?:
-        | ({
+        | {
             data: { id: number; title: string }[]
-          } & {
-            total: number
-          })
+            meta: {
+              total: number
+            }
+          }
         | undefined
     }>()
   }).skip(true, 'Have to check if Inertia supports this')
