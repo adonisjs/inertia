@@ -217,7 +217,7 @@ export type GetOptionalProps<Props> = {
     ? K
     : Props[K] extends DeferProp<any>
       ? K
-      : [undefined] extends Props[K]
+      : [undefined] extends [Props[K]]
         ? K
         : Props[K] extends MergeableProp<infer A>
           ? A extends DeferProp<any>
@@ -237,7 +237,7 @@ export type GetRequiredProps<Props> = {
     ? never
     : Props[K] extends DeferProp<any>
       ? never
-      : [undefined] extends Props[K]
+      : [undefined] extends [Props[K]]
         ? never
         : Props[K] extends MergeableProp<infer A>
           ? A extends DeferProp<any>
