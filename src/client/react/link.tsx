@@ -8,26 +8,27 @@
  */
 
 import React from 'react'
-import type { UserRegistry } from '@tuyau/core/types'
+import type { UserRegistry, InferRoutes } from '@tuyau/core/types'
 import { AreAllOptional } from '@poppinss/utils/types'
 import { Link as InertiaLink } from '@inertiajs/react'
 import { useTuyau } from './context.tsx'
 
+type Routes = InferRoutes<UserRegistry>
+
 /**
  * Get parameter tuple type for a route
  */
-type ExtractParamsTuple<Route extends keyof UserRegistry> =
-  UserRegistry[Route]['types']['paramsTuple']
+type ExtractParamsTuple<Route extends keyof Routes> = Routes[Route]['types']['paramsTuple']
 
 /**
  * Get parameter object type for a route
  */
-type ExtractParamsObject<Route extends keyof UserRegistry> = UserRegistry[Route]['types']['params']
+type ExtractParamsObject<Route extends keyof Routes> = Routes[Route]['types']['params']
 
 /**
  * Get params format for a route
  */
-type RouteParamsFormats<Route extends keyof UserRegistry> =
+type RouteParamsFormats<Route extends keyof Routes> =
   ExtractParamsObject<Route> extends Record<string, never>
     ? never
     : ExtractParamsTuple<Route> | ExtractParamsObject<Route>
@@ -35,7 +36,7 @@ type RouteParamsFormats<Route extends keyof UserRegistry> =
 /**
  * Parameters required for route navigation with proper type safety.
  */
-export type LinkParams<Route extends keyof UserRegistry> = {
+export type LinkParams<Route extends keyof Routes> = {
   route: Route
 } & (RouteParamsFormats<Route> extends never
   ? { params?: never }
@@ -47,7 +48,7 @@ export type LinkParams<Route extends keyof UserRegistry> = {
  * Props for the Link component extending InertiaLink props
  * with route-specific type safety and parameter validation.
  */
-type LinkProps<Route extends keyof UserRegistry> = Omit<
+type LinkProps<Route extends keyof Routes> = Omit<
   React.ComponentPropsWithoutRef<typeof InertiaLink>,
   'href' | 'method'
 > &
@@ -61,7 +62,7 @@ type LinkProps<Route extends keyof UserRegistry> = Omit<
  * @param props - Link properties including route and parameters
  * @param ref - Forward ref for the underlying InertiaLink component
  */
-function LinkInner<Route extends keyof UserRegistry>(
+function LinkInner<Route extends keyof Routes>(
   props: LinkProps<Route>,
   ref?: React.ForwardedRef<React.ElementRef<typeof InertiaLink>>
 ) {
@@ -99,7 +100,7 @@ function LinkInner<Route extends keyof UserRegistry>(
  * ```
  */
 
-export const Link: <Route extends keyof UserRegistry>(
+export const Link: <Route extends keyof Routes>(
   props: LinkProps<Route> & {
     ref?: React.Ref<React.ElementRef<typeof InertiaLink>>
   }

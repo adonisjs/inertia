@@ -9,7 +9,7 @@
 
 import React from 'react'
 import type { Tuyau } from '@tuyau/core/client'
-import type { AdonisRegistry } from '@tuyau/core/types'
+import type { TuyauRegistry } from '@tuyau/core/types'
 
 /**
  * React context for providing Tuyau client instance throughout the component tree
@@ -23,7 +23,7 @@ const TuyauContext = React.createContext<Tuyau<any> | null>(null)
  * application that needs access to type-safe routing functionality.
  *
  */
-export function TuyauProvider<R extends AdonisRegistry>(props: {
+export function TuyauProvider<R extends TuyauRegistry>(props: {
   children: React.ReactNode
   client: Tuyau<R>
 }) {

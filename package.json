@@ -60,7 +60,7 @@
     "@japa/snapshot": "^2.0.9",
     "@poppinss/ts-exec": "^1.4.1",
     "@release-it/conventional-changelog": "^10.0.2",
-    "@tuyau/core": "^1.0.0-beta.1",
+    "@tuyau/core": "^1.0.0-beta.4",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/supertest": "^6.0.3",
@@ -92,7 +92,7 @@
     "@inertiajs/react": "^2.2.15",
     "@japa/api-client": "^3.1.0",
     "@japa/plugin-adonisjs": "^5.0.0-next.0",
-    "@tuyau/core": "^1.0.0-beta.1",
+    "@tuyau/core": "^1.0.0-beta.4",
     "edge.js": "^6.0.0",
     "react": "^19.2.0"
   },

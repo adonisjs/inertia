@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import type { UserRegistry } from '@tuyau/core/types'
+import type { UserRegistry, InferRoutes } from '@tuyau/core/types'
 import { router as InertiaRouter } from '@inertiajs/react'
 
 import { useTuyau } from './context.tsx'
@@ -44,7 +44,7 @@ export function useRouter() {
      * router.visit({ route: 'user.edit', params: { id: userId } })
      * ```
      */
-    visit: <Route extends keyof UserRegistry>(
+    visit: <Route extends keyof InferRoutes<UserRegistry>>(
       props: LinkParams<Route>,
       options?: Parameters<typeof InertiaRouter.visit>[1]
     ) => {

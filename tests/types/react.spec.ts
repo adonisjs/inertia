@@ -48,8 +48,13 @@ const routes = {
   },
 } as const satisfies Record<string, AdonisEndpoint>
 
+const registry = {
+  routes,
+  $tree: {} as any,
+}
+
 declare module '@tuyau/core/types' {
-  type Registry = typeof routes
+  type Registry = typeof registry
   export interface UserRegistry extends Registry {}
 }
 
@@ -88,7 +93,7 @@ test.group('React | Typings', () => {
   }).fails()
 
   test('provider typing', () => {
-    const client = createTuyau({ registry: routes, baseUrl: 'http://localhost' })
+    const client = createTuyau({ registry, baseUrl: 'http://localhost' })
     TuyauProvider({ client, children: null })
   })
 
