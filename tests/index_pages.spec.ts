@@ -28,7 +28,7 @@ test.group('Index pages', () => {
       framework: 'vue3',
     })
 
-    indexer.run({} as any, generator)
+    indexer.run({} as any, {} as any, generator)
     await generator.generate()
 
     await assert.fileExists('.adonisjs/server/pages.d.ts')
@@ -60,7 +60,7 @@ test.group('Index pages', () => {
       framework: 'react',
     })
 
-    indexer.run({} as any, generator)
+    indexer.run({} as any, {} as any, generator)
     await generator.generate()
 
     await assert.fileExists('.adonisjs/server/pages.d.ts')
@@ -93,7 +93,7 @@ test.group('Index pages', () => {
       framework: 'solid',
     })
 
-    indexer.run({} as any, generator)
+    indexer.run({} as any, {} as any, generator)
     await generator.generate()
   }).throws('Unsupported framework "solid". Types generation is available only for vue3,react')
 })

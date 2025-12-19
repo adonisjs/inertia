@@ -80,9 +80,10 @@ export const indexPages = function (config: { framework: 'vue3' | 'react' }) {
      * Executes the page indexing process to generate TypeScript definitions.
      *
      * @param _ - Unused first parameter (assembler context)
+     * @param __ - Unused second parameter (hooks instance)
      * @param indexGenerator - The index generator instance used to register the pages type generation
      */
-    run(_, indexGenerator) {
+    run(_, __, indexGenerator) {
       indexGenerator.add('inertiaPages', {
         source: 'inertia/pages',
         glob: GLOB[config.framework],
@@ -92,10 +93,10 @@ export const indexPages = function (config: { framework: 'vue3' | 'react' }) {
          *
          * @param vfs - Virtual file system containing the scanned page files
          * @param buffer - Buffer instance for writing the generated TypeScript code
-         * @param __ - Unused third parameter
+         * @param ___ - Unused third parameter
          * @param helpers - Helper utilities for path manipulation and imports
          */
-        as(vfs, buffer, __, helpers) {
+        as(vfs, buffer, ___, helpers) {
           const filesList = vfs.asList()
           buffer.writeLine(`import '@adonisjs/inertia/types'`)
           buffer.writeLine(TYPES_EXTRACTION_HELPER[config.framework])
