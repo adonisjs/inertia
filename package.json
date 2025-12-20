@@ -85,16 +85,16 @@
     "html-entities": "^2.6.0"
   },
   "peerDependencies": {
-    "@adonisjs/assembler": "^8.0.0-next.14",
-    "@adonisjs/core": "^7.0.0-next.10",
-    "@adonisjs/session": "^8.0.0-next.0",
+    "@adonisjs/assembler": "^8.0.0-next.27",
+    "@adonisjs/core": "^7.0.0-next.16",
+    "@adonisjs/session": "^8.0.0-next.1",
     "@adonisjs/vite": "^5.1.0-next.0",
-    "@inertiajs/react": "^2.2.15",
-    "@japa/api-client": "^3.1.0",
-    "@japa/plugin-adonisjs": "^5.0.0-next.0",
-    "@tuyau/core": "^1.0.0-beta.5",
-    "edge.js": "^6.0.0",
-    "react": "^19.2.0"
+    "@inertiajs/react": "^2.3.4",
+    "@japa/api-client": "^3.1.1",
+    "@japa/plugin-adonisjs": "^5.1.0-next.0",
+    "@tuyau/core": "^1.0.0-beta.7",
+    "edge.js": "^6.4.0",
+    "react": "^19.2.3"
   },
   "peerDependenciesMeta": {
     "@adonisjs/assembler": {
