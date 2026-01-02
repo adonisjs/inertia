@@ -302,7 +302,11 @@ export type GetOptionalProps<Props> = {
       : Props[K] extends OnceProp<infer T>
         ? T extends DeferProp<any> | OptionalProp<any>
           ? K
-          : never
+          : T extends MergeableProp<infer TM>
+            ? TM extends DeferProp<any>
+              ? K
+              : never
+            : never
         : [undefined] extends [Props[K]]
           ? K
           : Props[K] extends MergeableProp<infer A>
@@ -326,7 +330,11 @@ export type GetRequiredProps<Props> = {
       : Props[K] extends OnceProp<infer T>
         ? T extends DeferProp<any> | OptionalProp<any>
           ? never
-          : K
+          : T extends MergeableProp<infer TM>
+            ? TM extends DeferProp<any>
+              ? never
+              : K
+            : K
         : [undefined] extends [Props[K]]
           ? never
           : Props[K] extends MergeableProp<infer A>
@@ -346,7 +354,11 @@ export type GetRequiredPropValue<Value> =
   Value extends AlwaysProp<infer A>
     ? UnpackProp<A>
     : Value extends OnceProp<infer B>
-      ? UnpackProp<B>
+      ? B extends MergeableProp<infer BM>
+        ? BM extends DeferProp<infer BMD>
+          ? UnpackProp<BMD>
+          : UnpackProp<BM>
+        : UnpackProp<B>
       : Value extends MergeableProp<infer C>
         ? UnpackProp<C>
         : Value extends () => AsyncOrSync<infer D>
@@ -363,7 +375,13 @@ export type GetOptionalPropValue<Value> =
   Value extends DeferProp<infer A>
     ? UnpackProp<A>
     : Value extends OnceProp<infer B>
-      ? UnpackProp<B>
+      ? B extends DeferProp<infer BA> | OptionalProp<infer BA>
+        ? UnpackProp<BA>
+        : B extends MergeableProp<infer BM>
+          ? BM extends DeferProp<infer BMA>
+            ? UnpackProp<BMA>
+            : UnpackProp<BM>
+          : UnpackProp<B>
       : Value extends MergeableProp<infer C>
         ? C extends DeferProp<infer CA>
           ? UnpackProp<CA>
