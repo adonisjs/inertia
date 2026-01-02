@@ -164,6 +164,23 @@ export class InertiaFactory<Pages extends Record<string, ComponentProps>> {
   }
 
   /**
+   * Simulates a client that already has certain once props cached
+   *
+   * @param props - Array of once prop keys the client already has
+   *
+   * @example
+   * ```typescript
+   * const inertia = factory
+   *   .withCachedOnceProps(['plans', 'roles'])
+   *   .create()
+   * ```
+   */
+  withCachedOnceProps(props: string[]) {
+    this.#parameters.ctx.request.request.headers[InertiaHeaders.ExceptOnceProps] = props.join(',')
+    return this
+  }
+
+  /**
    * Sets the assets version for cache busting
    *
    * @param version - Version string or function for asset versioning

@@ -17,6 +17,7 @@ import {
   type OPTIONAL_PROP,
   type TO_BE_MERGED,
   type DEFERRED_PROP,
+  type ONCE_PROP,
 } from './symbols.ts'
 
 /**
@@ -65,6 +66,8 @@ export type RequestInfo = {
   resetProps?: string[]
   /** Error bag identifier for validation errors */
   errorBag?: string
+  /** Props that the client already has cached (once props) */
+  exceptOnceProps?: string[]
 }
 
 /**
@@ -90,6 +93,8 @@ export type OptionalProp<T extends UnPackedPageProps> = {
   compute: () => AsyncOrSync<T>
   /** Brand symbol to identify this as an optional prop */
   [OPTIONAL_PROP]: true
+  /** Creates a once prop version that is cached by the client */
+  once(): OnceProp<OptionalProp<T>>
 }
 
 /**
@@ -104,6 +109,8 @@ export type DeferProp<T extends UnPackedPageProps> = {
   compute: () => AsyncOrSync<T>
   /** Creates a mergeable version of this deferred prop */
   merge(): MergeableProp<DeferProp<T>>
+  /** Creates a once prop version that is cached by the client */
+  once(): OnceProp<DeferProp<T>>
   /** Brand symbol to identify this as a deferred prop */
   [DEFERRED_PROP]: true
 }
@@ -119,6 +126,47 @@ export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
   /** Brand symbol to identify this prop for merging */
   [TO_BE_MERGED]: true
   [DEEP_MERGE]: boolean
+  /** Creates a once prop version that is cached by the client */
+  once(): OnceProp<MergeableProp<T>>
+}
+
+/**
+ * Represents a prop that is resolved only once and remembered by the client
+ * across page navigations. Useful for expensive data that rarely changes.
+ *
+ * @template T - The type of the prop value or wrapped prop type
+ */
+export type OnceProp<
+  T extends
+    | UnPackedPageProps
+    | DeferProp<UnPackedPageProps>
+    | OptionalProp<UnPackedPageProps>
+    | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>,
+> = {
+  /** The prop value that will be cached by the client */
+  value: T
+  /** Function that computes the prop value */
+  compute: () => AsyncOrSync<
+    T extends DeferProp<infer U> | OptionalProp<infer U>
+      ? U
+      : T extends UnPackedPageProps
+        ? T
+        : never
+  >
+  /** Whether to force refresh this prop even if client has it cached */
+  shouldBeRefreshed: boolean
+  /** Custom key for sharing data across multiple pages with different prop names */
+  customKey: string | null
+  /** Expiration timestamp in milliseconds (null = no expiration) */
+  expiresAt: number | null
+  /** Brand symbol to identify this as a once prop */
+  [ONCE_PROP]: true
+  /** Force this once prop to be refreshed on the next request */
+  fresh(value?: boolean): OnceProp<T>
+  /** Set a custom key for sharing data across multiple pages */
+  as(key: string): OnceProp<T>
+  /** Set an expiration time for this once prop (duration string ['1h', '5m'], Date, or seconds as number) */
+  until(delay: string | number | Date): OnceProp<T>
 }
 
 /**
@@ -142,6 +190,32 @@ type PagePropsLazyDataTypes<T extends JSONDataTypes> =
    * - Can be dropped during cherry-picking
    */
   | OptionalProp<T | ResolvableOf<T>>
+
+  /**
+   * - Never included on standard visit (inner deferred prop)
+   * - Must be shared with the client during standard visit
+   * - Cached by client and reused on subsequent pages
+   * - Can be explicitly requested for
+   * - Can be dropped during cherry-picking
+   */
+  | OnceProp<DeferProp<T | ResolvableOf<T>>>
+
+  /**
+   * - Never included on standard visit (inner optional prop)
+   * - Cached by client and reused on subsequent pages
+   * - Can be explicitly requested for
+   * - Can be dropped during cherry-picking
+   */
+  | OnceProp<OptionalProp<T | ResolvableOf<T>>>
+
+  /**
+   * - Never included on standard visit (inner deferred prop)
+   * - Merged with existing client-side data on navigation
+   * - Cached by client and reused on subsequent pages
+   * - Can be explicitly requested for
+   * - Can be dropped during cherry-picking
+   */
+  | OnceProp<MergeableProp<DeferProp<T | ResolvableOf<T>>>>
 
 /**
  * Eager props are always included during standard Inertia visits, but
@@ -173,6 +247,21 @@ type PagePropsEagerDataTypes<T extends JSONDataTypes> =
    * - Cannot be dropped during cherry-picking
    */
   | AlwaysProp<T | ResolvableOf<T>>
+
+  /**
+   * - Included on standard visit unless client already has it cached
+   * - Cached by client and reused on subsequent pages
+   * - Can be dropped during cherry-picking
+   */
+  | OnceProp<T | ResolvableOf<T>>
+
+  /**
+   * - Included on standard visit unless client already has it cached
+   * - Cached by client and reused on subsequent pages
+   * - Merged with existing client-side data on navigation
+   * - Can be dropped during cherry-picking
+   */
+  | OnceProp<MergeableProp<T | ResolvableOf<T>>>
 
 /**
  * Following is the list of acceptable Page props data types
@@ -210,13 +299,17 @@ export type GetOptionalProps<Props> = {
     ? K
     : Props[K] extends DeferProp<any>
       ? K
-      : [undefined] extends [Props[K]]
-        ? K
-        : Props[K] extends MergeableProp<infer A>
-          ? A extends DeferProp<any>
-            ? K
-            : never
+      : Props[K] extends OnceProp<infer T>
+        ? T extends DeferProp<any> | OptionalProp<any>
+          ? K
           : never
+        : [undefined] extends [Props[K]]
+          ? K
+          : Props[K] extends MergeableProp<infer A>
+            ? A extends DeferProp<any>
+              ? K
+              : never
+            : never
 }[keyof Props]
 
 /**
@@ -230,13 +323,17 @@ export type GetRequiredProps<Props> = {
     ? never
     : Props[K] extends DeferProp<any>
       ? never
-      : [undefined] extends [Props[K]]
-        ? never
-        : Props[K] extends MergeableProp<infer A>
-          ? A extends DeferProp<any>
-            ? never
-            : K
+      : Props[K] extends OnceProp<infer T>
+        ? T extends DeferProp<any> | OptionalProp<any>
+          ? never
           : K
+        : [undefined] extends [Props[K]]
+          ? never
+          : Props[K] extends MergeableProp<infer A>
+            ? A extends DeferProp<any>
+              ? never
+              : K
+            : K
 }[keyof Props]
 
 /**
@@ -248,11 +345,13 @@ export type GetRequiredProps<Props> = {
 export type GetRequiredPropValue<Value> =
   Value extends AlwaysProp<infer A>
     ? UnpackProp<A>
-    : Value extends MergeableProp<infer B>
+    : Value extends OnceProp<infer B>
       ? UnpackProp<B>
-      : Value extends () => AsyncOrSync<infer C>
+      : Value extends MergeableProp<infer C>
         ? UnpackProp<C>
-        : UnpackProp<Value>
+        : Value extends () => AsyncOrSync<infer D>
+          ? UnpackProp<D>
+          : UnpackProp<Value>
 
 /**
  * Utility type to simplify value of an optional prop by unwrapping branded types
@@ -263,15 +362,17 @@ export type GetRequiredPropValue<Value> =
 export type GetOptionalPropValue<Value> =
   Value extends DeferProp<infer A>
     ? UnpackProp<A>
-    : Value extends MergeableProp<infer B>
-      ? B extends DeferProp<infer BA>
-        ? UnpackProp<BA>
-        : UnpackProp<B>
-      : Value extends OptionalProp<infer C>
-        ? UnpackProp<C>
-        : Value extends () => AsyncOrSync<infer D>
+    : Value extends OnceProp<infer B>
+      ? UnpackProp<B>
+      : Value extends MergeableProp<infer C>
+        ? C extends DeferProp<infer CA>
+          ? UnpackProp<CA>
+          : UnpackProp<C>
+        : Value extends OptionalProp<infer D>
           ? UnpackProp<D>
-          : UnpackProp<Value>
+          : Value extends () => AsyncOrSync<infer E>
+            ? UnpackProp<E>
+            : UnpackProp<Value>
 
 /**
  * Converts the Page props to Component props that will be available to the frontend
@@ -417,6 +518,17 @@ export type PageObject<Props> = {
    * existing props on the page
    */
   deepMergeProps?: string[]
+
+  /**
+   * Once props metadata - maps custom keys to their prop name and expiration.
+   * The client uses this to cache props and exclude them from future requests.
+   */
+  onceProps?: {
+    [key: string]: {
+      prop: string
+      expiresAt: number | null
+    }
+  }
 
   /**
    * Encrypt history flag to be sent to the client with every request.

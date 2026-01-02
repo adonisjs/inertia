@@ -30,6 +30,7 @@ import {
   merge,
   always,
   optional,
+  once,
   deepMerge,
   buildStandardVisitProps,
   buildPartialRequestProps,
@@ -147,6 +148,23 @@ export class Inertia<Pages> {
   deepMerge = deepMerge
 
   /**
+   * Create a once prop that is cached by the client and reused on subsequent pages
+   *
+   * @example
+   * ```js
+   * {
+   *   // Basic usage - cached after first load
+   *   plans: inertia.once(() => Plan.all()),
+   *   // With expiration
+   *   rates: inertia.once(() => Rate.all()).until(Date.now() + 86400000),
+   *   // With custom key for sharing across pages
+   *   roles: inertia.once(() => Role.all()).as('roles')
+   * }
+   * ```
+   */
+  once = once
+
+  /**
    * Creates a new Inertia instance
    *
    * @param ctx - HTTP context for the current request
@@ -258,7 +276,11 @@ export class Inertia<Pages> {
     }
 
     debug('building props for a standard visit %O', requestInfo)
-    return buildStandardVisitProps(finalProps, this.ctx.containerResolver)
+    return buildStandardVisitProps(
+      finalProps,
+      this.ctx.containerResolver,
+      requestInfo.exceptOnceProps ?? []
+    )
   }
 
   /**
@@ -350,6 +372,7 @@ export class Inertia<Pages> {
       exceptProps: this.ctx.request.header(InertiaHeaders.PartialExcept)?.split(','),
       resetProps: this.ctx.request.header(InertiaHeaders.Reset)?.split(','),
       errorBag: this.ctx.request.header(InertiaHeaders.ErrorBag),
+      exceptOnceProps: this.ctx.request.header(InertiaHeaders.ExceptOnceProps)?.split(','),
     }
 
     return this.#cachedRequestInfo
@@ -466,11 +489,8 @@ export class Inertia<Pages> {
       : never
   ): Promise<PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
-    const { props, mergeProps, deferredProps, deepMergeProps } = await this.#buildPageProps(
-      page,
-      requestInfo,
-      pageProps
-    )
+    const { props, mergeProps, deferredProps, deepMergeProps, onceProps } =
+      await this.#buildPageProps(page, requestInfo, pageProps)
 
     return {
       component: page,
@@ -482,6 +502,7 @@ export class Inertia<Pages> {
       deferredProps,
       mergeProps,
       deepMergeProps,
+      onceProps: onceProps ?? {},
     } satisfies PageObject<Pages[Page]>
   }
 
