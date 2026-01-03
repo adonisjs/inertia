@@ -245,7 +245,7 @@ export function deepMerge<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
  * const plans = once(() => Plan.all())
  *
  * // With expiration - prop refreshes after 1 day
- * const rates = once(() => ExchangeRate.all()).until(Date.now() + 86400000)
+ * const rates = once(() => ExchangeRate.all()).until('1d')
  *
  * // With custom key - share data across pages with different prop names
  * const memberRoles = once(() => Role.all()).as('roles')

@@ -156,7 +156,7 @@ export class Inertia<Pages> {
    *   // Basic usage - cached after first load
    *   plans: inertia.once(() => Plan.all()),
    *   // With expiration
-   *   rates: inertia.once(() => Rate.all()).until(Date.now() + 86400000),
+   *   rates: inertia.once(() => Rate.all()).until('1d'),
    *   // With custom key for sharing across pages
    *   roles: inertia.once(() => Role.all()).as('roles')
    * }

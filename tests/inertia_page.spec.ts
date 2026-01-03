@@ -2747,5 +2747,4 @@ test.group('Inertia.page | Once Props', () => {
       Date.now = originalNow
     }
   })
-
 })
