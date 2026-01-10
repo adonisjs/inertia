@@ -62,7 +62,7 @@ test.group('To component props', () => {
       paginated:
         | {
             data: { id: number; title: string }[]
-            meta: {
+            metadata: {
               total: number
             }
           }
@@ -80,7 +80,7 @@ test.group('To component props', () => {
       paginated?:
         | {
             data: { id: number; title: string }[]
-            meta: {
+            metadata: {
               total: number
             }
           }
@@ -162,12 +162,7 @@ test.group('To component props', () => {
     type Data = ToComponentProps<{
       user: Item<UserTransformer, 1, 'toObject'>
       posts: Collection<PostsTransformer, 1, 'toObject'>
-      paginated: Paginator<
-        Collection<PostsTransformer, 1, 'toObject'>,
-        {
-          total: number
-        }
-      >
+      paginated: Paginator<Collection<PostsTransformer, 1, 'toObject'>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -178,9 +173,7 @@ test.group('To component props', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
@@ -207,14 +200,7 @@ test.group('To component props', () => {
     type Data = ToComponentProps<{
       user: Item<UserTransformer, 1, 'toObject'> | undefined
       posts: Collection<PostsTransformer, 1, 'toObject'>
-      paginated:
-        | Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        | undefined
+      paginated: Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -228,9 +214,7 @@ test.group('To component props', () => {
       paginated?:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()
@@ -260,15 +244,7 @@ test.group('To component props', () => {
     type Data = ToComponentProps<{
       user: () => Promise<Item<UserTransformer, 1, 'toObject'> | undefined>
       posts: Collection<PostsTransformer, 1, 'toObject'>
-      paginated: () => Promise<
-        | Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        | undefined
-      >
+      paginated: () => Promise<Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -282,9 +258,7 @@ test.group('To component props', () => {
       paginated:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()
@@ -312,15 +286,7 @@ test.group('To component props', () => {
     type Data = ToComponentProps<{
       user: MergeableProp<Item<UserTransformer, 1, 'toObject'> | undefined>
       posts: MergeableProp<Collection<PostsTransformer, 1, 'toObject'>>
-      paginated: MergeableProp<
-        | Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        | undefined
-      >
+      paginated: MergeableProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -334,9 +300,7 @@ test.group('To component props', () => {
       paginated:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()
@@ -458,14 +422,7 @@ test.group('To component props | Deferred', () => {
     type Data = ToComponentProps<{
       user: DeferProp<Item<UserTransformer, 1, 'toObject'>>
       posts: DeferProp<Collection<PostsTransformer, 1, 'toObject'>>
-      paginated: DeferProp<
-        Paginator<
-          Collection<PostsTransformer, 1, 'toObject'>,
-          {
-            total: number
-          }
-        >
-      >
+      paginated: DeferProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -476,9 +433,7 @@ test.group('To component props | Deferred', () => {
       posts?: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
@@ -507,15 +462,7 @@ test.group('To component props | Deferred', () => {
     type Data = ToComponentProps<{
       user: DeferProp<Item<UserTransformer, 1, 'toObject'> | undefined>
       posts: DeferProp<Collection<PostsTransformer, 1, 'toObject'>>
-      paginated: DeferProp<
-        | Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        | undefined
-      >
+      paginated: DeferProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -529,9 +476,7 @@ test.group('To component props | Deferred', () => {
       paginated?:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()
@@ -562,15 +507,7 @@ test.group('To component props | Deferred', () => {
       user: MergeableProp<DeferProp<Item<UserTransformer, 1, 'toObject'> | undefined>>
       posts: MergeableProp<DeferProp<Collection<PostsTransformer, 1, 'toObject'>>>
       paginated: MergeableProp<
-        DeferProp<
-          | Paginator<
-              Collection<PostsTransformer, 1, 'toObject'>,
-              {
-                total: number
-              }
-            >
-          | undefined
-        >
+        DeferProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined>
       >
     }>
 
@@ -585,9 +522,7 @@ test.group('To component props | Deferred', () => {
       paginated?:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()
@@ -711,14 +646,7 @@ test.group('To component props | Optional', () => {
     type Data = ToComponentProps<{
       user: OptionalProp<Item<UserTransformer, 1, 'toObject'>>
       posts: OptionalProp<Collection<PostsTransformer, 1, 'toObject'>>
-      paginated: OptionalProp<
-        Paginator<
-          Collection<PostsTransformer, 1, 'toObject'>,
-          {
-            total: number
-          }
-        >
-      >
+      paginated: OptionalProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -729,9 +657,7 @@ test.group('To component props | Optional', () => {
       posts?: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
@@ -760,15 +686,7 @@ test.group('To component props | Optional', () => {
     type Data = ToComponentProps<{
       user: OptionalProp<Item<UserTransformer, 1, 'toObject'> | undefined>
       posts: OptionalProp<Collection<PostsTransformer, 1, 'toObject'>>
-      paginated: OptionalProp<
-        | Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        | undefined
-      >
+      paginated: OptionalProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -782,9 +700,7 @@ test.group('To component props | Optional', () => {
       paginated?:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()
@@ -813,15 +729,7 @@ test.group('To component props | Optional', () => {
       user: MergeableProp<DeferProp<Item<UserTransformer, 1, 'toObject'> | undefined>>
       posts: MergeableProp<DeferProp<Collection<PostsTransformer, 1, 'toObject'>>>
       paginated: MergeableProp<
-        DeferProp<
-          | Paginator<
-              Collection<PostsTransformer, 1, 'toObject'>,
-              {
-                total: number
-              }
-            >
-          | undefined
-        >
+        DeferProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined>
       >
     }>
 
@@ -836,9 +744,7 @@ test.group('To component props | Optional', () => {
       paginated?:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()
@@ -962,14 +868,7 @@ test.group('To component props | Always', () => {
     type Data = ToComponentProps<{
       user: AlwaysProp<Item<UserTransformer, 1, 'toObject'>>
       posts: AlwaysProp<Collection<PostsTransformer, 1, 'toObject'>>
-      paginated: AlwaysProp<
-        Paginator<
-          Collection<PostsTransformer, 1, 'toObject'>,
-          {
-            total: number
-          }
-        >
-      >
+      paginated: AlwaysProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -980,9 +879,7 @@ test.group('To component props | Always', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
@@ -1011,15 +908,7 @@ test.group('To component props | Always', () => {
     type Data = ToComponentProps<{
       user: AlwaysProp<Item<UserTransformer, 1, 'toObject'> | undefined>
       posts: AlwaysProp<Collection<PostsTransformer, 1, 'toObject'>>
-      paginated: AlwaysProp<
-        | Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        | undefined
-      >
+      paginated: AlwaysProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -1033,9 +922,7 @@ test.group('To component props | Always', () => {
       paginated:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()
@@ -1064,15 +951,7 @@ test.group('To component props | Always', () => {
       user: MergeableProp<DeferProp<Item<UserTransformer, 1, 'toObject'> | undefined>>
       posts: MergeableProp<DeferProp<Collection<PostsTransformer, 1, 'toObject'>>>
       paginated: MergeableProp<
-        DeferProp<
-          | Paginator<
-              Collection<PostsTransformer, 1, 'toObject'>,
-              {
-                total: number
-              }
-            >
-          | undefined
-        >
+        DeferProp<Paginator<Collection<PostsTransformer, 1, 'toObject'>> | undefined>
       >
     }>
 
@@ -1087,9 +966,7 @@ test.group('To component props | Always', () => {
       paginated?:
         | {
             data: { id: number; title: string }[]
-            meta: {
-              total: number
-            }
+            metadata: any
           }
         | undefined
     }>()

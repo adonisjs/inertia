@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.0.0-next.29",
-    "@adonisjs/core": "^7.0.0-next.22",
+    "@adonisjs/core": "^7.0.0-next.23",
     "@adonisjs/eslint-config": "^3.0.0-next.9",
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/session": "^8.0.0-next.2",
@@ -85,14 +85,14 @@
     "html-entities": "^2.6.0"
   },
   "peerDependencies": {
-    "@adonisjs/assembler": "^8.0.0-next.27",
-    "@adonisjs/core": "^7.0.0-next.16",
-    "@adonisjs/session": "^8.0.0-next.1",
-    "@adonisjs/vite": "^5.1.0-next.0",
-    "@inertiajs/react": "^2.3.4",
+    "@adonisjs/assembler": "^8.0.0-next.29",
+    "@adonisjs/core": "^7.0.0-next.23",
+    "@adonisjs/session": "^8.0.0-next.2",
+    "@adonisjs/vite": "^5.1.0-next.2",
+    "@inertiajs/react": "^2.3.8",
     "@japa/api-client": "^3.1.1",
-    "@japa/plugin-adonisjs": "^5.1.0-next.0",
-    "@tuyau/core": "^1.0.0-beta.7",
+    "@japa/plugin-adonisjs": "^5.1.0-next.1",
+    "@tuyau/core": "^1.0.0-beta.10",
     "edge.js": "^6.4.0",
     "react": "^19.2.3"
   },

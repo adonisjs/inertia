@@ -1006,7 +1006,7 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        meta: {
+        metadata: {
           total: number
         }
       }
@@ -1055,7 +1055,7 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "meta": {
+            "metadata": {
               "total": 10,
             },
           },
@@ -1085,7 +1085,7 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        meta: {
+        metadata: {
           total: number
         }
       }
@@ -1196,7 +1196,7 @@ test.group('Inertia.page | Transformers', () => {
                 "id": 1,
               },
             ],
-            "meta": {
+            "metadata": {
               "total": 10,
             },
           },
@@ -1394,7 +1394,7 @@ test.group('Inertia.page | Transformers', () => {
                 "id": 1,
               },
             ],
-            "meta": {},
+            "metadata": {},
           },
         },
         "url": "",
@@ -1530,7 +1530,7 @@ test.group('Inertia.page | Transformers', () => {
                 "id": 1,
               },
             ],
-            "meta": {},
+            "metadata": {},
           },
           "user": {
             "id": 1,
@@ -1554,7 +1554,7 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
+        metadata: {
           total: number
         }
       }
@@ -1607,7 +1607,7 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "meta": {
+            "metadata": {
               "total": 10,
             },
           },
@@ -1639,7 +1639,7 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
+        metadata: {
           total: number
         }
       }
@@ -1695,7 +1695,7 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "meta": {
+            "metadata": {
               "total": 10,
             },
           },
@@ -1727,7 +1727,7 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
+        metadata: {
           total: number
         }
       }
@@ -1784,7 +1784,7 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "meta": {
+            "metadata": {
               "total": 10,
             },
           },
@@ -1814,7 +1814,7 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
+        metadata: {
           total: number
         }
       }
@@ -1872,7 +1872,7 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "meta": {
+            "metadata": {
               "total": 10,
             },
           },
@@ -1894,7 +1894,7 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
+        metadata: {
           total: number
         }
       }
@@ -1956,7 +1956,7 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "meta": {
+            "metadata": {
               "total": 10,
             },
           },
@@ -1986,7 +1986,7 @@ test.group('Inertia.page | Transformers', () => {
       posts: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
+        metadata: {
           total: number
         }
       }
@@ -2044,7 +2044,7 @@ test.group('Inertia.page | Transformers', () => {
                 "title": "Hello world",
               },
             ],
-            "meta": {
+            "metadata": {
               "total": 10,
             },
           },
