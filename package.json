@@ -1,7 +1,7 @@
 {
   "name": "@adonisjs/inertia",
   "description": "Official Inertia.js adapter for AdonisJS",
-  "version": "4.0.0-next.16",
+  "version": "4.0.0-next.18",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -43,25 +43,25 @@
     "docs": "typedoc"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^8.0.0-next.27",
-    "@adonisjs/core": "^7.0.0-next.16",
-    "@adonisjs/eslint-config": "^3.0.0-next.6",
+    "@adonisjs/assembler": "^8.0.0-next.29",
+    "@adonisjs/core": "^7.0.0-next.23",
+    "@adonisjs/eslint-config": "^3.0.0-next.9",
     "@adonisjs/prettier-config": "^1.4.5",
-    "@adonisjs/session": "^8.0.0-next.1",
+    "@adonisjs/session": "^8.0.0-next.2",
     "@adonisjs/tsconfig": "^2.0.0-next.3",
     "@adonisjs/vite": "^5.1.0-next.2",
-    "@inertiajs/react": "^2.3.4",
-    "@japa/api-client": "^3.1.1",
+    "@inertiajs/react": "^2.3.8",
+    "@japa/api-client": "^3.2.1",
     "@japa/assert": "4.2.0",
     "@japa/expect-type": "^2.0.4",
     "@japa/file-system": "^3.0.0",
-    "@japa/plugin-adonisjs": "^5.1.0-next.0",
+    "@japa/plugin-adonisjs": "^5.1.0-next.1",
     "@japa/runner": "5.0.0",
     "@japa/snapshot": "^2.0.10",
     "@poppinss/ts-exec": "^1.4.1",
     "@release-it/conventional-changelog": "^10.0.4",
-    "@tuyau/core": "^1.0.0-beta.9",
-    "@types/node": "^25.0.3",
+    "@tuyau/core": "^1.0.0-beta.10",
+    "@types/node": "^25.0.5",
     "@types/react": "^19.2.7",
     "@types/supertest": "^6.0.3",
     "c8": "^10.1.3",
@@ -73,26 +73,26 @@
     "get-port": "^7.1.0",
     "prettier": "^3.7.4",
     "react": "^19.2.3",
-    "release-it": "^19.1.0",
-    "supertest": "^7.1.4",
-    "tsdown": "^0.18.1",
+    "release-it": "^19.2.3",
+    "supertest": "^7.2.2",
+    "tsdown": "^0.18.4",
     "typescript": "~5.9.3",
-    "vite": "^7.3.0"
+    "vite": "^7.3.1"
   },
   "dependencies": {
-    "@poppinss/utils": "^7.0.0-next.4",
+    "@poppinss/utils": "^7.0.0-next.6",
     "edge-error": "^4.0.2",
     "html-entities": "^2.6.0"
   },
   "peerDependencies": {
-    "@adonisjs/assembler": "^8.0.0-next.27",
-    "@adonisjs/core": "^7.0.0-next.16",
-    "@adonisjs/session": "^8.0.0-next.1",
-    "@adonisjs/vite": "^5.1.0-next.0",
-    "@inertiajs/react": "^2.3.4",
+    "@adonisjs/assembler": "^8.0.0-next.29",
+    "@adonisjs/core": "^7.0.0-next.23",
+    "@adonisjs/session": "^8.0.0-next.2",
+    "@adonisjs/vite": "^5.1.0-next.2",
+    "@inertiajs/react": "^2.3.8",
     "@japa/api-client": "^3.1.1",
-    "@japa/plugin-adonisjs": "^5.1.0-next.0",
-    "@tuyau/core": "^1.0.0-beta.7",
+    "@japa/plugin-adonisjs": "^5.1.0-next.1",
+    "@tuyau/core": "^1.0.0-beta.10",
     "edge.js": "^6.4.0",
     "react": "^19.2.3"
   },
@@ -159,29 +159,6 @@
         }
       }
     }
-  },
-  "tsdown": {
-    "entry": [
-      "./index.ts",
-      "./src/types.ts",
-      "./src/client/vite.ts",
-      "./src/client/helpers.ts",
-      "./factories/main.ts",
-      "./src/inertia_middleware.ts",
-      "./providers/inertia_provider.ts",
-      "./src/plugins/edge/plugin.ts",
-      "./src/plugins/japa/api_client.ts",
-      "./src/client/react/index.tsx"
-    ],
-    "outDir": "./build",
-    "clean": true,
-    "format": "esm",
-    "minify": "dce-only",
-    "fixedExtension": false,
-    "dts": false,
-    "treeshake": false,
-    "sourcemaps": false,
-    "target": "esnext"
   },
   "c8": {
     "reporter": [

@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { serialize } from '@adonisjs/core/transformers'
+import { BaseSerializer } from '@adonisjs/core/transformers'
 import { type AsyncOrSync } from '@adonisjs/core/types/common'
 import { type JSONDataTypes } from '@adonisjs/core/types/transformers'
 import string from '@adonisjs/core/helpers/string'
@@ -31,6 +31,14 @@ import {
   type UnPackedPageProps,
 } from './types.ts'
 import { type ContainerResolver } from '@adonisjs/core/container'
+
+class InertiaSerializer extends BaseSerializer {
+  wrap: undefined = undefined
+  definePaginationMetaData(metaData: unknown): unknown {
+    return metaData
+  }
+}
+const inertiaSerializer = new InertiaSerializer()
 
 /**
  * Type guard to check if a value is a plain object
@@ -441,7 +449,7 @@ async function unpackPropValue(
   value: UnPackedPageProps<JSONDataTypes>,
   containerResolver: ContainerResolver<any>
 ) {
-  return serialize(value, containerResolver) as Promise<JSONDataTypes>
+  return inertiaSerializer.serialize(value, containerResolver) as Promise<JSONDataTypes>
 }
 
 /**
