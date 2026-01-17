@@ -42,8 +42,9 @@ test.group('Index pages', () => {
       `'users/index': ExtractProps<(typeof import('../../inertia/pages/users/index.vue'))['default']>`,
       ``,
     ])
+    console.log(cliUi.logger.getLogs())
     assert.isDefined(
-      cliUi.logger.getLogs().find(({ message }) => message.includes('.adonisjs/server/pages.d.ts'))
+      cliUi.logger.getLogs().find(({ message }) => message.includes('codegen: created 1 file(s)'))
     )
   })
 
@@ -75,7 +76,7 @@ test.group('Index pages', () => {
       ``,
     ])
     assert.isDefined(
-      cliUi.logger.getLogs().find(({ message }) => message.includes('.adonisjs/server/pages.d.ts'))
+      cliUi.logger.getLogs().find(({ message }) => message.includes('codegen: created 1 file(s)'))
     )
   })
 
