@@ -991,14 +991,7 @@ test.group('To component props | Once with Transformers', () => {
     type Data = ToComponentProps<{
       user: OnceProp<Item<UserTransformer, 1, 'toObject'>>
       posts: OnceProp<Collection<PostsTransformer, 1, 'toObject'>>
-      paginated: OnceProp<
-        Paginator<
-          Collection<PostsTransformer, 1, 'toObject'>,
-          {
-            total: number
-          }
-        >
-      >
+      paginated: OnceProp<Paginator<PostsTransformer, 1, 'toObject'>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -1009,9 +1002,7 @@ test.group('To component props | Once with Transformers', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
@@ -1040,16 +1031,7 @@ test.group('To component props | Once with Transformers', () => {
     type Data = ToComponentProps<{
       user: OnceProp<DeferProp<Item<UserTransformer, 1, 'toObject'>>>
       posts: OnceProp<DeferProp<Collection<PostsTransformer, 1, 'toObject'>>>
-      paginated: OnceProp<
-        DeferProp<
-          Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        >
-      >
+      paginated: OnceProp<DeferProp<Paginator<PostsTransformer, 1, 'toObject'>>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -1060,9 +1042,7 @@ test.group('To component props | Once with Transformers', () => {
       posts?: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
@@ -1091,16 +1071,7 @@ test.group('To component props | Once with Transformers', () => {
     type Data = ToComponentProps<{
       user: OnceProp<OptionalProp<Item<UserTransformer, 1, 'toObject'>>>
       posts: OnceProp<OptionalProp<Collection<PostsTransformer, 1, 'toObject'>>>
-      paginated: OnceProp<
-        OptionalProp<
-          Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        >
-      >
+      paginated: OnceProp<OptionalProp<Paginator<PostsTransformer, 1, 'toObject'>>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -1111,9 +1082,7 @@ test.group('To component props | Once with Transformers', () => {
       posts?: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
@@ -1142,16 +1111,7 @@ test.group('To component props | Once with Transformers', () => {
     type Data = ToComponentProps<{
       user: OnceProp<MergeableProp<Item<UserTransformer, 1, 'toObject'>>>
       posts: OnceProp<MergeableProp<Collection<PostsTransformer, 1, 'toObject'>>>
-      paginated: OnceProp<
-        MergeableProp<
-          Paginator<
-            Collection<PostsTransformer, 1, 'toObject'>,
-            {
-              total: number
-            }
-          >
-        >
-      >
+      paginated: OnceProp<MergeableProp<Paginator<PostsTransformer, 1, 'toObject'>>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -1162,9 +1122,7 @@ test.group('To component props | Once with Transformers', () => {
       posts: { id: number; title: string }[]
       paginated: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
@@ -1193,18 +1151,7 @@ test.group('To component props | Once with Transformers', () => {
     type Data = ToComponentProps<{
       user: OnceProp<MergeableProp<DeferProp<Item<UserTransformer, 1, 'toObject'>>>>
       posts: OnceProp<MergeableProp<DeferProp<Collection<PostsTransformer, 1, 'toObject'>>>>
-      paginated: OnceProp<
-        MergeableProp<
-          DeferProp<
-            Paginator<
-              Collection<PostsTransformer, 1, 'toObject'>,
-              {
-                total: number
-              }
-            >
-          >
-        >
-      >
+      paginated: OnceProp<MergeableProp<DeferProp<Paginator<PostsTransformer, 1, 'toObject'>>>>
     }>
 
     expectTypeOf<Data>().toEqualTypeOf<{
@@ -1215,9 +1162,7 @@ test.group('To component props | Once with Transformers', () => {
       posts?: { id: number; title: string }[]
       paginated?: {
         data: { id: number; title: string }[]
-        meta: {
-          total: number
-        }
+        metadata: any
       }
     }>()
   })
