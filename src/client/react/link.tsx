@@ -8,41 +8,14 @@
  */
 
 import React from 'react'
-import type { UserRegistry, InferRoutes } from '@tuyau/core/types'
-import { AreAllOptional } from '@poppinss/utils/types'
 import { Link as InertiaLink } from '@inertiajs/react'
 import { useTuyau } from './context.tsx'
-
-type Routes = InferRoutes<UserRegistry>
-
-/**
- * Get parameter tuple type for a route
- */
-type ExtractParamsTuple<Route extends keyof Routes> = Routes[Route]['types']['paramsTuple']
-
-/**
- * Get parameter object type for a route
- */
-type ExtractParamsObject<Route extends keyof Routes> = Routes[Route]['types']['params']
-
-/**
- * Get params format for a route
- */
-type RouteParamsFormats<Route extends keyof Routes> =
-  ExtractParamsObject<Route> extends Record<string, never>
-    ? never
-    : ExtractParamsTuple<Route> | ExtractParamsObject<Route>
+import type { RouteParams, Routes } from '../common.ts'
 
 /**
  * Parameters required for route navigation with proper type safety.
  */
-export type LinkParams<Route extends keyof Routes> = {
-  route: Route
-} & (RouteParamsFormats<Route> extends never
-  ? { params?: never }
-  : AreAllOptional<ExtractParamsObject<Route>> extends true
-    ? { params?: RouteParamsFormats<Route> }
-    : { params: RouteParamsFormats<Route> })
+export type LinkParams<Route extends keyof Routes> = RouteParams<Route>
 
 /**
  * Props for the Link component extending InertiaLink props
