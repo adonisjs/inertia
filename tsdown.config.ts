@@ -12,6 +12,7 @@ export default defineConfig({
     './src/plugins/edge/plugin.ts',
     './src/plugins/japa/api_client.ts',
     './src/client/react/index.tsx',
+    './src/client/vue/index.ts',
   ],
   outDir: './build',
   clean: true,
