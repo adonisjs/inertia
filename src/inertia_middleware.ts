@@ -53,7 +53,7 @@ export default class InertiaMiddleware {
      * If not a Vine Validation error, then return the entire error bag
      */
     if (!session.flashMessages.has('errorsBag.E_VALIDATION_ERROR')) {
-      return session.flashMessages.get('errorsBag')
+      return session.flashMessages.get('errorsBag', {})
     }
 
     /**

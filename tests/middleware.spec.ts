@@ -397,6 +397,46 @@ test.group('Middleware | Errors', () => {
     })
   })
 
+  test('return default object if errorsBag is undefined', async ({ assert }) => {
+    const middleware = new InertiaMiddleware({
+      rootView: 'root',
+      sharedData: {},
+      versionCache: new VersionCache(new URL(import.meta.url), '1'),
+      ssr: { enabled: false, bundle: '', entrypoint: '' },
+      history: { encrypt: false },
+    })
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    const server = httpServer.create(async (req, res) => {
+      const request = new RequestFactory().merge({ req, res }).create()
+      const response = new ResponseFactory().merge({ req, res }).create()
+      const ctx = new HttpContextFactory().merge({ request, response }).create()
+      await sessionMiddleware.handle(ctx, () => {})
+
+      // Do not set errorsBag in session flashMessages
+      await middleware.handle(ctx, () => {})
+
+      ctx.response.json(
+        await ctx.inertia.render('foo', {
+          test: 'value',
+          yeah: 'no',
+        })
+      )
+      ctx.response.finish()
+    })
+
+    const r1 = await supertest(server)
+      .post('/')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.PartialComponent, 'foo')
+      .set(InertiaHeaders.PartialOnly, 'yeah')
+
+    assert.deepEqual(r1.body.props, {
+      yeah: 'no',
+      errors: {},
+    })
+  })
+
   test('if session isn\t initialized, doesn\t throw an error', async ({ assert }) => {
     const middleware = new InertiaMiddleware({
       rootView: 'root',
