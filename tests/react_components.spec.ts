@@ -99,7 +99,7 @@ test.group('React | Link Component', () => {
       React.createElement(
         TuyauProvider,
         { client, children: null },
-        React.createElement(Link, { route: 'users.comments.edit', params: ['1'] }, 'View User')
+        React.createElement(Link, { route: 'users.comments.edit', routeParams: ['1'] }, 'View User')
       )
     })
   })
@@ -161,7 +161,7 @@ test.group('React | Form Component', () => {
       React.createElement(
         TuyauProvider,
         { client, children: null },
-        React.createElement(Form, { route: 'users.comments.edit', params: ['1'] })
+        React.createElement(Form, { route: 'users.comments.edit', routeParams: ['1'] })
       )
     })
   })

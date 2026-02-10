@@ -38,9 +38,7 @@ type LinkHrefProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaLink>, 'r
 /**
  * Union type for Link component props - either route-based or direct href
  */
-type LinkProps<Route extends keyof Routes = keyof Routes> =
-  | LinkRouteProps<Route>
-  | LinkHrefProps
+type LinkProps<Route extends keyof Routes = keyof Routes> = LinkRouteProps<Route> | LinkHrefProps
 
 /**
  * Internal Link component implementation with forward ref support.
@@ -63,7 +61,7 @@ function LinkInner<Route extends keyof Routes>(
   }
 
   // Route-based navigation
-  const { route: _route, params, ...linkProps } = props as LinkRouteProps<Route>
+  const { route: _route, routeParams: params, ...linkProps } = props as LinkRouteProps<Route>
   const routeInfo = tuyau.getRoute((props as any).route, { params })
 
   return (
@@ -90,7 +88,7 @@ function LinkInner<Route extends keyof Routes>(
  * <Link route="home">Home</Link>
  *
  * // Link to a route with required parameters
- * <Link route="user.show" params={{ id: 1 }}>
+ * <Link route="user.show" routeParams={{ id: 1 }}>
  *   View User
  * </Link>
  *

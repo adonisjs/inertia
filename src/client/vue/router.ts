@@ -88,7 +88,7 @@ export function useRouter() {
 
       // Route-based navigation
       const routeInfo = tuyau.getRoute((props as VisitRouteParams<Route>).route, {
-        params: (props as VisitRouteParams<Route>).params,
+        params: (props as VisitRouteParams<Route>).routeParams,
       })
       const url = routeInfo.url
 

@@ -64,30 +64,30 @@ test.group('React | Typings', () => {
     Link({ route: 'users.index' })
 
     // Test tuple format
-    Link({ route: 'users.comments.edit', params: ['1', '2'] })
+    Link({ route: 'users.comments.edit', routeParams: ['1', '2'] })
 
     // Test original object format
-    Link({ route: 'users.comments.edit', params: { id: '1', comment_id: '2' } })
+    Link({ route: 'users.comments.edit', routeParams: { id: '1', comment_id: '2' } })
 
     // @ts-expect-error too much params
-    Link({ route: 'users.comments.edit', params: ['1', '2', '3'] })
+    Link({ route: 'users.comments.edit', routeParams: ['1', '2', '3'] })
 
     // @ts-expect-error missing params
     Link({ route: 'users.comments.edit' })
 
     // @ts-expect-error missing params
-    Link({ route: 'users.comments.edit', params: [] })
+    Link({ route: 'users.comments.edit', routeParams: [] })
 
     // @ts-expect-error missing params
-    Link({ route: 'users.comments.edit', params: ['1'] })
+    Link({ route: 'users.comments.edit', routeParams: ['1'] })
 
     // @ts-expect-error unknown route
-    Link({ route: 'unknown', params: [] })
+    Link({ route: 'unknown', routeParams: [] })
   }).fails()
 
   test('do not ask for params if none are required', () => {
     Link({ route: 'users.index' })
-    Link({ route: 'users.comments.edit', params: ['1', '2'] })
+    Link({ route: 'users.comments.edit', routeParams: ['1', '2'] })
 
     // @ts-expect-error missing params
     Link({ route: 'users.comments.edit' })
@@ -102,7 +102,7 @@ test.group('React | Typings', () => {
     const router = useRouter()
 
     router.visit({ route: 'users.index' })
-    router.visit({ route: 'users.comments.edit', params: ['1', '2'] })
+    router.visit({ route: 'users.comments.edit', routeParams: ['1', '2'] })
 
     // @ts-expect-error inexistent route
     router.visit({ route: 'foo' })
@@ -140,7 +140,7 @@ test.group('React | Typings', () => {
     router.visit({ route: 'users.index', href: '/about' })
 
     // @ts-expect-error cannot use route with href
-    router.visit({ route: 'users.comments.edit', params: ['1', '2'], href: '/users' })
+    router.visit({ route: 'users.comments.edit', routeParams: ['1', '2'], href: '/users' })
   }).fails()
 
   test('Link with direct href', () => {
@@ -164,7 +164,7 @@ test.group('React | Typings', () => {
     Link({ route: 'users.index', href: '/about' })
 
     // @ts-expect-error cannot use route with href
-    Link({ route: 'users.comments.edit', params: ['1', '2'], href: '/users' })
+    Link({ route: 'users.comments.edit', routeParams: ['1', '2'], href: '/users' })
   }).fails()
 
   test('Form with route-based navigation', () => {
@@ -172,10 +172,10 @@ test.group('React | Typings', () => {
     Form({ route: 'users.index' })
 
     // Form to a route with required parameters (tuple)
-    Form({ route: 'users.comments.edit', params: ['1', '2'] })
+    Form({ route: 'users.comments.edit', routeParams: ['1', '2'] })
 
     // Form to a route with required parameters (object)
-    Form({ route: 'users.comments.edit', params: { id: '1', comment_id: '2' } })
+    Form({ route: 'users.comments.edit', routeParams: { id: '1', comment_id: '2' } })
 
     // @ts-expect-error missing params
     Form({ route: 'users.comments.edit' })
@@ -207,7 +207,7 @@ test.group('React | Typings', () => {
     // @ts-expect-error cannot use route with action
     Form({
       route: 'users.comments.edit',
-      params: ['1', '2'],
+      routeParams: ['1', '2'],
       action: { url: '/users', method: 'post' },
     })
   }).fails()

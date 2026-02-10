@@ -38,9 +38,7 @@ type FormActionProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaForm>, 
 /**
  * Union type for Form component props - either route-based or direct action
  */
-type FormProps<Route extends keyof Routes = keyof Routes> =
-  | FormRouteProps<Route>
-  | FormActionProps
+type FormProps<Route extends keyof Routes = keyof Routes> = FormRouteProps<Route> | FormActionProps
 
 /**
  * Internal Form component implementation with forward ref support.
@@ -60,7 +58,7 @@ function FormInner<Route extends keyof Routes>(
   }
 
   // Route-based navigation
-  const { route: _route, params, ...formProps } = props as FormRouteProps<Route>
+  const { route: _route, routeParams: params, ...formProps } = props as FormRouteProps<Route>
   const routeInfo = tuyau.getRoute((props as any).route, { params })
 
   return (
@@ -93,7 +91,7 @@ function FormInner<Route extends keyof Routes>(
  * </Form>
  *
  * // Form to a route with required parameters
- * <Form route="users.update" params={{ id: 1 }}>
+ * <Form route="users.update" routeParams={{ id: 1 }}>
  *   {({ errors }) => (
  *     <>
  *       <input type="text" name="name" />

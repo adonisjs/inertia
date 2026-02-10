@@ -66,7 +66,7 @@ export function useRouter() {
      * router.visit({ route: 'dashboard' })
      *
      * // Navigate with parameters
-     * router.visit({ route: 'user.edit', params: { id: userId } })
+     * router.visit({ route: 'user.edit', routeParams: { id: userId } })
      *
      * // Navigate with direct href
      * router.visit({ href: '/about' })
@@ -86,7 +86,7 @@ export function useRouter() {
 
       // Route-based navigation
       const routeInfo = tuyau.getRoute((props as VisitRouteParams<Route>).route, {
-        params: (props as VisitRouteParams<Route>).params,
+        params: (props as VisitRouteParams<Route>).routeParams,
       })
       const url = routeInfo.url
 

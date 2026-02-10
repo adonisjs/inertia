@@ -36,7 +36,7 @@ export type RouteParamsFormats<Route extends keyof Routes> =
 export type RouteParams<Route extends keyof Routes> = {
   route: Route
 } & (RouteParamsFormats<Route> extends never
-  ? { params?: never }
+  ? { routeParams?: never }
   : AreAllOptional<ExtractParamsObject<Route>> extends true
-    ? { params?: RouteParamsFormats<Route> }
-    : { params: RouteParamsFormats<Route> })
+    ? { routeParams?: RouteParamsFormats<Route> }
+    : { routeParams: RouteParamsFormats<Route> })
