@@ -18,28 +18,50 @@ import type { RouteParams, Routes } from '../common.ts'
 export type FormParams<Route extends keyof Routes> = RouteParams<Route>
 
 /**
- * Props for the Form component extending InertiaForm props
- * with route-specific type safety and parameter validation.
+ * Props for the Form component when using route-based navigation
  */
-type FormProps<Route extends keyof Routes> = Omit<
+type FormRouteProps<Route extends keyof Routes> = Omit<
   React.ComponentPropsWithoutRef<typeof InertiaForm>,
   'action' | 'method'
 > &
-  FormParams<Route>
+  FormParams<Route> & {
+    action?: never
+  }
+
+/**
+ * Props for the Form component when using direct action
+ */
+type FormActionProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaForm>, 'route'> & {
+  route?: never
+}
+
+/**
+ * Union type for Form component props - either route-based or direct action
+ */
+type FormProps<Route extends keyof Routes = keyof Routes> =
+  | FormRouteProps<Route>
+  | FormActionProps
 
 /**
  * Internal Form component implementation with forward ref support.
  * Resolves route parameters and generates the appropriate URL and HTTP method
- * for Inertia form submission.
+ * for Inertia form submission when using route-based navigation.
+ * Falls back to standard InertiaForm when action is provided directly.
  */
 function FormInner<Route extends keyof Routes>(
   props: FormProps<Route>,
   ref?: React.ForwardedRef<React.ElementRef<typeof InertiaForm>>
 ) {
-  const { route: _route, params, ...formProps } = props
-
   const tuyau = useTuyau()
-  const routeInfo = tuyau.getRoute(props.route, { params })
+
+  // Check if props has action (direct form submission)
+  if ('action' in props) {
+    return <InertiaForm {...props} ref={ref} />
+  }
+
+  // Route-based navigation
+  const { route: _route, params, ...formProps } = props as FormRouteProps<Route>
+  const routeInfo = tuyau.getRoute((props as any).route, { params })
 
   return (
     <InertiaForm
@@ -55,7 +77,8 @@ function FormInner<Route extends keyof Routes>(
  *
  * Provides compile-time route validation and automatic parameter type checking
  * based on your application's route definitions. Automatically resolves the
- * correct URL and HTTP method for each route.
+ * correct URL and HTTP method for each route. Alternatively, you can use
+ * the standard action prop for direct form submission.
  *
  * @example
  * ```tsx
@@ -76,6 +99,16 @@ function FormInner<Route extends keyof Routes>(
  *       <input type="text" name="name" />
  *       {errors.name && <div>{errors.name}</div>}
  *       <button type="submit">Update</button>
+ *     </>
+ *   )}
+ * </Form>
+ *
+ * // Form with direct action
+ * <Form action={{ url: '/users', method: 'post' }}>
+ *   {({ processing }) => (
+ *     <>
+ *       <input type="text" name="name" />
+ *       <button type="submit" disabled={processing}>Create</button>
  *     </>
  *   )}
  * </Form>

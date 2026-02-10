@@ -18,31 +18,53 @@ import type { RouteParams, Routes } from '../common.ts'
 export type LinkParams<Route extends keyof Routes> = RouteParams<Route>
 
 /**
- * Props for the Link component extending InertiaLink props
- * with route-specific type safety and parameter validation.
+ * Props for the Link component when using route-based navigation
  */
-type LinkProps<Route extends keyof Routes> = Omit<
+type LinkRouteProps<Route extends keyof Routes> = Omit<
   React.ComponentPropsWithoutRef<typeof InertiaLink>,
   'href' | 'method'
 > &
-  LinkParams<Route>
+  LinkParams<Route> & {
+    href?: never
+  }
+
+/**
+ * Props for the Link component when using direct href
+ */
+type LinkHrefProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaLink>, 'route'> & {
+  route?: never
+}
+
+/**
+ * Union type for Link component props - either route-based or direct href
+ */
+type LinkProps<Route extends keyof Routes = keyof Routes> =
+  | LinkRouteProps<Route>
+  | LinkHrefProps
 
 /**
  * Internal Link component implementation with forward ref support.
  * Resolves route parameters and generates the appropriate URL and HTTP method
- * for Inertia navigation.
+ * for Inertia navigation when using route-based navigation.
+ * Falls back to standard InertiaLink when href is provided directly.
  *
- * @param props - Link properties including route and parameters
+ * @param props - Link properties including route and parameters, or direct href
  * @param ref - Forward ref for the underlying InertiaLink component
  */
 function LinkInner<Route extends keyof Routes>(
   props: LinkProps<Route>,
   ref?: React.ForwardedRef<React.ElementRef<typeof InertiaLink>>
 ) {
-  const { route: _route, params, ...linkProps } = props
-
   const tuyau = useTuyau()
-  const routeInfo = tuyau.getRoute(props.route, { params })
+
+  // Check if props has href (direct navigation)
+  if ('href' in props) {
+    return <InertiaLink {...props} ref={ref} />
+  }
+
+  // Route-based navigation
+  const { route: _route, params, ...linkProps } = props as LinkRouteProps<Route>
+  const routeInfo = tuyau.getRoute((props as any).route, { params })
 
   return (
     <InertiaLink
@@ -59,7 +81,8 @@ function LinkInner<Route extends keyof Routes>(
  *
  * Provides compile-time route validation and automatic parameter type checking
  * based on your application's route definitions. Automatically resolves the
- * correct URL and HTTP method for each route.
+ * correct URL and HTTP method for each route. Alternatively, you can use
+ * the standard href prop for direct navigation.
  *
  * @example
  * ```tsx
@@ -70,6 +93,9 @@ function LinkInner<Route extends keyof Routes>(
  * <Link route="user.show" params={{ id: 1 }}>
  *   View User
  * </Link>
+ *
+ * // Link with direct href
+ * <Link href="/about">About</Link>
  * ```
  */
 

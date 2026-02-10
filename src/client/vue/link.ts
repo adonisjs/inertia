@@ -7,9 +7,10 @@
  * file that was distributed with this source code.
  */
 
-import { Link as InertiaLink } from '@inertiajs/vue3'
-import { defineComponent, h } from 'vue'
 import type { PropType } from 'vue'
+import { defineComponent, h } from 'vue'
+import { Link as InertiaLink } from '@inertiajs/vue3'
+
 import { useTuyau } from './context.ts'
 import type { RouteParams, RouteParamsFormats, Routes } from '../common.ts'
 
@@ -20,6 +21,20 @@ export type LinkParams<Route extends keyof Routes> = RouteParams<Route>
 
 /**
  * Type-safe Link component for Inertia.js navigation.
+ *
+ * Supports both route-based navigation with automatic URL resolution
+ * and direct href navigation for maximum flexibility.
+ *
+ * @example
+ * ```vue
+ * <!-- Route-based navigation -->
+ * <Link route="users.index">Users</Link>
+ * <Link route="users.show" :params="{ id: 1 }">View User</Link>
+ *
+ * <!-- Direct href navigation -->
+ * <Link href="/about">About</Link>
+ * <Link href="/logout" method="post">Logout</Link>
+ * ```
  */
 export const Link = defineComponent({
   name: 'TuyauLink',
@@ -27,10 +42,14 @@ export const Link = defineComponent({
   props: {
     route: {
       type: String as PropType<keyof Routes>,
-      required: true,
+      required: false,
     },
     params: {
       type: [Array, Object] as PropType<RouteParamsFormats<keyof Routes>>,
+      required: false,
+    },
+    href: {
+      type: String,
       required: false,
     },
   },
@@ -38,6 +57,23 @@ export const Link = defineComponent({
     const tuyau = useTuyau()
 
     return () => {
+      // Check if using direct href
+      if (props.href) {
+        return h(
+          InertiaLink as any,
+          {
+            ...attrs,
+            href: props.href,
+          },
+          slots
+        )
+      }
+
+      // Route-based navigation
+      if (!props.route) {
+        throw new Error('Either route or href prop is required for Link component')
+      }
+
       const routeInfo = tuyau.getRoute(props.route, { params: props.params as any })
 
       return h(
