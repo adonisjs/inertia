@@ -91,7 +91,14 @@ export default function inertia(options?: InertiaPluginOptions): PluginOption {
       }
 
       return {
-        builder: {},
+        builder: {
+          buildApp: async (builder) => {
+            await builder.build(builder.environments.client)
+            if (options?.ssr?.enabled) {
+              await builder.build(builder.environments.ssr)
+            }
+          },
+        },
         build: { outDir: 'build/public/assets' },
         environments: {
           ...(options?.ssr?.enabled && {
