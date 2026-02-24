@@ -21,7 +21,8 @@
     "./helpers": "./build/src/client/helpers.js",
     "./react": "./build/src/client/react/index.js",
     "./vue": "./build/src/client/vue/index.js",
-    "./factories": "./build/factories/main.js"
+    "./factories": "./build/factories/main.js",
+    "./commands": "./build/commands/main.js"
   },
   "scripts": {
     "pretest": "npm run lint",
@@ -29,10 +30,10 @@
     "typecheck": "tsc --noEmit",
     "clean": "del-cli build",
     "compile": "tsdown && tsc --emitDeclarationOnly --declaration",
-    "copy:templates": "copyfiles --up 1 \"stubs/**/*.stub\" build",
+    "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
     "prebuild": "npm run lint && npm run clean",
     "build": "npm run compile",
-    "postbuild": "npm run copy:templates",
+    "postcompile": "npm run copy:templates && npm run index:commands",
     "prebenchmark": "npm run build",
     "benchmark": "node benchmarks/index.js",
     "release": "release-it",
@@ -40,16 +41,17 @@
     "format": "prettier --write .",
     "prepublishOnly": "npm run build",
     "lint": "eslint",
+    "index:commands": "adonis-kit index build/commands",
     "quick:test": "cross-env NODE_DEBUG=adonisjs:inertia node --import=@poppinss/ts-exec --enable-source-maps bin/test.ts",
     "docs": "typedoc"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.0.0-next.30",
     "@adonisjs/core": "^7.0.0-next.24",
-    "@adonisjs/eslint-config": "^3.0.0-next.9",
+    "@adonisjs/eslint-config": "^3.0.0",
     "@adonisjs/prettier-config": "^1.4.5",
     "@adonisjs/session": "^8.0.0-next.2",
-    "@adonisjs/tsconfig": "^2.0.0-next.3",
+    "@adonisjs/tsconfig": "^2.0.0",
     "@adonisjs/vite": "^5.1.0-next.4",
     "@inertiajs/react": "^2.3.15",
     "@inertiajs/vue3": "^2.3.15",
@@ -70,8 +72,8 @@
     "copyfiles": "^2.4.1",
     "cross-env": "^10.1.0",
     "del-cli": "^7.0.0",
-    "edge.js": "^6.4.0",
-    "eslint": "^10.0.1",
+    "edge.js": "^6.5.0",
+    "eslint": "^10.0.2",
     "get-port": "^7.1.0",
     "prettier": "^3.8.1",
     "react": "^19.2.4",
@@ -80,10 +82,10 @@
     "tsdown": "^0.20.3",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
-    "vue": "^3.5.28"
+    "vue": "^3.5.29"
   },
   "dependencies": {
-    "@poppinss/utils": "^7.0.0-next.6",
+    "@poppinss/utils": "^7.0.0",
     "edge-error": "^4.0.2",
     "html-entities": "^2.6.0"
   },

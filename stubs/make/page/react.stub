@@ -1,0 +1,20 @@
+{{#var pageName = generators.inertiaPageName(entity.name)}}
+{{#var pageFileName = generators.inertiaPageFileName(entity.name, '.tsx')}}
+{{{
+  exports({
+    to: app.makePath(pagesDir, entity.path, pageFileName)
+  })
+}}}
+import type { InertiaProps } from '~/types'
+import type { Data } from '@generated/data'
+
+type PageProps = InertiaProps<{
+}>
+
+export default function {{ pageName }}({}: PageProps) {
+  return (
+    <div>
+      <h1>{{ pageName }}</h1>
+    </div>
+  )
+}

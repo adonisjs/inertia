@@ -1,0 +1,18 @@
+{{#var pageName = generators.inertiaPageName(entity.name)}}
+{{#var pageFileName = generators.inertiaPageFileName(entity.name, '.vue')}}
+{{{
+  exports({
+    to: app.makePath(pagesDir, entity.path, pageFileName)
+  })
+}}}
+<script setup lang="ts">
+import { type Data } from '@generated/data'
+
+const props = defineProps<{}>()
+</script>
+
+<template>
+  <div>
+    <h1>{{ pageName }}</h1>
+  </div>
+</template>

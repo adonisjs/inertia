@@ -13,6 +13,7 @@ export default defineConfig({
     './src/plugins/japa/api_client.ts',
     './src/client/react/index.tsx',
     './src/client/vue/index.ts',
+    './commands/make_page.ts',
   ],
   outDir: './build',
   clean: true,
