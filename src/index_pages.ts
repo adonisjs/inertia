@@ -69,7 +69,7 @@ type ExtractProps<T> =
  * })
  * ```
  */
-export const indexPages = function (config: { framework: 'vue3' | 'react', source?: string }) {
+export const indexPages = function (config: { framework: 'vue3' | 'react'; source?: string }) {
   if (!SUPPORTED_FRAMEWORKS.includes(config.framework)) {
     throw new Error(
       `Unsupported framework "${config.framework}". Types generation is available only for ${SUPPORTED_FRAMEWORKS.join(',')}`
