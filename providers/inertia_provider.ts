@@ -51,7 +51,7 @@ declare module '@adonisjs/core/http' {
      */
     renderInertia<Page extends keyof InertiaPages>(
       component: Page,
-      props: InertiaPages[Page] extends ComponentProps
+      props?: InertiaPages[Page] extends ComponentProps
         ? AsPageProps<Omit<InertiaPages[Page], keyof SharedProps>>
         : never,
       viewProps?: Record<string, any>
