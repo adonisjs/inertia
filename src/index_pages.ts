@@ -56,6 +56,7 @@ type ExtractProps<T> =
  *
  * @param config - Configuration object specifying the frontend framework
  * @param config.framework - The frontend framework ('vue3' or 'react')
+ * @param config.source - The path to Inertia pages (default: inertia/pages)
  * @returns Assembler hook object with run method for generating page types
  *
  * @example
@@ -68,7 +69,7 @@ type ExtractProps<T> =
  * })
  * ```
  */
-export const indexPages = function (config: { framework: 'vue3' | 'react' }) {
+export const indexPages = function (config: { framework: 'vue3' | 'react'; source?: string }) {
   if (!SUPPORTED_FRAMEWORKS.includes(config.framework)) {
     throw new Error(
       `Unsupported framework "${config.framework}". Types generation is available only for ${SUPPORTED_FRAMEWORKS.join(',')}`
@@ -85,7 +86,7 @@ export const indexPages = function (config: { framework: 'vue3' | 'react' }) {
      */
     run(_, __, indexGenerator) {
       indexGenerator.add('inertiaPages', {
-        source: 'inertia/pages',
+        source: config.source ?? 'inertia/pages',
         glob: GLOB[config.framework],
         output: '.adonisjs/server/pages.d.ts',
         /**
