@@ -20,7 +20,7 @@ export type FormParams<Route extends keyof Routes> = RouteParams<Route>
 /**
  * Props for the Form component when using route-based navigation
  */
-type FormRouteProps<Route extends keyof Routes> = Omit<
+export type FormRouteProps<Route extends keyof Routes> = Omit<
   React.ComponentPropsWithoutRef<typeof InertiaForm>,
   'action' | 'method'
 > &
@@ -31,14 +31,16 @@ type FormRouteProps<Route extends keyof Routes> = Omit<
 /**
  * Props for the Form component when using direct action
  */
-type FormActionProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaForm>, 'route'> & {
+export type FormActionProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaForm>, 'route'> & {
   route?: never
 }
 
 /**
  * Union type for Form component props - either route-based or direct action
  */
-type FormProps<Route extends keyof Routes = keyof Routes> = FormRouteProps<Route> | FormActionProps
+export type FormProps<Route extends keyof Routes = keyof Routes> =
+  | FormRouteProps<Route>
+  | FormActionProps
 
 /**
  * Internal Form component implementation with forward ref support.

@@ -14,9 +14,9 @@ import { Form as InertiaForm } from '@inertiajs/vue3'
 import { useTuyau } from './context.ts'
 import type { RouteParams, RouteParamsFormats, Routes } from '../common.ts'
 
-type InertiaFormSlots = InstanceType<typeof InertiaForm>['$slots']
-type InertiaFormDefaultSlot = InertiaFormSlots['default']
-type InertiaFormSlotProps = InertiaFormDefaultSlot extends (...args: any[]) => any
+export type InertiaFormSlots = InstanceType<typeof InertiaForm>['$slots']
+export type InertiaFormDefaultSlot = InertiaFormSlots['default']
+export type InertiaFormSlotProps = InertiaFormDefaultSlot extends (...args: any[]) => any
   ? Parameters<InertiaFormDefaultSlot>[0]
   : never
 

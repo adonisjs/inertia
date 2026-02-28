@@ -20,7 +20,7 @@ export type LinkParams<Route extends keyof Routes> = RouteParams<Route>
 /**
  * Props for the Link component when using route-based navigation
  */
-type LinkRouteProps<Route extends keyof Routes> = Omit<
+export type LinkRouteProps<Route extends keyof Routes> = Omit<
   React.ComponentPropsWithoutRef<typeof InertiaLink>,
   'href' | 'method'
 > &
@@ -31,14 +31,16 @@ type LinkRouteProps<Route extends keyof Routes> = Omit<
 /**
  * Props for the Link component when using direct href
  */
-type LinkHrefProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaLink>, 'route'> & {
+export type LinkHrefProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaLink>, 'route'> & {
   route?: never
 }
 
 /**
  * Union type for Link component props - either route-based or direct href
  */
-type LinkProps<Route extends keyof Routes = keyof Routes> = LinkRouteProps<Route> | LinkHrefProps
+export type LinkProps<Route extends keyof Routes = keyof Routes> =
+  | LinkRouteProps<Route>
+  | LinkHrefProps
 
 /**
  * Internal Link component implementation with forward ref support.
