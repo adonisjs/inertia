@@ -1076,6 +1076,95 @@ test.group('Inertia.page | Transformers', () => {
     `)
   })
 
+  test('build page with nested component props using transformers', async ({ assert }) => {
+    type Props = {
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      groups: [
+        {
+          post: { id: number; title: string }
+        },
+      ]
+      paginated: {
+        data: { id: number; title: string }[]
+        metadata: {
+          total: number
+        }
+      }
+    }
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UserTransformer extends BaseTransformer<{ id: number; timestamps: boolean }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const inertia = new InertiaFactory<{
+      home: Props
+    }>().create()
+
+    const page = await inertia.page('home', {
+      user: UserTransformer.transform({
+        id: 1,
+        timestamps: true,
+      }),
+      groups: [
+        {
+          post: PostsTransformer.transform({ id: 1, title: 'Hello world' }),
+        },
+      ],
+      paginated: PostsTransformer.paginate([{ id: 1, title: 'Hello world' }], {
+        total: 10,
+      }),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "props": {
+          "groups": [
+            {
+              "post": {
+                "id": 1,
+                "title": "Hello world",
+              },
+            },
+          ],
+          "paginated": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Hello world",
+              },
+            ],
+            "metadata": {
+              "total": 10,
+            },
+          },
+          "user": {
+            "id": 1,
+            "timestamps": true,
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
   test('partial reload props using transformers', async ({ assert }) => {
     type Props = {
       user: {

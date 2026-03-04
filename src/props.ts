@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { BaseSerializer } from '@adonisjs/core/transformers'
+import { BaseSerializer, Collection, Item, Paginator } from '@adonisjs/core/transformers'
 import { type AsyncOrSync } from '@adonisjs/core/types/common'
 import { type JSONDataTypes } from '@adonisjs/core/types/transformers'
 
@@ -316,6 +316,13 @@ export function isOptionalProp<T extends UnPackedPageProps>(
 }
 
 /**
+ * Checks if a value is a transformer instance (Item, Collection, or Paginator).
+ */
+function isTransformerInstance(value: unknown): boolean {
+  return value instanceof Item || value instanceof Collection || value instanceof Paginator
+}
+
+/**
  * Helper function to unpack prop values using the transformer serialize function.
  *
  * @param value - The prop value to serialize
@@ -325,8 +332,20 @@ export function isOptionalProp<T extends UnPackedPageProps>(
 async function unpackPropValue(
   value: UnPackedPageProps<JSONDataTypes>,
   containerResolver: ContainerResolver<any>
-) {
-  return inertiaSerializer.serialize(value, containerResolver) as Promise<JSONDataTypes>
+): Promise<JSONDataTypes> {
+  if (isTransformerInstance(value)) {
+    return inertiaSerializer.serialize(value, containerResolver) as Promise<JSONDataTypes>
+  }
+
+  if (Array.isArray(value)) {
+    return Promise.all(value.map((item) => unpackPropValue(item, containerResolver)))
+  }
+
+  if (isObject(value)) {
+    return inertiaSerializer.serialize(value, containerResolver) as Promise<JSONDataTypes>
+  }
+
+  return value
 }
 
 /**
@@ -427,6 +446,15 @@ export async function buildStandardVisitProps(
 
       /**
        * Unpack all other values
+       */
+      unpackedValues.push({
+        key,
+        value: value,
+      })
+    } else if (Array.isArray(value)) {
+      /**
+       * Arrays may contain nested transformer instances
+       * that need to be resolved
        */
       unpackedValues.push({
         key,
@@ -567,6 +595,19 @@ export async function buildPartialRequestProps(
 
       /**
        * Unpack all other values
+       */
+      unpackedValues.push({ key, value: value as UnPackedPageProps })
+    } else if (Array.isArray(value)) {
+      /**
+       * Skip key if not part of cherry picking list
+       */
+      if (!cherryPickProps.includes(key)) {
+        continue
+      }
+
+      /**
+       * Arrays may contain nested transformer instances
+       * that need to be resolved
        */
       unpackedValues.push({ key, value: value as UnPackedPageProps })
     } else {
