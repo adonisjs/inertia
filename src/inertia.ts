@@ -10,32 +10,32 @@
 /// <reference types="@adonisjs/core/providers/app_provider" />
 /// <reference types="@adonisjs/core/providers/edge_provider" />
 
-import { createHash } from 'node:crypto'
-import { type Vite } from '@adonisjs/vite'
 import type { HttpContext } from '@adonisjs/core/http'
-
+import { type Vite } from '@adonisjs/vite'
+import { type AsyncOrSync } from '@poppinss/utils/types'
+import { createHash } from 'node:crypto'
+import debug from './debug.ts'
 import { InertiaHeaders } from './headers.js'
-import { type ServerRenderer } from './server_renderer.js'
-import type {
-  PageProps,
-  PageObject,
-  AsPageProps,
-  RequestInfo,
-  InertiaConfig,
-  ComponentProps,
-  SharedProps,
-} from './types.js'
 import {
+  always,
+  buildPartialRequestProps,
+  buildStandardVisitProps,
+  deepMerge,
   defer,
   merge,
-  always,
   optional,
-  deepMerge,
-  buildStandardVisitProps,
-  buildPartialRequestProps,
+  scroll,
 } from './props.ts'
-import debug from './debug.ts'
-import { type AsyncOrSync } from '@poppinss/utils/types'
+import { type ServerRenderer } from './server_renderer.js'
+import type {
+  AsPageProps,
+  ComponentProps,
+  InertiaConfig,
+  PageObject,
+  PageProps,
+  RequestInfo,
+  SharedProps,
+} from './types.js'
 
 /**
  * Main class used to interact with Inertia
@@ -147,6 +147,18 @@ export class Inertia<Pages> {
   deepMerge = deepMerge
 
   /**
+   * Wrap a paginated value for the infinite scroll
+   *
+   * @example
+   * ```js
+   * {
+   *   posts: inertia.scroll(() => PostTransformer.paginate(posts.all(), posts.getMeta()))
+   * }
+   * ```
+   */
+  scroll = scroll
+
+  /**
    * Creates a new Inertia instance
    *
    * @param ctx - HTTP context for the current request
@@ -241,6 +253,7 @@ export class Inertia<Pages> {
       finalProps = { ...pageProps }
     }
 
+    let result
     if (requestInfo.partialComponent === component) {
       const only = requestInfo.onlyProps
       const except = requestInfo.exceptProps ?? []
@@ -254,11 +267,30 @@ export class Inertia<Pages> {
       debug('building props for a partial reload %O', requestInfo)
       debug('cherry picking props %s', cherryPickProps)
 
-      return buildPartialRequestProps(finalProps, cherryPickProps, this.ctx.containerResolver)
+      result = await buildPartialRequestProps(
+        finalProps,
+        cherryPickProps,
+        this.ctx.containerResolver
+      )
+    } else {
+      debug('building props for a standard visit %O', requestInfo)
+      result = await buildStandardVisitProps(finalProps, this.ctx.containerResolver)
     }
 
-    debug('building props for a standard visit %O', requestInfo)
-    return buildStandardVisitProps(finalProps, this.ctx.containerResolver)
+    const prependProps: string[] = []
+    const mergeProps: string[] = [...(result.mergeProps || [])]
+    const scrollProps = result.scrollProps ?? {}
+    for (const [key, propInfo] of Object.entries(scrollProps)) {
+      const scrolPropPath = `${key}.${propInfo.wrapper}`
+
+      if (requestInfo.scrollMergeIntent === 'prepend') {
+        prependProps.push(scrolPropPath)
+      } else if (requestInfo.scrollMergeIntent === 'append') {
+        mergeProps.push(scrolPropPath)
+      }
+    }
+
+    return { ...result, mergeProps, prependProps }
   }
 
   /**
@@ -350,6 +382,7 @@ export class Inertia<Pages> {
       exceptProps: this.ctx.request.header(InertiaHeaders.PartialExcept)?.split(','),
       resetProps: this.ctx.request.header(InertiaHeaders.Reset)?.split(','),
       errorBag: this.ctx.request.header(InertiaHeaders.ErrorBag),
+      scrollMergeIntent: this.ctx.request.header(InertiaHeaders.InfiniteScrollMergeIntent),
     }
 
     return this.#cachedRequestInfo
@@ -466,11 +499,8 @@ export class Inertia<Pages> {
       : never
   ): Promise<PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
-    const { props, mergeProps, deferredProps, deepMergeProps } = await this.#buildPageProps(
-      page,
-      requestInfo,
-      pageProps
-    )
+    const { props, mergeProps, deferredProps, deepMergeProps, prependProps, scrollProps } =
+      await this.#buildPageProps(page, requestInfo, pageProps)
 
     return {
       component: page,
@@ -482,6 +512,8 @@ export class Inertia<Pages> {
       deferredProps,
       mergeProps,
       deepMergeProps,
+      prependProps,
+      scrollProps,
     } satisfies PageObject<Pages[Page]>
   }
 

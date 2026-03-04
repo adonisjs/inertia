@@ -7,20 +7,20 @@
  * file that was distributed with this source code.
  */
 
-import { Edge } from 'edge.js'
-import { test } from '@japa/runner'
-import { type InlineConfig } from 'vite'
-import type { Test } from '@japa/runner/core'
-import { HttpContext } from '@adonisjs/core/http'
-import { pluginAdonisJS } from '@japa/plugin-adonisjs'
-import { ApiClient, apiClient } from '@japa/api-client'
 import { IgnitorFactory } from '@adonisjs/core/factories'
-import { type ProviderNode } from '@adonisjs/core/types/app'
-import { runner, syncReporter } from '@japa/runner/factories'
+import { HttpContext } from '@adonisjs/core/http'
 import { type ApplicationService } from '@adonisjs/core/types'
-import { type NamedReporterContract } from '@japa/runner/types'
+import { type ProviderNode } from '@adonisjs/core/types/app'
 import { defineConfig as defineViteConfig, Vite } from '@adonisjs/vite'
+import { ApiClient, apiClient } from '@japa/api-client'
+import { pluginAdonisJS } from '@japa/plugin-adonisjs'
+import { test } from '@japa/runner'
+import type { Test } from '@japa/runner/core'
+import { runner, syncReporter } from '@japa/runner/factories'
+import { type NamedReporterContract } from '@japa/runner/types'
+import { Edge } from 'edge.js'
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http'
+import { type InlineConfig } from 'vite'
 
 import { defineConfig } from '../src/define_config.ts'
 import { inertiaApiClient } from '../src/plugins/japa/api_client.js'
@@ -172,3 +172,20 @@ export const setupFakeAdonisProject = test.macro(async ($test) => {
     ),
   ])
 })
+
+export const makePaginatedData = (currentPage: number, lastPage: number) => {
+  return {
+    data: [{ id: currentPage, title: `Post ${currentPage}` }],
+    meta: {
+      total: lastPage * 10,
+      perPage: 10,
+      currentPage,
+      lastPage,
+      firstPage: 1,
+      firstPageUrl: '/?page=1',
+      lastPageUrl: `/?page=${lastPage}`,
+      nextPageUrl: currentPage < lastPage ? `/?page=${currentPage + 1}` : null,
+      previousPageUrl: currentPage > 1 ? `/?page=${currentPage - 1}` : null,
+    },
+  }
+}

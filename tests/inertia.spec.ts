@@ -7,15 +7,15 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'node:path'
-import { test } from '@japa/runner'
-import { Vite } from '@adonisjs/vite'
-import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
+import { HttpContext } from '@adonisjs/core/http'
+import { Vite } from '@adonisjs/vite'
+import { test } from '@japa/runner'
+import { join } from 'node:path'
 
+import { InertiaFactory } from '../factories/inertia_factory.js'
 import { InertiaHeaders } from '../src/headers.ts'
 import { setupViewMacroMock, setupVite } from './helpers.js'
-import { InertiaFactory } from '../factories/inertia_factory.js'
 
 test.group('Inertia', () => {
   test('Set X-Inertia-Location header with 409 status code', async ({ assert }) => {
@@ -44,7 +44,9 @@ test.group('Inertia', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {},
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -69,6 +71,8 @@ test.group('Inertia', () => {
       deferredProps: {},
       mergeProps: [],
       deepMergeProps: [],
+      prependProps: [],
+      scrollProps: {},
     })
   })
 
@@ -102,6 +106,8 @@ test.group('Inertia', () => {
       deferredProps: {},
       mergeProps: [],
       deepMergeProps: [],
+      prependProps: [],
+      scrollProps: {},
     })
   })
 

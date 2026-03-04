@@ -11,17 +11,26 @@ import { BaseSerializer } from '@adonisjs/core/transformers'
 import { type AsyncOrSync } from '@adonisjs/core/types/common'
 import { type JSONDataTypes } from '@adonisjs/core/types/transformers'
 
-import { ALWAYS_PROP, DEEP_MERGE, DEFERRED_PROP, OPTIONAL_PROP, TO_BE_MERGED } from './symbols.ts'
+import { type ContainerResolver } from '@adonisjs/core/container'
 import {
-  type DeferProp,
-  type PageProps,
+  ALWAYS_PROP,
+  DEEP_MERGE,
+  DEFERRED_PROP,
+  OPTIONAL_PROP,
+  SCROLL_PROP,
+  TO_BE_MERGED,
+} from './symbols.ts'
+import {
   type AlwaysProp,
-  type OptionalProp,
-  type MergeableProp,
   type ComponentProps,
+  type DeferProp,
+  type MergeableProp,
+  type OptionalProp,
+  type PageProps,
+  type ScrollMetadata,
+  type ScrollProp,
   type UnPackedPageProps,
 } from './types.ts'
-import { type ContainerResolver } from '@adonisjs/core/container'
 
 class InertiaSerializer extends BaseSerializer {
   wrap: undefined = undefined
@@ -216,6 +225,39 @@ export function deepMerge<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
 }
 
 /**
+ * Wraps a paginated value for infinite scrolling.
+ *
+ * Pagination metadata is automatically extracted and emitted in scrollProps.
+ * Merge/prepend behavior is wired based on the X-Inertia-Infinite-Scroll-Merge-Intent
+ * request header: "append" adds propKey.data to mergeProps, "prepend" to prependProps,
+ * absent means initial load and no merge is declared.
+ *
+ * @example
+ * ```js
+ * { posts: inertia.scroll(() => PostTransformer.paginate(posts.all(), posts.getMeta())) }
+ * ```
+ *
+ * @example Custom page query parameter
+ * ```js
+ * {
+ *   users:  inertia.scroll(() => UserTransformer.paginate(users.all(), users.getMeta()), { pageName: 'usersPage' }),
+ *   orders: inertia.scroll(() => OrderTransformer.paginate(orders.all(), orders.getMeta()), { pageName: 'ordersPage' }),
+ * }
+ * ```
+ */
+export function scroll<T extends UnPackedPageProps>(
+  value: T | (() => AsyncOrSync<T>),
+  options: { pageName?: string; wrapper?: string } = {}
+): ScrollProp<T> {
+  return {
+    value,
+    pageName: options.pageName ?? 'page',
+    wrapper: options.wrapper ?? 'data',
+    [SCROLL_PROP]: true,
+  }
+}
+
+/**
  * Type guard that checks if a prop value is a deferred prop.
  *
  * Deferred props contain the DEFERRED_PROP symbol and have compute/merge capabilities.
@@ -316,6 +358,50 @@ export function isOptionalProp<T extends UnPackedPageProps>(
 }
 
 /**
+ * Type guard that checks if a prop value is a scroll prop.
+ *
+ * Scroll props contain the SCROLL_PROP symbol and wrap a paginated value
+ * for the infinite scroll.
+ *
+ * @param propValue - The object to check for scroll prop characteristics
+ * @returns True if the prop value is a scroll prop
+ *
+ * @example
+ * ```js
+ * const prop = scroll(() => PostTransformer.paginate(posts.all(), posts.getMeta()))
+ *
+ * if (isScrollProp(prop)) {
+ *   // prop is now typed as ScrollProp<T>
+ *   const result = await prop.compute()
+ * }
+ * ```
+ */
+export function isScrollProp<T extends UnPackedPageProps>(
+  propValue: Object
+): propValue is ScrollProp<T> {
+  return SCROLL_PROP in propValue
+}
+
+/**
+ * Extracts scroll metadata from a serialized paginator value.
+ * Reads from the "metadata" key produced by AdonisJS transformers
+ * rather than inspecting the raw paginator instance.
+ */
+function resolveScrollMetadata(serialized: any, pageName: string, wrapper: string): ScrollMetadata {
+  const meta = serialized?.metadata ?? {}
+  const currentPage: number | null = meta.currentPage ?? null
+  const lastPage: number | null = meta.lastPage ?? null
+  return {
+    pageName,
+    wrapper,
+    currentPage,
+    nextPage:
+      currentPage !== null && lastPage !== null && currentPage < lastPage ? currentPage + 1 : null,
+    previousPage: currentPage !== null && currentPage > 1 ? currentPage - 1 : null,
+  }
+}
+
+/**
  * Helper function to unpack prop values using the transformer serialize function.
  *
  * @param value - The prop value to serialize
@@ -361,6 +447,7 @@ export async function buildStandardVisitProps(
   const deepMergeProps: string[] = []
   const newProps: ComponentProps = {}
   const deferredProps: { [group: string]: string[] } = {}
+  const scrollProps: { [key: string]: ScrollMetadata } = {}
   const unpackedValues: Array<{
     key: string
     value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
@@ -389,6 +476,15 @@ export async function buildStandardVisitProps(
        * Unpack always prop value
        */
       if (isAlwaysProp(value)) {
+        unpackedValues.push({ key, value: value.value })
+        continue
+      }
+
+      /**
+       * Scroll props are serialized like standard props. The pageName is tracked
+       * so that scrollProps metadata can be derived after serialization.
+       */
+      if (isScrollProp(value)) {
         unpackedValues.push({ key, value: value.value })
         continue
       }
@@ -464,11 +560,18 @@ export async function buildStandardVisitProps(
     })
   )
 
+  for (const [key, value] of Object.entries(pageProps)) {
+    if (isObject(value) && isScrollProp(value)) {
+      scrollProps[key] = resolveScrollMetadata(newProps[key], value.pageName, value.wrapper)
+    }
+  }
+
   return {
     props: newProps,
     mergeProps,
     deepMergeProps,
     deferredProps,
+    scrollProps,
   }
 }
 
@@ -503,6 +606,7 @@ export async function buildPartialRequestProps(
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
+  const scrollProps: { [key: string]: ScrollMetadata } = {}
   const newProps: ComponentProps = {}
   const unpackedValues: Array<{
     key: string
@@ -540,6 +644,14 @@ export async function buildPartialRequestProps(
        */
       if (isOptionalProp(value)) {
         unpackedValues.push({ key, value: value.compute })
+        continue
+      }
+
+      /**
+       * Unpack scroll prop value and track pageName for metadata derivation
+       */
+      if (isScrollProp(value)) {
+        unpackedValues.push({ key, value: value.value })
         continue
       }
 
@@ -605,10 +717,17 @@ export async function buildPartialRequestProps(
     })
   )
 
+  for (const [key, value] of Object.entries(pageProps)) {
+    if (isObject(value) && isScrollProp(value)) {
+      scrollProps[key] = resolveScrollMetadata(newProps[key], value.pageName, value.wrapper)
+    }
+  }
+
   return {
     props: newProps,
     mergeProps,
     deepMergeProps,
     deferredProps: {},
+    scrollProps,
   }
 }

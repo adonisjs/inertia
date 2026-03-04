@@ -7,11 +7,12 @@
  * file that was distributed with this source code.
  */
 
-import { test } from '@japa/runner'
 import { BaseTransformer } from '@adonisjs/core/transformers'
+import { test } from '@japa/runner'
 
-import { always, deepMerge, defer, merge, optional } from '../src/props.ts'
 import { InertiaFactory } from '../factories/inertia_factory.ts'
+import { always, deepMerge, defer, merge, optional, scroll } from '../src/props.ts'
+import { makePaginatedData } from './helpers.ts'
 
 test.group('Inertia.page', () => {
   test('build page with component props as it is', async ({ assert }) => {
@@ -51,6 +52,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -72,6 +74,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -120,12 +123,14 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "user": {
             "id": 1,
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -169,6 +174,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -188,6 +194,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -222,6 +229,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -230,6 +238,7 @@ test.group('Inertia.page', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -281,6 +290,7 @@ test.group('Inertia.page', () => {
         },
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -288,6 +298,7 @@ test.group('Inertia.page', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -337,6 +348,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -346,6 +358,7 @@ test.group('Inertia.page', () => {
             ],
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -392,6 +405,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -399,6 +413,7 @@ test.group('Inertia.page', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -448,6 +463,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -461,6 +477,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -504,6 +521,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -525,6 +543,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -573,6 +592,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -594,6 +614,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -641,6 +662,7 @@ test.group('Inertia.page', () => {
           "posts",
           "paginated",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -662,6 +684,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -710,6 +733,7 @@ test.group('Inertia.page', () => {
         "mergeProps": [
           "posts",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -731,6 +755,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -779,6 +804,7 @@ test.group('Inertia.page', () => {
         "mergeProps": [
           "paginated",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -790,6 +816,7 @@ test.group('Inertia.page', () => {
             "total": 10,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -838,6 +865,7 @@ test.group('Inertia.page', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -849,6 +877,7 @@ test.group('Inertia.page', () => {
             "total": 10,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -905,6 +934,7 @@ test.group('Inertia.page', () => {
           "posts",
           "paginated",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -926,6 +956,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -978,6 +1009,7 @@ test.group('Inertia.page', () => {
         "mergeProps": [
           "paginated",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -989,6 +1021,7 @@ test.group('Inertia.page', () => {
             "total": 10,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1047,6 +1080,7 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1070,6 +1104,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1129,12 +1164,14 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "user": {
             "id": 1,
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1189,6 +1226,7 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1210,6 +1248,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1250,6 +1289,7 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -1258,6 +1298,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1321,6 +1362,7 @@ test.group('Inertia.page | Transformers', () => {
         },
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -1328,6 +1370,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1387,6 +1430,7 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1397,6 +1441,7 @@ test.group('Inertia.page | Transformers', () => {
             "metadata": {},
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1455,6 +1500,7 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -1462,6 +1508,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1523,6 +1570,7 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1537,6 +1585,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1599,6 +1648,7 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1622,6 +1672,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1687,6 +1738,7 @@ test.group('Inertia.page | Transformers', () => {
         "deferredProps": {},
         "encryptHistory": false,
         "mergeProps": [],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1710,6 +1762,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1776,6 +1829,7 @@ test.group('Inertia.page | Transformers', () => {
           "posts",
           "paginated",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1799,6 +1853,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1864,6 +1919,7 @@ test.group('Inertia.page | Transformers', () => {
         "mergeProps": [
           "paginated",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1877,6 +1933,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1948,6 +2005,7 @@ test.group('Inertia.page | Transformers', () => {
           "posts",
           "paginated",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1971,6 +2029,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -2036,6 +2095,7 @@ test.group('Inertia.page | Transformers', () => {
         "mergeProps": [
           "paginated",
         ],
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -2049,9 +2109,261 @@ test.group('Inertia.page | Transformers', () => {
             },
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
     `)
+  })
+})
+
+test.group('Inertia.page | scroll helper', () => {
+  test('emit scrollProps metadata and serialize data on initial load', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(1, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta)),
+    })
+
+    assert.snapshot(page).matchInline(`
+      {
+        "clearHistory": false,
+        "component": "home",
+        "deepMergeProps": [],
+        "deferredProps": {},
+        "encryptHistory": false,
+        "mergeProps": [],
+        "prependProps": [],
+        "props": {
+          "posts": {
+            "data": [
+              {
+                "id": 1,
+                "title": "Post 1",
+              },
+            ],
+            "metadata": {
+              "currentPage": 1,
+              "firstPage": 1,
+              "firstPageUrl": "/?page=1",
+              "lastPage": 3,
+              "lastPageUrl": "/?page=3",
+              "nextPageUrl": "/?page=2",
+              "perPage": 10,
+              "previousPageUrl": null,
+              "total": 30,
+            },
+          },
+        },
+        "scrollProps": {
+          "posts": {
+            "currentPage": 1,
+            "nextPage": 2,
+            "pageName": "page",
+            "previousPage": null,
+            "wrapper": "data",
+          },
+        },
+        "url": "",
+        "version": "1",
+      }
+    `)
+  })
+
+  test('no mergeProps or prependProps on initial load (no header)', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(1, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta)),
+    })
+
+    assert.deepEqual(page.mergeProps, [])
+    assert.deepEqual(page.prependProps, [])
+  })
+
+  test('add posts.data to mergeProps when intent is "append"', async ({ assert }) => {
+    const inertia = new InertiaFactory().scrollIntent('append').create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(2, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta)),
+    })
+
+    assert.deepEqual(page.mergeProps, ['posts.data'])
+    assert.deepEqual(page.prependProps, [])
+  })
+
+  test('add posts.data to prependProps when intent is "prepend"', async ({ assert }) => {
+    const inertia = new InertiaFactory().scrollIntent('prepend').create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(2, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta)),
+    })
+
+    assert.deepEqual(page.prependProps, ['posts.data'])
+    assert.deepEqual(page.mergeProps, [])
+  })
+
+  test('nextPage is null on last page', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(3, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta)),
+    })
+
+    assert.isNull((page.scrollProps as any).posts.nextPage)
+    assert.equal((page.scrollProps as any).posts.previousPage, 2)
+  })
+
+  test('previousPage is null on first page', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(1, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta)),
+    })
+
+    assert.isNull((page.scrollProps as any).posts.previousPage)
+    assert.equal((page.scrollProps as any).posts.nextPage, 2)
+  })
+
+  test('custom pageName is reflected in scrollProps', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(1, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta), {
+        pageName: 'postsPage',
+      }),
+    })
+
+    assert.equal((page.scrollProps as any).posts.pageName, 'postsPage')
+  })
+
+  test('accept a direct value (non-lazy)', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(1, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(PostsTransformer.paginate(postsData.data, postsData.meta)),
+    })
+
+    assert.equal((page.scrollProps as any).posts.currentPage, 1)
+    assert.equal((page.scrollProps as any).posts.nextPage, 2)
+  })
+
+  test('multiple scroll props emit independent scrollProps and mergeProps', async ({ assert }) => {
+    const inertia = new InertiaFactory().scrollIntent('append').create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    class UsersTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(1, 3)
+    const usersData = makePaginatedData(2, 5)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta), {
+        pageName: 'postsPage',
+      }),
+      users: scroll(() => UsersTransformer.paginate(usersData.data, usersData.meta), {
+        pageName: 'usersPage',
+      }),
+    })
+
+    assert.equal((page.scrollProps as any).posts.pageName, 'postsPage')
+    assert.equal((page.scrollProps as any).users.pageName, 'usersPage')
+    assert.includeMembers(page.mergeProps ?? [], ['posts.data', 'users.data'])
+  })
+
+  test('scroll prop is included and scrollProps emitted during partial reload', async ({
+    assert,
+  }) => {
+    const inertia = new InertiaFactory().partialReload('home').only(['posts']).create()
+
+    class PostsTransformer extends BaseTransformer<{ id: number; title: string }> {
+      toObject() {
+        return this.resource
+      }
+    }
+
+    const postsData = makePaginatedData(2, 3)
+
+    const page = await inertia.page('home', {
+      posts: scroll(() => PostsTransformer.paginate(postsData.data, postsData.meta)),
+      filters: { search: '' },
+    })
+
+    assert.exists((page.props as any).posts)
+    assert.notExists((page.props as any).filters)
+    assert.equal((page.scrollProps as any).posts.currentPage, 2)
   })
 })

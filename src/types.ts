@@ -7,16 +7,17 @@
  * file that was distributed with this source code.
  */
 
-import type { HttpContext } from '@adonisjs/core/http'
 import { type ContainerResolver } from '@adonisjs/core/container'
-import type { JSONDataTypes } from '@adonisjs/core/types/transformers'
+import type { HttpContext } from '@adonisjs/core/http'
 import type { AsyncOrSync, DeepPartial, Prettify } from '@adonisjs/core/types/common'
+import type { JSONDataTypes } from '@adonisjs/core/types/transformers'
 import {
-  type DEEP_MERGE,
   type ALWAYS_PROP,
-  type OPTIONAL_PROP,
-  type TO_BE_MERGED,
+  type DEEP_MERGE,
   type DEFERRED_PROP,
+  type OPTIONAL_PROP,
+  type SCROLL_PROP,
+  type TO_BE_MERGED,
 } from './symbols.ts'
 
 /**
@@ -65,6 +66,8 @@ export type RequestInfo = {
   resetProps?: string[]
   /** Error bag identifier for validation errors */
   errorBag?: string
+  /** Merge intent for infinite scroll props */
+  scrollMergeIntent?: string
 }
 
 /**
@@ -119,6 +122,33 @@ export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
   /** Brand symbol to identify this prop for merging */
   [TO_BE_MERGED]: true
   [DEEP_MERGE]: boolean
+}
+
+/**
+ * Represents a prop wrapping a paginated value for use with the <InfiniteScroll>
+ * component. Metadata is extracted after serialization and emitted in scrollProps.
+ * Merge/prepend behavior is driven by the X-Inertia-Infinite-Scroll-Merge-Intent header.
+ *
+ * @template T - The type of the paginated value
+ */
+export type ScrollProp<T extends UnPackedPageProps> = {
+  value: T | (() => AsyncOrSync<T>)
+  /** URL query-parameter name for the page number. Defaults to `"page"`. */
+  pageName: string
+  /** The wrapper key for the data array. Default to `"data"`. **/
+  wrapper: string
+  [SCROLL_PROP]: true
+}
+
+/**
+ * Pagination metadata emitted in the scrollProps field of the page object.
+ */
+export type ScrollMetadata = {
+  pageName: string
+  wrapper: string
+  currentPage: number | null
+  nextPage: number | null
+  previousPage: number | null
 }
 
 /**
@@ -190,7 +220,9 @@ export type PagePropsDataTypes<T extends JSONDataTypes = JSONDataTypes> =
  */
 export type PageProps = Record<
   string,
-  PagePropsDataTypes | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>
+  | PagePropsDataTypes
+  | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>
+  | ScrollProp<UnPackedPageProps>
 >
 
 /**
@@ -248,11 +280,13 @@ export type GetRequiredProps<Props> = {
 export type GetRequiredPropValue<Value> =
   Value extends AlwaysProp<infer A>
     ? UnpackProp<A>
-    : Value extends MergeableProp<infer B>
-      ? UnpackProp<B>
-      : Value extends () => AsyncOrSync<infer C>
-        ? UnpackProp<C>
-        : UnpackProp<Value>
+    : Value extends ScrollProp<infer S> // ← ajouter avant MergeableProp
+      ? UnpackProp<S>
+      : Value extends MergeableProp<infer B>
+        ? UnpackProp<B>
+        : Value extends () => AsyncOrSync<infer C>
+          ? UnpackProp<C>
+          : UnpackProp<Value>
 
 /**
  * Utility type to simplify value of an optional prop by unwrapping branded types
@@ -301,10 +335,14 @@ export type AsPageProps<Props extends ComponentProps> = Prettify<
     }[keyof Props]]?:
       | PagePropsDataTypes<Props[K]>
       | MergeableProp<UnPackedPageProps<Props[K]> | DeferProp<UnPackedPageProps<Props[K]>>>
+      | ScrollProp<UnPackedPageProps<Props[K]>>
   } & {
     [K in {
       [O in keyof Props]: [undefined] extends [Props[O]] ? never : O
-    }[keyof Props]]: PagePropsEagerDataTypes<Props[K]> | MergeableProp<UnPackedPageProps<Props[K]>>
+    }[keyof Props]]:
+      | PagePropsEagerDataTypes<Props[K]>
+      | MergeableProp<UnPackedPageProps<Props[K]>>
+      | ScrollProp<UnPackedPageProps<Props[K]>>
   }
 >
 
@@ -417,6 +455,17 @@ export type PageObject<Props> = {
    * existing props on the page
    */
   deepMergeProps?: string[]
+
+  /**
+   * An array with the keys of props that should be prepended to the
+   * existing props on the page
+   */
+  prependProps?: string[]
+
+  /**
+   * Pagination metadata for scroll props, keyed by prop name.
+   */
+  scrollProps?: { [propKey: string]: ScrollMetadata }
 
   /**
    * Encrypt history flag to be sent to the client with every request.

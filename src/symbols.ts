@@ -36,3 +36,9 @@ export const DEFERRED_PROP = Symbol.for('DEFERRED_PROP')
  * Deep merging recursively merges nested objects and arrays.
  */
 export const DEEP_MERGE = Symbol.for('DEEP_MERGE')
+
+/**
+ * Symbol used to mark props that wrap a paginated value for infinite-scroll handling.
+ * Emit scrollProps metadata and conditionally wire mergeProps / prependProps.
+ */
+export const SCROLL_PROP = Symbol.for('SCROLL_PROP')

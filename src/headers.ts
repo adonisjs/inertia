@@ -74,4 +74,10 @@ export const InertiaHeaders = {
    * Used to identify which component is being partially reloaded.
    */
   PartialComponent: 'x-inertia-partial-component',
+
+  /**
+   * Header sent to indicate how the incoming page of data should be combined with existing client-side data.
+   * Value is "append", "prepend", or absent on initial load.
+   */
+  InfiniteScrollMergeIntent: 'x-inertia-infinite-scroll-merge-intent',
 } as const

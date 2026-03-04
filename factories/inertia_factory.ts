@@ -7,18 +7,18 @@
  * file that was distributed with this source code.
  */
 
-import { type Vite } from '@adonisjs/vite'
-import { type HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
+import { type HttpContext } from '@adonisjs/core/http'
+import { type Vite } from '@adonisjs/vite'
 
 import { defineConfig } from '../index.js'
-import { Inertia } from '../src/inertia.js'
 import { InertiaHeaders } from '../src/headers.js'
+import { Inertia } from '../src/inertia.js'
 import { ServerRenderer } from '../src/server_renderer.js'
 import {
   type AssetsVersion,
-  type InertiaConfig,
   type ComponentProps,
+  type InertiaConfig,
   type InertiaConfigInput,
 } from '../src/types.js'
 
@@ -92,6 +92,11 @@ export class InertiaFactory<Pages extends Record<string, ComponentProps>> {
       this.#parameters.config = defineConfig(parameters.config)
     }
     this.#parameters.ctx.request.request.headers[InertiaHeaders.Inertia] = 'true'
+    return this
+  }
+
+  scrollIntent(intent: 'append' | 'prepend') {
+    this.#parameters.ctx.request.request.headers[InertiaHeaders.InfiniteScrollMergeIntent] = intent
     return this
   }
 
