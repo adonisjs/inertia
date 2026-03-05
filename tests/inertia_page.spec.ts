@@ -2169,7 +2169,6 @@ test.group('Inertia.page | scroll helper', () => {
             "nextPage": 2,
             "pageName": "page",
             "previousPage": null,
-            "wrapper": "data",
           },
         },
         "url": "",

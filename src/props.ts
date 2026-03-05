@@ -387,13 +387,12 @@ export function isScrollProp<T extends UnPackedPageProps>(
  * Reads from the "metadata" key produced by AdonisJS transformers
  * rather than inspecting the raw paginator instance.
  */
-function resolveScrollMetadata(serialized: any, pageName: string, wrapper: string): ScrollMetadata {
+function resolveScrollMetadata(serialized: any, pageName: string): ScrollMetadata {
   const meta = serialized?.metadata ?? {}
   const currentPage: number | null = meta.currentPage ?? null
   const lastPage: number | null = meta.lastPage ?? null
   return {
     pageName,
-    wrapper,
     currentPage,
     nextPage:
       currentPage !== null && lastPage !== null && currentPage < lastPage ? currentPage + 1 : null,
@@ -441,13 +440,16 @@ async function unpackPropValue(
  */
 export async function buildStandardVisitProps(
   pageProps: PageProps,
-  containerResolver: ContainerResolver<any>
+  containerResolver: ContainerResolver<any>,
+  scrollMergeIntent?: string
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
   const newProps: ComponentProps = {}
   const deferredProps: { [group: string]: string[] } = {}
+  const prependProps: string[] = []
   const scrollProps: { [key: string]: ScrollMetadata } = {}
+  const scrollResolvers = new Map<string, (jsonValue: any) => void>()
   const unpackedValues: Array<{
     key: string
     value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
@@ -485,6 +487,16 @@ export async function buildStandardVisitProps(
        * so that scrollProps metadata can be derived after serialization.
        */
       if (isScrollProp(value)) {
+        const scrollPath = `${key}.${value.wrapper}`
+
+        if (scrollMergeIntent === 'prepend') {
+          prependProps.push(scrollPath)
+        } else if (scrollMergeIntent === 'append') {
+          mergeProps.push(scrollPath)
+        }
+        scrollResolvers.set(key, (jsonValue) => {
+          scrollProps[key] = resolveScrollMetadata(jsonValue, value.pageName)
+        })
         unpackedValues.push({ key, value: value.value })
         continue
       }
@@ -551,20 +563,20 @@ export async function buildStandardVisitProps(
           .then((r) => unpackPropValue(r, containerResolver))
           .then((jsonValue) => {
             newProps[key] = jsonValue
+            if (scrollResolvers.has(key)) {
+              scrollResolvers.get(key)!(jsonValue)
+            }
           })
       } else {
         return unpackPropValue(value, containerResolver).then((jsonValue) => {
           newProps[key] = jsonValue
+          if (scrollResolvers.has(key)) {
+            scrollResolvers.get(key)!(jsonValue)
+          }
         })
       }
     })
   )
-
-  for (const [key, value] of Object.entries(pageProps)) {
-    if (isObject(value) && isScrollProp(value)) {
-      scrollProps[key] = resolveScrollMetadata(newProps[key], value.pageName, value.wrapper)
-    }
-  }
 
   return {
     props: newProps,
@@ -572,6 +584,7 @@ export async function buildStandardVisitProps(
     deepMergeProps,
     deferredProps,
     scrollProps,
+    prependProps,
   }
 }
 
@@ -602,11 +615,14 @@ export async function buildStandardVisitProps(
 export async function buildPartialRequestProps(
   pageProps: PageProps,
   cherryPickProps: string[],
-  containerResolver: ContainerResolver<any>
+  containerResolver: ContainerResolver<any>,
+  scrollMergeIntent?: string
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
+  const prependProps: string[] = []
   const scrollProps: { [key: string]: ScrollMetadata } = {}
+  const scrollResolvers = new Map<string, (jsonValue: any) => void>()
   const newProps: ComponentProps = {}
   const unpackedValues: Array<{
     key: string
@@ -651,6 +667,16 @@ export async function buildPartialRequestProps(
        * Unpack scroll prop value and track pageName for metadata derivation
        */
       if (isScrollProp(value)) {
+        const scrollPath = `${key}.${value.wrapper}`
+
+        if (scrollMergeIntent === 'prepend') {
+          prependProps.push(scrollPath)
+        } else if (scrollMergeIntent === 'append') {
+          mergeProps.push(scrollPath)
+        }
+        scrollResolvers.set(key, (jsonValue) => {
+          scrollProps[key] = resolveScrollMetadata(jsonValue, value.pageName)
+        })
         unpackedValues.push({ key, value: value.value })
         continue
       }
@@ -708,20 +734,20 @@ export async function buildPartialRequestProps(
           .then((r) => unpackPropValue(r, containerResolver))
           .then((jsonValue) => {
             newProps[key] = jsonValue
+            if (scrollResolvers.has(key)) {
+              scrollResolvers.get(key)!(jsonValue)
+            }
           })
       } else {
         return unpackPropValue(value, containerResolver).then((jsonValue) => {
           newProps[key] = jsonValue
+          if (scrollResolvers.has(key)) {
+            scrollResolvers.get(key)!(jsonValue)
+          }
         })
       }
     })
   )
-
-  for (const [key, value] of Object.entries(pageProps)) {
-    if (isObject(value) && isScrollProp(value)) {
-      scrollProps[key] = resolveScrollMetadata(newProps[key], value.pageName, value.wrapper)
-    }
-  }
 
   return {
     props: newProps,
@@ -729,5 +755,6 @@ export async function buildPartialRequestProps(
     deepMergeProps,
     deferredProps: {},
     scrollProps,
+    prependProps,
   }
 }

@@ -145,7 +145,6 @@ export type ScrollProp<T extends UnPackedPageProps> = {
  */
 export type ScrollMetadata = {
   pageName: string
-  wrapper: string
   currentPage: number | null
   nextPage: number | null
   previousPage: number | null
@@ -280,7 +279,7 @@ export type GetRequiredProps<Props> = {
 export type GetRequiredPropValue<Value> =
   Value extends AlwaysProp<infer A>
     ? UnpackProp<A>
-    : Value extends ScrollProp<infer S> // ← ajouter avant MergeableProp
+    : Value extends ScrollProp<infer S>
       ? UnpackProp<S>
       : Value extends MergeableProp<infer B>
         ? UnpackProp<B>

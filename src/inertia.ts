@@ -253,7 +253,6 @@ export class Inertia<Pages> {
       finalProps = { ...pageProps }
     }
 
-    let result
     if (requestInfo.partialComponent === component) {
       const only = requestInfo.onlyProps
       const except = requestInfo.exceptProps ?? []
@@ -267,30 +266,20 @@ export class Inertia<Pages> {
       debug('building props for a partial reload %O', requestInfo)
       debug('cherry picking props %s', cherryPickProps)
 
-      result = await buildPartialRequestProps(
+      return buildPartialRequestProps(
         finalProps,
         cherryPickProps,
-        this.ctx.containerResolver
+        this.ctx.containerResolver,
+        requestInfo.scrollMergeIntent
       )
     } else {
       debug('building props for a standard visit %O', requestInfo)
-      result = await buildStandardVisitProps(finalProps, this.ctx.containerResolver)
+      return buildStandardVisitProps(
+        finalProps,
+        this.ctx.containerResolver,
+        requestInfo.scrollMergeIntent
+      )
     }
-
-    const prependProps: string[] = []
-    const mergeProps: string[] = [...(result.mergeProps || [])]
-    const scrollProps = result.scrollProps ?? {}
-    for (const [key, propInfo] of Object.entries(scrollProps)) {
-      const scrolPropPath = `${key}.${propInfo.wrapper}`
-
-      if (requestInfo.scrollMergeIntent === 'prepend') {
-        prependProps.push(scrolPropPath)
-      } else if (requestInfo.scrollMergeIntent === 'append') {
-        mergeProps.push(scrolPropPath)
-      }
-    }
-
-    return { ...result, mergeProps, prependProps }
   }
 
   /**
