@@ -483,8 +483,8 @@ export async function buildStandardVisitProps(
       }
 
       /**
-       * Scroll props are serialized like standard props. The pageName is tracked
-       * so that scrollProps metadata can be derived after serialization.
+       * Scroll props are merged or prepended.
+       * The wrapper path is tracked for merge intent and a metadata resolver is registered.
        */
       if (isScrollProp(value)) {
         const scrollPath = `${key}.${value.wrapper}`
@@ -664,7 +664,7 @@ export async function buildPartialRequestProps(
       }
 
       /**
-       * Unpack scroll prop value and track pageName for metadata derivation
+       * Unpack scroll prop and track the wrapper path for merge intent.
        */
       if (isScrollProp(value)) {
         const scrollPath = `${key}.${value.wrapper}`

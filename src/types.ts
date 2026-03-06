@@ -125,9 +125,9 @@ export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
 }
 
 /**
- * Represents a prop wrapping a paginated value for use with the <InfiniteScroll>
- * component. Metadata is extracted after serialization and emitted in scrollProps.
- * Merge/prepend behavior is driven by the X-Inertia-Infinite-Scroll-Merge-Intent header.
+ * Represents a scroll prop wrapping a paginated value for infinite scroll pagination.
+ * Metadata is extracted after serialization and emitted in scrollProps.
+ * Merge or prepend behavior is driven by the X-Inertia-Infinite-Scroll-Merge-Intent header.
  *
  * @template T - The type of the paginated value
  */
