@@ -16,6 +16,8 @@ import { join } from 'node:path'
 import { InertiaFactory } from '../factories/inertia_factory.js'
 import { InertiaHeaders } from '../src/headers.ts'
 import { setupViewMacroMock, setupVite } from './helpers.js'
+import { ServerRenderer } from '../src/server_renderer.js'
+import { defineConfig } from '../src/define_config.js'
 
 test.group('Inertia', () => {
   test('Set X-Inertia-Location header with 409 status code', async ({ assert }) => {
@@ -573,4 +575,44 @@ test.group('Inertia | Ssr', () => {
     assert.deepEqual(result.props.page.component, 'foo')
     assert.deepEqual(result.props.page.version, '1')
   })
+
+  test('should recreate module runner after vite dev server restarts', async ({ assert, fs }) => {
+    await fs.create('foo.ts', 'export default () => ({ head: ["head"], body: "before restart" })')
+    const vite = await setupVite({ build: { rollupOptions: { input: 'foo.ts' } } })
+
+    const config = defineConfig({ ssr: { enabled: true, entrypoint: 'foo.ts' } })
+    const renderer = new ServerRenderer(config, vite)
+
+    const pageObject = {
+      component: 'foo',
+      props: {},
+      url: '/',
+      version: '1',
+      clearHistory: false,
+      encryptHistory: false,
+      deferredProps: {},
+      mergeProps: [],
+      deepMergeProps: [],
+    }
+
+    /**
+     * First render should work normally
+     */
+    const result1 = await renderer.render(pageObject)
+    assert.deepEqual(result1.body, 'before restart')
+
+    /**
+     * Restart the Vite dev server. This replaces server.environments.ssr
+     * with a new instance, making the old module runner's transport stale.
+     */
+    await vite.getDevServer()!.restart()
+
+    /**
+     * After restart, rendering should still work because the
+     * ServerRenderer detects the environment change and recreates
+     * the module runner.
+     */
+    const result2 = await renderer.render(pageObject)
+    assert.deepEqual(result2.body, 'before restart')
+  }).timeout(30_000)
 })
