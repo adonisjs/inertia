@@ -13,9 +13,10 @@ import { Vite } from '@adonisjs/vite'
 import { test } from '@japa/runner'
 import { join } from 'node:path'
 
-import { InertiaFactory } from '../factories/inertia_factory.js'
 import { InertiaHeaders } from '../src/headers.ts'
 import { setupViewMacroMock, setupVite } from './helpers.js'
+
+import { InertiaFactory } from '../factories/inertia_factory.js'
 import { ServerRenderer } from '../src/server_renderer.js'
 import { defineConfig } from '../src/define_config.js'
 
