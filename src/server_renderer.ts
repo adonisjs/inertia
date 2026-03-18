@@ -9,6 +9,7 @@
 
 import { pathToFileURL } from 'node:url'
 import { type Vite } from '@adonisjs/vite'
+import type { DevEnvironment } from 'vite'
 import type { ModuleRunner } from 'vite/module-runner'
 
 import type { PageObject, RenderInertiaSsrApp, InertiaConfig } from './types.js'
@@ -32,6 +33,13 @@ export class ServerRenderer {
    * Used in development mode to execute SSR entry points.
    */
   #runtime?: ModuleRunner
+
+  /**
+   * Reference to the SSR environment the current module runner
+   * was created from. Used to detect Vite dev server restarts
+   * so the stale runner can be replaced.
+   */
+  #ssrEnvironment?: DevEnvironment
 
   /**
    * Inertia configuration object containing SSR settings
@@ -90,6 +98,22 @@ export class ServerRenderer {
      */
     if (devServer) {
       debug('creating SSR bundle using dev-server')
+
+      /**
+       * When Vite restarts (e.g. after .env changes), it replaces
+       * server.environments.ssr with a new instance. The old module
+       * runner holds a transport bound to the dead environment's hot
+       * channel, so we must detect this and recreate the runner.
+       */
+      const currentSsrEnv = devServer.environments.ssr
+      if (this.#ssrEnvironment !== currentSsrEnv) {
+        if (this.#runtime) {
+          await this.#runtime.close()
+        }
+        this.#runtime = undefined
+        this.#ssrEnvironment = currentSsrEnv
+      }
+
       this.#runtime ??= await this.#vite.createModuleRunner()
       this.#runtime.clearCache()
       render = await this.#runtime.import(this.#config.ssr.entrypoint!)
