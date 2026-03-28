@@ -31,6 +31,19 @@ export default class MakePage extends BaseCommand {
   declare react: boolean
 
   /**
+   * Read the contents from this file (if the flag exists) and use
+   * it as the raw contents
+   */
+  @flags.string({ description: 'Use the contents of the given file as the generated output' })
+  declare contentsFrom: string
+
+  /**
+   * Forcefully overwrite existing files
+   */
+  @flags.boolean({ description: 'Forcefully overwrite existing files', alias: 'f' })
+  declare force: boolean
+
+  /**
    * Directory under which the inertia pages are stored
    */
   protected pagesDir: string = 'inertia/pages'
@@ -83,11 +96,19 @@ export default class MakePage extends BaseCommand {
   async run() {
     const framework = await this.#resolveFramework()
     const codemods = await this.createCodemods()
+    codemods.overwriteExisting = this.force === true
 
-    await codemods.makeUsingStub(stubsRoot, `make/page/${framework}.stub`, {
-      flags: this.parsed.flags,
-      pagesDir: this.pagesDir,
-      entity: this.app.generators.createEntity(this.name),
-    })
+    await codemods.makeUsingStub(
+      stubsRoot,
+      `make/page/${framework}.stub`,
+      {
+        flags: this.parsed.flags,
+        pagesDir: this.pagesDir,
+        entity: this.app.generators.createEntity(this.name),
+      },
+      {
+        contentsFromFile: this.contentsFrom,
+      }
+    )
   }
 }
