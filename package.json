@@ -1,7 +1,7 @@
 {
   "name": "@adonisjs/inertia",
   "description": "Official Inertia.js adapter for AdonisJS",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "engines": {
     "node": ">=24.0.0"
   },
