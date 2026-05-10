@@ -4,7 +4,6 @@ export default defineConfig({
   entry: [
     './index.ts',
     './src/types.ts',
-    './src/client/vite.ts',
     './src/client/helpers.ts',
     './factories/main.ts',
     './src/inertia_middleware.ts',

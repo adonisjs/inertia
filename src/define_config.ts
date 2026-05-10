@@ -25,7 +25,7 @@ import type { InertiaConfig, InertiaConfigInput } from './types.js'
  *   rootView: 'layouts/app',
  *   ssr: {
  *     enabled: true,
- *     bundle: 'build/ssr/ssr.js'
+ *     entrypoint: 'inertia/ssr.tsx'
  *   }
  * })
  * ```
@@ -47,7 +47,6 @@ export function defineConfig(config: InertiaConfigInput): InertiaConfig {
       },
       ssr: {
         enabled: false,
-        bundle: 'ssr/ssr.js',
         entrypoint: 'inertia/ssr.tsx',
       },
     },

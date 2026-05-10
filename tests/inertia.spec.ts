@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { join } from 'node:path'
 import { test } from '@japa/runner'
 import { Vite } from '@adonisjs/vite'
 import { HttpContext } from '@adonisjs/core/http'
@@ -457,7 +456,7 @@ test.group('Inertia | Ssr', () => {
     assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
   })
 
-  test('if devServer is not available, use bundle file to render the page', async ({
+  test('if devServer is not available, use SSR bundle from manifest', async ({
     assert,
     fs,
   }) => {
@@ -469,10 +468,19 @@ test.group('Inertia | Ssr', () => {
     })
 
     await fs.createJson('package.json', { type: 'module' })
-    await fs.create('foo.js', 'export default () => ({ head: ["head"], body: "foo.ts" })')
+    await fs.create(
+      'server/foo.js',
+      'export default () => ({ head: ["head"], body: "foo.ts" })'
+    )
+    await fs.create(
+      'server/.vite/manifest.json',
+      JSON.stringify({
+        'foo.ts': { file: 'foo.js', isEntry: true, src: 'foo.ts' },
+      })
+    )
 
     const inertia = new InertiaFactory()
-      .merge({ config: { ssr: { enabled: true, bundle: join(fs.basePath, 'foo.js') } } })
+      .merge({ config: { ssr: { enabled: true, entrypoint: 'foo.ts' } } })
       .withVite(vite)
       .withoutInertia()
       .create()
