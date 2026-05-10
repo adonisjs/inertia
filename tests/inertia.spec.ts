@@ -456,10 +456,7 @@ test.group('Inertia | Ssr', () => {
     assert.deepEqual(result.props.page.ssrBody, 'foo.ts')
   })
 
-  test('if devServer is not available, use SSR bundle from manifest', async ({
-    assert,
-    fs,
-  }) => {
+  test('if devServer is not available, use SSR bundle from manifest', async ({ assert, fs }) => {
     setupViewMacroMock()
 
     const vite = new Vite({
@@ -468,10 +465,7 @@ test.group('Inertia | Ssr', () => {
     })
 
     await fs.createJson('package.json', { type: 'module' })
-    await fs.create(
-      'server/foo.js',
-      'export default () => ({ head: ["head"], body: "foo.ts" })'
-    )
+    await fs.create('server/foo.js', 'export default () => ({ head: ["head"], body: "foo.ts" })')
     await fs.create(
       'server/.vite/manifest.json',
       JSON.stringify({
