@@ -326,6 +326,9 @@ async function unpackPropValue(
   value: UnPackedPageProps<JSONDataTypes>,
   containerResolver: ContainerResolver<any>
 ) {
+  if (value === null) {
+    return null
+  }
   return inertiaSerializer.serialize(value, containerResolver) as Promise<JSONDataTypes>
 }
 
