@@ -326,6 +326,7 @@ async function unpackPropValue(
   value: UnPackedPageProps<JSONDataTypes>,
   containerResolver: ContainerResolver<any>
 ) {
+  // Allow returning null values without serialization
   if (value === null) {
     return null
   }

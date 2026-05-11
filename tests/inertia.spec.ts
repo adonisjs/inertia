@@ -311,6 +311,19 @@ test.group('Inertia', () => {
     assert.deepEqual(result.props, { foo: 'bar', baz: 'baz', qux: 'qux' })
   })
 
+  test('allow null values as props', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const result: any = await inertia.render('foo', {
+      foo: null,
+      baz: () => null,
+      qux: async () => null,
+      always: inertia.always(null),
+    })
+
+    assert.deepEqual(result.props, { foo: null, baz: null, qux: null, always: null })
+  })
+
   test('return version in page object', async ({ assert }) => {
     const inertia = new InertiaFactory().withVersion('2').create()
     const result: any = await inertia.render('foo', {})
