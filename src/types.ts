@@ -104,6 +104,8 @@ export type DeferProp<T extends UnPackedPageProps> = {
   compute: () => AsyncOrSync<T>
   /** Creates a mergeable version of this deferred prop */
   merge(): MergeableProp<DeferProp<T>>
+  /** Creates a deep-mergeable version of this deferred prop */
+  deepMerge(): MergeableProp<DeferProp<T>>
   /** Brand symbol to identify this as a deferred prop */
   [DEFERRED_PROP]: true
 }
