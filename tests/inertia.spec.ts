@@ -243,14 +243,91 @@ test.group('Inertia', () => {
   test('use mergeable and deferred props', async ({ assert }) => {
     const inertia = new InertiaFactory().create()
 
+    let computeCalls = 0
     const result: any = await inertia.render('foo', {
       foo: 'bar',
       baz: inertia.merge([1, 2, 3]),
-      bar: inertia.defer(() => 'bar').merge(),
+      bar: inertia
+        .defer(() => {
+          computeCalls++
+          return 'bar'
+        })
+        .merge(),
     })
 
     assert.deepEqual(result.deferredProps, { default: ['bar'] })
     assert.deepEqual(result.mergeProps, ['baz', 'bar'])
+    assert.deepEqual(result.deepMergeProps, [])
+    assert.deepEqual(result.props, { foo: 'bar', baz: [1, 2, 3] })
+    assert.equal(computeCalls, 0)
+  })
+
+  test('use deep-mergeable and deferred props via .deepMerge() chained on defer()', async ({
+    assert,
+  }) => {
+    const inertia = new InertiaFactory().create()
+
+    let computeCalls = 0
+    const result: any = await inertia.render('foo', {
+      foo: 'bar',
+      baz: inertia.deepMerge({ a: 1 }),
+      bar: inertia
+        .defer(() => {
+          computeCalls++
+          return { items: [1, 2, 3] }
+        })
+        .deepMerge(),
+    })
+
+    assert.deepEqual(result.deferredProps, { default: ['bar'] })
+    assert.deepEqual(result.mergeProps, [])
+    assert.deepEqual(result.deepMergeProps, ['baz', 'bar'])
+    assert.deepEqual(result.props, { foo: 'bar', baz: { a: 1 } })
+    assert.equal(computeCalls, 0)
+  })
+
+  test('use deep-mergeable and deferred props via inertia.deepMerge(inertia.defer())', async ({
+    assert,
+  }) => {
+    const inertia = new InertiaFactory().create()
+
+    let computeCalls = 0
+    const result: any = await inertia.render('foo', {
+      foo: 'bar',
+      bar: inertia.deepMerge(
+        inertia.defer(() => {
+          computeCalls++
+          return { items: [1, 2, 3] }
+        })
+      ),
+    })
+
+    assert.deepEqual(result.deferredProps, { default: ['bar'] })
+    assert.deepEqual(result.deepMergeProps, ['bar'])
+    assert.deepEqual(result.mergeProps, [])
+    assert.deepEqual(result.props, { foo: 'bar' })
+    assert.equal(computeCalls, 0)
+  })
+
+  test('load mergeable deferred props when present in x-inertia-partial-data', async ({
+    assert,
+  }) => {
+    const inertia = new InertiaFactory().partialReload('foo').only(['bar']).create()
+
+    let computeCalls = 0
+    const result: any = await inertia.render('foo', {
+      foo: 'bar',
+      bar: inertia
+        .defer(() => {
+          computeCalls++
+          return { items: [1, 2, 3] }
+        })
+        .deepMerge(),
+    })
+
+    assert.deepEqual(result.props, { bar: { items: [1, 2, 3] } })
+    assert.deepEqual(result.deepMergeProps, ['bar'])
+    assert.equal(computeCalls, 1)
   })
 
   test('properly handle null and undefined values on first visit', async ({ assert }) => {

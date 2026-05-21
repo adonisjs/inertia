@@ -75,6 +75,9 @@ export function defer<T extends UnPackedPageProps>(
     merge() {
       return merge(this)
     },
+    deepMerge() {
+      return deepMerge(this)
+    },
     [DEFERRED_PROP]: true,
   }
 }
@@ -411,16 +414,13 @@ export async function buildStandardVisitProps(
         if (isObject(value.value) && isDeferredProp(value.value)) {
           deferredProps[value.value.group] = deferredProps[value.value.group] ?? []
           deferredProps[value.value.group].push(key)
-          unpackedValues.push({
-            key,
-            value: value.value.compute,
-          })
-        } else {
-          unpackedValues.push({
-            key,
-            value: value.value,
-          })
+          continue
         }
+
+        unpackedValues.push({
+          key,
+          value: value.value,
+        })
 
         continue
       }
