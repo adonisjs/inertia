@@ -253,6 +253,70 @@ test.group('Inertia', () => {
     assert.deepEqual(result.mergeProps, ['baz', 'bar'])
   })
 
+  test('reset header excludes keys from mergeProps on partial reload', async ({ assert }) => {
+    const inertia = new InertiaFactory()
+      .partialReload('foo')
+      .only(['posts', 'stats'])
+      .reset(['posts'])
+      .create()
+
+    const result: any = await inertia.render('foo', {
+      posts: inertia.merge([1, 2, 3]),
+      stats: inertia.merge({ total: 10 }),
+    })
+
+    assert.deepEqual(result.props, { posts: [1, 2, 3], stats: { total: 10 } })
+    assert.deepEqual(result.mergeProps, ['stats'])
+    assert.deepEqual(result.deepMergeProps, [])
+  })
+
+  test('reset header excludes keys from deepMergeProps on partial reload', async ({ assert }) => {
+    const inertia = new InertiaFactory()
+      .partialReload('foo')
+      .only(['posts', 'stats'])
+      .reset(['posts'])
+      .create()
+
+    const result: any = await inertia.render('foo', {
+      posts: inertia.deepMerge({ items: [1, 2, 3] }),
+      stats: inertia.deepMerge({ total: 10 }),
+    })
+
+    assert.deepEqual(result.props, { posts: { items: [1, 2, 3] }, stats: { total: 10 } })
+    assert.deepEqual(result.deepMergeProps, ['stats'])
+    assert.deepEqual(result.mergeProps, [])
+  })
+
+  test('reset header excludes deferred mergeable keys from deepMergeProps', async ({ assert }) => {
+    const inertia = new InertiaFactory()
+      .partialReload('foo')
+      .only(['cards'])
+      .reset(['cards'])
+      .create()
+
+    const result: any = await inertia.render('foo', {
+      cards: inertia.deepMerge(inertia.defer(() => ({ items: ['a', 'b'] }))),
+    })
+
+    assert.deepEqual(result.props, { cards: { items: ['a', 'b'] } })
+    assert.deepEqual(result.deepMergeProps, [])
+    assert.deepEqual(result.mergeProps, [])
+  })
+
+  test('omitting reset header preserves mergeProps/deepMergeProps as before', async ({
+    assert,
+  }) => {
+    const inertia = new InertiaFactory().partialReload('foo').only(['posts', 'stats']).create()
+
+    const result: any = await inertia.render('foo', {
+      posts: inertia.merge([1, 2, 3]),
+      stats: inertia.deepMerge({ total: 10 }),
+    })
+
+    assert.deepEqual(result.mergeProps, ['posts'])
+    assert.deepEqual(result.deepMergeProps, ['stats'])
+  })
+
   test('properly handle null and undefined values on first visit', async ({ assert }) => {
     setupViewMacroMock()
 

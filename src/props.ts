@@ -485,6 +485,10 @@ export async function buildStandardVisitProps(
  * @param pageProps - The page props to process
  * @param cherryPickProps - Array of prop names to include
  * @param containerResolver - Container resolver for dependency injection
+ * @param resetProps - Array of prop names the client asked to reset via the
+ *   `X-Inertia-Reset` header. Keys present in this list are excluded from the
+ *   returned `mergeProps`/`deepMergeProps` so the client replaces the value
+ *   instead of merging/concatenating with the previous value.
  * @returns Promise resolving to object containing processed props and merge props list
  *
  * @example
@@ -499,7 +503,8 @@ export async function buildStandardVisitProps(
 export async function buildPartialRequestProps(
   pageProps: PageProps,
   cherryPickProps: string[],
-  containerResolver: ContainerResolver<any>
+  containerResolver: ContainerResolver<any>,
+  resetProps: string[] = []
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
@@ -607,8 +612,8 @@ export async function buildPartialRequestProps(
 
   return {
     props: newProps,
-    mergeProps,
-    deepMergeProps,
+    mergeProps: mergeProps.filter((key) => !resetProps.includes(key)),
+    deepMergeProps: deepMergeProps.filter((key) => !resetProps.includes(key)),
     deferredProps: {},
   }
 }
