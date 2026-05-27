@@ -906,25 +906,12 @@ test.group('Inertia.page', () => {
           "paginated",
         ],
         "props": {
-          "paginated": {
-            "data": [
-              {
-                "id": 1,
-                "title": "Hello world",
-              },
-            ],
-            "total": 10,
-          },
           "posts": [
             {
               "id": 1,
               "title": "Hello world",
             },
           ],
-          "user": {
-            "id": 1,
-            "timestamps": true,
-          },
         },
         "url": "",
         "version": "1",
@@ -1949,27 +1936,12 @@ test.group('Inertia.page | Transformers', () => {
           "paginated",
         ],
         "props": {
-          "paginated": {
-            "data": [
-              {
-                "id": 1,
-                "title": "Hello world",
-              },
-            ],
-            "metadata": {
-              "total": 10,
-            },
-          },
           "posts": [
             {
               "id": 1,
               "title": "Hello world",
             },
           ],
-          "user": {
-            "id": 1,
-            "timestamps": true,
-          },
         },
         "url": "",
         "version": "1",
