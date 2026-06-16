@@ -57,10 +57,28 @@ and link back to their spec.
 - **Good:** specs are framework-neutral and reusable as reference.
 - **Bad / cost:** two documents per feature (spec + eventual ADR) and the
   discipline to keep them distinct.
+- **Bad / cost:** "tech-agnostic" specs can silently **drift from the real
+  protocol** if not checked against a concrete client. A 2026-06-13 validation
+  pass found several specs diverged from actual Inertia behavior (e.g.
+  fragment-preserving redirects and shared-props tracking described wrong
+  mechanics; rescued props described `null` instead of omission; the prefetch
+  flash claim overstated). Lesson: specs must be **version-pinned and verified**.
 - **Neutral:** the `planning/README.md` defines the intended implementation order;
   the ADR index tracks the corresponding proposed ADR slots.
+
+### Amendment (2026-06-13): version-pinning is mandatory
+
+A spec is only useful if it matches a real Inertia version. Each `planning/*.md`
+now carries a **version-applicability banner** recording: which Inertia line the
+feature lives in (v2 legacy / v3 latest / both), whether the client this adapter
+targets (`@inertiajs/core` `2.3.23`) supports it, and a verification date. This
+surfaced the gating fact that several features (rescued deferred props,
+fragment-preserving redirects, shared-props tracking) are **v3-only** while the
+adapter still targets v2 — making a v2→v3 client upgrade an upstream
+prerequisite. Verify specs against the installed client source, not memory.
 
 ## More Information
 
 - Source: `planning/README.md` and `planning/01..09-*.md`
 - Related: [ADR index](README.md) "Proposed" section
+- Validation baseline: Inertia `3.4.0` (latest) vs installed `2.3.23` (legacy line)

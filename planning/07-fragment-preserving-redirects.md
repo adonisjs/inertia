@@ -1,56 +1,63 @@
 # Fragment-Preserving Redirects
 
+> **Inertia version:** **v3 only (latest).** The `X-Inertia-Redirect` header and
+> the `preserveFragment` page-object field exist in `@inertiajs/core` `3.4.0`
+> but are **absent from `2.3.23`** (the line this adapter targets). The v2 client
+> has a *different*, automatic fragment behavior (see below) and will ignore
+> `X-Inertia-Redirect` / `preserveFragment`. Server-side support here is
+> **blocked on a v2→v3 client upgrade**. Verified 2026-06-13.
+
 ## Overview
 
-Standard Inertia redirects use HTTP status `409` plus an `X-Inertia-Location` header to instruct the client to perform a full visit to a different URL. By default the URL fragment (`#section`) of the original request is **not** preserved across the redirect. Fragment-preserving redirects opt into carrying the fragment through.
+A user navigates to a URL with a fragment (`/page#section`) and the server redirects. By default the fragment is lost. Fragment-preserving redirects carry the fragment through. **Note:** this is a distinct mechanism from external/location redirects.
 
-## Wire format
+## Two separate 409 mechanisms (do not conflate)
 
-### Response header
+- **External / asset-version redirects** use `409` + **`X-Inertia-Location`** → the client does a full `window.location` visit to that URL.
+- **Fragment-preserving redirects** (v3) use `409` + **`X-Inertia-Redirect`** → emitted **alone**, *not* together with `X-Inertia-Location`.
 
-On a fragment-preserving redirect, the server emits both:
+## Wire format (v3)
+
+### Redirect response
 
 ```
-X-Inertia-Location: <absolute-url-without-fragment>
-X-Inertia-Redirect: <absolute-url-without-fragment>
+HTTP/1.1 409 Conflict
+X-Inertia-Redirect: https://app.test/page#section
 ```
 
-paired with HTTP status `409`. The presence of `X-Inertia-Redirect` (in addition to `X-Inertia-Location`) signals that the client SHOULD reattach the original request's fragment to the destination URL before navigating.
+- The header value is the **full redirect URL, including the fragment** — the server has already composed it. The client does **not** reattach the original request's fragment; it navigates to the URL as given.
+- `X-Inertia-Location` is **not** set on this path.
 
-If the destination URL itself carries a fragment, that fragment is used as-is and the original-request fragment is ignored.
+### Page-object field (200 renders)
 
-### Page object field
-
-For Inertia responses (status 200) that are produced after a redirect was flagged for fragment preservation, the page object carries:
+When the server was asked to preserve the fragment for a subsequent render, the page object carries:
 
 ```jsonc
-{
-  "preserveFragment": true
-}
+{ "preserveFragment": true }
 ```
-
-This signals to the client that the next URL change derived from this response should retain the current fragment.
 
 | Field              | Type    | Description |
 | ------------------ | ------- | --- |
-| `preserveFragment` | boolean | When true, the client preserves the existing URL fragment when applying the new URL. Absent or false means default behavior (fragment dropped). |
+| `preserveFragment` | boolean | When true, the client retains the current URL fragment when applying the new URL. |
 
-## Server behavior
+## Server behavior (v3, per inertia-laravel reference)
 
-Servers MUST provide a way for handlers to flag a response or redirect as fragment-preserving. The flag is per-response, not global.
+- A handler opts in per-response (e.g. `Inertia::preserveFragment()`), which sets a one-shot session flag.
+- On a redirect whose `Location` contains `#`, **and the request is not a prefetch** (`! request.prefetch()` — see `planning/02`), the middleware replaces the response with `409` + `X-Inertia-Redirect: <full Location incl. fragment>`.
+- On a `200` Inertia render, if the flag was set, emit `preserveFragment: true` on the page object. The flag is read-and-cleared (one-shot).
 
-When handling a redirect that has been flagged:
+## Client expectation (v3)
 
-1. Compute the destination URL.
-2. Set HTTP status `409`.
-3. Set `X-Inertia-Location` to the destination.
-4. Set `X-Inertia-Redirect` to the destination.
+- On `409` + `X-Inertia-Redirect`: hard-navigate to the header's URL (fragment already included).
+- On `200` + `preserveFragment: true`: retain the existing window-location fragment when committing the new URL to history.
 
-When producing a normal `200` response after a flagged operation (e.g. a redirect that resolves to an Inertia page render), the server emits `preserveFragment: true` on the page object.
+## v2 behavior (the installed client, for reference)
 
-The flag is one-shot: once consumed by emitting either the headers or the page-object field, it is cleared.
+`2.3.23` has no `X-Inertia-Redirect` / `preserveFragment`. On the `409` + `X-Inertia-Location` path it auto-preserves the fragment via `setHashIfSameUrl`: if the origin URL had a hash, the destination has none, and they share the same path-without-hash, the origin hash is copied onto the destination. There is no opt-in and no page-object field in v2.
 
-## Client expectation
+## Sources
 
-- On `409` with `X-Inertia-Redirect` present, take the current URL's fragment and append it to the destination URL (unless the destination already carries one), then perform a hard navigation.
-- On a `200` response with `preserveFragment: true`, when committing the new URL to history, retain the existing window-location fragment.
+- https://inertiajs.com/the-protocol (v3: `X-Inertia-Redirect`, `X-Inertia-Location`, `preserveFragment`, 409 semantics)
+- https://inertiajs.com/redirects (v3: `preserveFragment()`)
+- inertia-laravel `master`: `Middleware.php` (`onRedirectWithFragment`, `redirectHasFragment`, `! $request->prefetch()` guard), `Response.php`, `Support/Header.php`
+- `@inertiajs/core` `2.3.23` `dist` (`setHashIfSameUrl`; no `X-Inertia-Redirect`/`preserveFragment`)

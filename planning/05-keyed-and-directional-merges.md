@@ -1,26 +1,24 @@
 # Keyed and Directional Merges
 
+> **Inertia version:** available in **both v2 (legacy) and v3 (latest)**.
+> The wire fields (`mergeProps`, `prependProps`, `deepMergeProps`,
+> `matchPropsOn`) and the `X-Inertia-Reset` request header are all present in
+> `@inertiajs/core` `2.3.23` (the line this adapter targets). Verified 2026-06-13.
+
 ## Overview
 
-The base **merge** prop modifier instructs the client to combine an incoming prop value with the existing cached value rather than replace it. The protocol extends this with two orthogonal controls:
+Mergeable props let the client combine incoming prop values with existing cached values instead of replacing them. Beyond shallow vs deep merge, the protocol supports **directional** merges (append vs prepend) and **keyed** merges (dedupe/replace items by a key field).
 
-- **Direction** — whether incoming array items are appended after, or prepended before, existing items.
-- **Match key** — a key path used to dedupe items during merge so re-fetching an overlapping range does not produce duplicates.
+## Wire format (page-object fields)
 
-These controls compose with deferred and once-prop modifiers and underpin features such as infinite scroll.
+| Field            | Type       | Description |
+| ---------------- | ---------- | --- |
+| `mergeProps`     | `string[]` | Prop paths whose array value is **appended** to the existing array. |
+| `prependProps`   | `string[]` | Prop paths whose array value is **prepended** to the existing array. |
+| `deepMergeProps` | `string[]` | Prop paths whose value is recursively (deep) merged. |
+| `matchPropsOn`   | `string[]` | Keyed-merge config; entries are `"<propPath>.<keyField>"` (see below). |
 
-## Wire format
-
-The page object carries four fields, all `string[]` of prop paths:
-
-| Field            | Description |
-| ---------------- | --- |
-| `mergeProps`     | Props whose array values should be **appended** during merge (default direction). |
-| `prependProps`   | Props whose array values should be **prepended** during merge. |
-| `deepMergeProps` | Props that should be deep-merged (recursive object merge) instead of array-merged. |
-| `matchPropsOn`   | Entries describing match-key configuration for keyed deduplication. |
-
-A given prop path MUST appear in at most one of `mergeProps`, `prependProps`, `deepMergeProps`. A prop appearing in any of those three MAY also appear in `matchPropsOn`.
+A given prop path appears in at most one of `mergeProps` / `prependProps` / `deepMergeProps`, and MAY also appear in `matchPropsOn`. (This is an adapter-level invariant — the wire does not enforce exclusivity; a prop listed in two direction fields is processed by the client twice.)
 
 ```jsonc
 {
@@ -31,35 +29,39 @@ A given prop path MUST appear in at most one of `mergeProps`, `prependProps`, `d
 }
 ```
 
-### `matchPropsOn` entry shape
+### Keyed merges — `matchPropsOn` entry shape
 
-Each entry is a string. If the entry contains a dot, it is interpreted as `<propPath>.<keyField>`:
+Each entry encodes which field identifies items for dedup, as `propPath` + `.` + `keyField`. The client splits on the **last dot** — the part before is the prop path, the part after is the key field:
 
-- `"users.id"` → for the `users` prop, dedupe items by their `id` field.
-- `"items.uuid"` → for the `items` prop, dedupe items by `uuid`.
+- `"users.id"` → for `users`, dedupe items by `id`.
+- `"activity.uuid"` → for `activity`, dedupe items by `uuid`.
 
-If the entry has no dot, it names the prop path and dedupe is by that field on the prop's items, by convention.
+> The dot is **mandatory**. An entry with no dot does not match any prop path, so keyed dedup is silently disabled for it (the prop still appends/prepends, just without matching). There is **no** "no-dot fallback" convention.
+
+## Resetting cached arrays — `X-Inertia-Reset`
+
+`X-Inertia-Reset` is a **request header the client sends to the server** (derived from the client's `reset: [...]` visit option), listing comma-separated prop paths whose cached arrays should be discarded before merging. It is **not** a server-emitted directive received by the client. The reset props are also folded into the partial-reload `only` list.
 
 ## Server behavior
 
-When building a response:
-
-1. For every mergeable prop, classify into one of `mergeProps`, `prependProps`, or `deepMergeProps`.
-2. If a match key is configured for that prop, emit the corresponding entry in `matchPropsOn`.
+1. For each mergeable prop, classify into one of `mergeProps` / `prependProps` / `deepMergeProps`.
+2. If a match key is configured, emit `"<propPath>.<keyField>"` in `matchPropsOn`.
 3. Emit the resolved value at the prop path inside `props`.
 
-The server does **not** perform the merge — it only labels the prop. Merging happens on the client against its existing cached state.
-
-A mergeable prop MAY also be deferred or marked once. The merge metadata is emitted regardless of whether the value is included in the current response.
+The server only **labels** the prop; the merge happens client-side against cached state. A mergeable prop MAY also be deferred or once; the merge metadata is emitted regardless of whether the value is in the current response.
 
 ## Client expectation
 
 For each prop path listed:
 
-- `mergeProps`: replace the cached array with `[...cached, ...incoming]`.
-- `prependProps`: replace the cached array with `[...incoming, ...cached]`.
-- `deepMergeProps`: recursively merge incoming object into cached object.
+- `mergeProps`: `[...cached, ...incoming]`.
+- `prependProps`: `[...incoming, ...cached]`.
+- `deepMergeProps`: recursive object merge.
 
-If a corresponding `matchPropsOn` entry exists, apply deduplication after the merge so that any item in `incoming` whose key matches an existing item in `cached` replaces (rather than duplicates) the existing item. The order produced by the direction (append/prepend) is preserved for new keys.
+If a `matchPropsOn` entry exists, an incoming item whose key matches an existing item **replaces** it (rather than duplicating); direction order is preserved for new keys. If the prop is named in the request's `X-Inertia-Reset`, the cached array is discarded before merge.
 
-A `reset` directive received via `X-Inertia-Reset` empties the cached array for the listed prop before merge.
+## Sources
+
+- https://inertiajs.com/the-protocol (page-object fields, `X-Inertia-Reset` request header)
+- https://inertiajs.com/merging-props (`merge`/`deepMerge`/`prepend`/`append`/`matchOn`, `reset` request option)
+- `@inertiajs/core` `2.3.23` `types/types.d.ts:103-106` and `dist` merge/match logic

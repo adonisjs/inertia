@@ -1,87 +1,72 @@
 # Flash Messages (First-Class)
 
+> **Inertia version:** first-class flash was added in **v2.3.0** and is present
+> in `@inertiajs/core` `2.3.23` (the line this adapter targets) and v3 (latest):
+> a top-level `flash` page-object field, `router.flash()`, the `onFlash` visit
+> option, and the `inertia:flash` global event. **The AdonisJS adapter does not
+> use it today** — it shares flash as a normal prop / builds the `errors` prop
+> from session flash. Adopting the first-class field is the work this spec
+> describes. Last verified 2026-06-13.
+
 ## Overview
 
-Flash messages are short-lived, single-consumption values surfaced to the client outside the normal `props` channel. Typical uses include success notifications after a write, transient identifiers (e.g. a newly created record id), or any data that should be available exactly once and then disappear.
+Flash messages are short-lived, single-consumption values surfaced to the client outside the normal `props` channel — success notifications, transient ids, data available exactly once.
 
-Flash messages differ from regular props in three ways:
+They differ from regular props in three ways:
 
-1. They live in a **dedicated top-level field** on the page object, not inside `props`.
-2. They are **automatically reflashed** across redirects so the producing request can flash and the redirected target receives the data.
-3. They are **not persisted** in browser history state — navigating back to a previous page does not re-surface previously consumed flash data.
+1. They live in a **dedicated top-level field** (`page.flash`), not inside `props`.
+2. They are **single-consumption**: cleared after being sent, so they do not reappear on later requests.
+3. They are **not persisted** in browser history state (the client strips flash before `history.replaceState`).
 
 ## Wire format
-
-The page object carries a `flash` field:
 
 ```jsonc
 {
   "component": "Users/Show",
   "props": { "user": { "id": 42, "name": "Jane" } },
-  "flash": {
-    "message": "User created successfully",
-    "newUserId": 42
-  }
+  "flash": { "message": "User created successfully", "newUserId": 42 }
 }
 ```
 
-Field shape:
-
 | Field   | Type                       | Description |
 | ------- | -------------------------- | --- |
-| `flash` | `Record<string, unknown>`  | Map of arbitrary JSON-serializable values. Keys are application-defined. |
+| `flash` | `Record<string, unknown>`  | Map of arbitrary JSON-serializable values; keys are application-defined. |
 
-Rules:
-
-- The field is **always present** in responses, even when empty (`{}`). Clients depend on it being a defined object.
-- Values are serialized as standard JSON; no special wrapper or marker types apply.
-- The same key may appear in `flash` and in `props`; they are independent channels.
+- The client normalizes `flash` to `{}` when absent, so component code can rely on a defined object. (This is a **client normalization**, not a documented server guarantee — a server-side contract that the field is always present is the adapter's own choice.)
+- Values are standard JSON; no wrapper/marker types.
+- The same key may appear in `flash` and in `props`; independent channels.
+- **TypeScript:** `page.flash` is typed `FlashData = InertiaConfigFor<'flashDataType'>` (default `Record<string, unknown>`). This is a **DX-only** hook — apps narrow the shape via declaration merging (`interface InertiaConfig { flashDataType: {...} }`); it does not change wire behavior.
 
 ## Server behavior
 
-### Producing flash data
+### Producing and emitting
 
-Handlers register key/value pairs to be flashed on the next response. Multiple registrations within a single request accumulate; later registrations to the same key overwrite earlier ones.
+Handlers register key/value pairs; multiple registrations accumulate (later overwrites earlier). When building a 200 response: read the session flash bucket, emit it as `flash`, and clear it so subsequent requests do not re-observe it.
 
-Flash data is stored in a server-side, per-session bucket so that:
+### Flash across redirects
 
-- A handler that flashes data and then issues a redirect does not lose the flash — it carries across the redirect to whichever request consumes it.
-- Once consumed, the bucket is cleared.
+The "flash → redirect → consume" lifecycle works because the **framework's session flash** survives one redirect — this is ordinary session-flash behavior, **not** an Inertia-mandated reflash rule. Inertia's docs state flash is cleared after being sent and is not itself persisted across arbitrary redirects at the Inertia layer.
 
-### Emitting on the response
+### Asset-version mismatch (the one Inertia-documented reflash)
 
-When building any Inertia response (status 200 page object):
-
-1. Read the session flash bucket.
-2. Emit the entire bucket as `flash` on the page object.
-3. Clear the bucket so subsequent requests do not see the same flash.
-
-### Reflashing across redirects
-
-When the response is itself a redirect (302/303 to a follow-up handler), the server MUST reflash the flash bucket so the next request observes it. This is the standard "flash → redirect → consume" lifecycle.
+When a `409` reload is issued due to an asset-version mismatch, the server MUST reflash the bucket so the forced reload observes the original flash. This is the single reflash behavior Inertia's adapters document — and the AdonisJS adapter already does it (`session.reflash()` in the version-mismatch path).
 
 ### Prefetch interaction
 
-When the request carries `Purpose: prefetch`, the server MUST NOT clear the flash bucket. Prefetch is speculative; consuming flash here would prevent the actual visit from seeing it. The server MAY still emit `flash: {}` on the prefetched response, or MAY emit the current bucket without clearing — both behaviors are protocol-conformant; the choice depends on whether the prefetched response is meant to preview flash data or not.
-
-### Asset-version mismatch
-
-When a 409 reload is issued due to an asset-version mismatch, the server MUST reflash the bucket so the forced reload observes the original flash data.
+**Undocumented in Inertia.** The protocol/flash docs say nothing about flash during a prefetch. Treat any "don't clear flash on prefetch" behavior as adapter-discretion, not a protocol requirement. (See `planning/02`: flash is action-driven and not generally consumed by prefetch.)
 
 ## Client-side flash
 
-Clients MAY allow application code to write to the `flash` channel directly without a server round-trip. When the client writes flash data:
-
-- The data is treated identically to server-emitted flash for rendering.
-- It does not persist in history state.
-- It is not transmitted to the server on subsequent requests.
-
-This is purely a client-side convenience and has no protocol surface.
+`router.flash(keyOrData, value)` lets app code write flash without a server round-trip. It sets `page.flash` locally and fires the `inertia:flash` global event; it is not transmitted to the server and does not persist in history.
 
 ## Client expectation
 
-- Read `flash` on every response.
-- Surface flash entries via whatever mechanism the framework offers (subscription hook, event callback, page accessor).
-- Treat `flash` as ephemeral — do not persist it across navigations.
-- A per-visit callback MAY be invoked with the flash payload after the response is committed.
-- A global event MAY be emitted whenever flash data arrives.
+- Read `flash` on every response; surface entries via a hook, the `onFlash` visit callback, the `inertia:flash` global event, or a page accessor.
+- Treat `flash` as ephemeral; do not persist across navigations.
+
+## Sources
+
+- https://inertiajs.com/docs/v2/data-props/flash-data
+- https://inertiajs.com/the-protocol (409 reflash)
+- `@inertiajs/core` `2.3.23` `types/types.d.ts` (`flash: FlashData`, `onFlash`), `dist` (`router.flash`, `inertia:flash`, history stripping)
+- AdonisJS adapter today: `src/inertia_middleware.ts` (shares session flash as `errors`; `reflash()` on 409)

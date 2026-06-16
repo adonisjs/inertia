@@ -1,5 +1,10 @@
 # Once Props
 
+> **Inertia version:** available in **both v2 (legacy, 2.3.x) and v3 (latest)**.
+> The `X-Inertia-Except-Once-Props` header and the `onceProps` page-object field
+> are present in `@inertiajs/core` `2.3.23` (the line this adapter targets). This
+> spec was verified accurate against the installed client. Last verified 2026-06-13.
+
 ## Overview
 
 A **once prop** is a prop whose value is computed by the server, sent to the client on first encounter, and then **remembered by the client across subsequent visits to pages that include the same prop**. On follow-up requests, the client tells the server which once-keys it already has cached so the server can skip recomputation and omit the value from the response.

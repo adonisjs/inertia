@@ -1,5 +1,12 @@
 # Infinite Scroll
 
+> **Inertia version:** available in **both v2 (legacy, 2.3.x) and v3 (latest)**.
+> The `X-Inertia-Infinite-Scroll-Merge-Intent` header and the `scrollProps`
+> page-object field (with the `ScrollProp` shape below) are present in
+> `@inertiajs/core` `2.3.23` (the line this adapter targets), as is
+> `useInfiniteScroll`. Builds on keyed/directional merges (`planning/05`).
+> This spec was verified accurate against the installed client. Last verified 2026-06-13.
+
 ## Overview
 
 Infinite scroll layers on top of the keyed-and-directional-merge primitive to support continuously loading paginated data as the user scrolls. The server provides paginated values plus pagination metadata; the client decides direction (next page vs previous page) and informs the server of its merge intent on each follow-up request.
