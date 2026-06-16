@@ -352,16 +352,13 @@ export type InertiaConfig = {
     pages?: string[] | ((ctx: HttpContext, page: string) => AsyncOrSync<boolean>)
 
     /**
-     * The entrypoint file to load in order to boot the frontend application on
-     * the server
+     * The entrypoint file that boots the frontend application on the server.
+     * Must also be declared under `serverEntrypoints` on the AdonisJS Vite
+     * plugin so it gets bundled for production. The value is passed to
+     * `vite.loadServerModule()` to evaluate the module in dev and import
+     * the bundle in production.
      */
     entrypoint: string
-
-    /**
-     * The SSR bundle output to load during production. This bundle is created
-     * using Vite
-     */
-    bundle: string
   }
 }
 
