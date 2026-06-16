@@ -41,25 +41,28 @@ We use the [MADR](https://adr.github.io/madr/) format. See
 | 0011 | [Page-prop type safety via module augmentation + codegen](0011-typed-pages-via-module-augmentation.md) | Accepted |
 | 0012 | [Japa `api_client` plugin for testing Inertia responses](0012-japa-api-client-plugin.md) | Accepted |
 | 0013 | [Tech-agnostic protocol-coverage planning method](0013-protocol-coverage-planning-method.md) | Accepted |
+| 0014 | [Upgrade the bundled client adapters to Inertia v3](0014-upgrade-bundled-client-to-inertia-v3.md) | Accepted |
 
 ## Proposed (planned protocol features)
 
 These are the planned protocol-coverage features from
 [`planning/`](../../planning). Each will get a full ADR when it is implemented,
 recording the adapter-specific design decision. Until then they are tracked here
-as proposed slots referencing their spec.
+as proposed slots referencing their spec. The v3 client upgrade
+([ADR 0014](0014-upgrade-bundled-client-to-inertia-v3.md)) unblocks the v3-only
+features (04, 07, 08).
 
 | Planned ADR | Feature | Spec |
 | ----------- | ------- | ---- |
-| 0014 | Multiple errors per field        | [`planning/01-multiple-errors-per-field.md`](../../planning/01-multiple-errors-per-field.md) |
-| 0015 | Prefetch awareness               | [`planning/02-prefetch-awareness.md`](../../planning/02-prefetch-awareness.md) |
-| 0016 | Once props                       | [`planning/03-once-props.md`](../../planning/03-once-props.md) |
-| 0017 | Rescued deferred props           | [`planning/04-rescued-deferred-props.md`](../../planning/04-rescued-deferred-props.md) |
-| 0018 | Keyed and directional merges     | [`planning/05-keyed-and-directional-merges.md`](../../planning/05-keyed-and-directional-merges.md) |
-| 0019 | Infinite scroll                  | [`planning/06-infinite-scroll.md`](../../planning/06-infinite-scroll.md) |
-| 0020 | Fragment-preserving redirects    | [`planning/07-fragment-preserving-redirects.md`](../../planning/07-fragment-preserving-redirects.md) |
-| 0021 | Shared props tracking            | [`planning/08-shared-props-tracking.md`](../../planning/08-shared-props-tracking.md) |
-| 0022 | Flash messages                   | [`planning/09-flash-messages.md`](../../planning/09-flash-messages.md) |
+| 0015 | Multiple errors per field        | [`planning/01-multiple-errors-per-field.md`](../../planning/01-multiple-errors-per-field.md) |
+| 0016 | Prefetch awareness               | [`planning/02-prefetch-awareness.md`](../../planning/02-prefetch-awareness.md) |
+| 0017 | Once props                       | [`planning/03-once-props.md`](../../planning/03-once-props.md) |
+| 0018 | Rescued deferred props           | [`planning/04-rescued-deferred-props.md`](../../planning/04-rescued-deferred-props.md) |
+| 0019 | Keyed and directional merges     | [`planning/05-keyed-and-directional-merges.md`](../../planning/05-keyed-and-directional-merges.md) |
+| 0020 | Infinite scroll                  | [`planning/06-infinite-scroll.md`](../../planning/06-infinite-scroll.md) |
+| 0021 | Fragment-preserving redirects    | [`planning/07-fragment-preserving-redirects.md`](../../planning/07-fragment-preserving-redirects.md) |
+| 0022 | Shared props tracking            | [`planning/08-shared-props-tracking.md`](../../planning/08-shared-props-tracking.md) |
+| 0023 | Flash messages                   | [`planning/09-flash-messages.md`](../../planning/09-flash-messages.md) |
 
 > The number assignment above is indicative. Assign the next free number when an
 > ADR is actually written; do not let a placeholder block the sequence.

@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { encode } from 'html-entities'
 import type { PluginFn } from 'edge.js/types'
 
 import debug from '../../debug.js'
@@ -58,11 +57,27 @@ export const edgePluginInertia: () => PluginFn<undefined> = () => {
         }
 
         const className = attributes?.class ? ` class="${attributes.class}"` : ''
-        const id = attributes?.id ? ` id="${attributes.id}"` : ' id="app"'
+        const id = attributes?.id || 'app'
         const tag = attributes?.as || 'div'
-        const dataPage = encode(JSON.stringify(page))
 
-        return `<${tag}${id}${className} data-page="${dataPage}"></${tag}>`
+        /**
+         * Inertia v3 reads the initial page payload exclusively from a
+         * `<script type="application/json">` element matched by its `data-page`
+         * attribute (the `data-page` attribute on the root element is no longer
+         * supported). The mount element is a separate node located by `id`.
+         *
+         * The payload is escaped the same way the Inertia client does it
+         * (`/` -> `\/`) so a `</script>` sequence inside the data cannot close
+         * the tag early. HTML-entity encoding is intentionally NOT used here:
+         * the browser does not decode entities inside a script element's text
+         * content, so `JSON.parse` would fail on encoded output.
+         */
+        const dataPage = JSON.stringify(page).replace(/\//g, '\\/')
+
+        return (
+          `<script data-page="${id}" type="application/json">${dataPage}</script>` +
+          `<${tag} id="${id}"${className}></${tag}>`
+        )
       }
     )
 

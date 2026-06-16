@@ -472,17 +472,29 @@ export class Inertia<Pages> {
       pageProps
     )
 
-    return {
+    const pageObject: PageObject<Pages[Page]> = {
       component: page,
       url: this.ctx.request.url(true),
       version: this.getVersion(),
-      clearHistory: this.#shouldClearHistory,
-      encryptHistory: this.#shouldEncryptHistory,
       props: props as Pages[Page],
       deferredProps,
       mergeProps,
       deepMergeProps,
-    } satisfies PageObject<Pages[Page]>
+    }
+
+    /**
+     * Inertia v3 omits `clearHistory` and `encryptHistory` from the page object
+     * unless they are `true` (the client defaults both to `false` when absent).
+     * We only emit them when enabled to match the v3 wire format.
+     */
+    if (this.#shouldClearHistory) {
+      pageObject.clearHistory = true
+    }
+    if (this.#shouldEncryptHistory) {
+      pageObject.encryptHistory = true
+    }
+
+    return pageObject
   }
 
   /**

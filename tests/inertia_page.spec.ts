@@ -45,11 +45,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -114,11 +112,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "user": {
@@ -163,11 +159,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -216,11 +210,9 @@ test.group('Inertia.page', () => {
     })
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "posts": [
@@ -270,7 +262,6 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {
@@ -279,7 +270,6 @@ test.group('Inertia.page', () => {
             "paginated",
           ],
         },
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "posts": [
@@ -331,11 +321,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -386,11 +374,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "posts": [
@@ -442,11 +428,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -498,11 +482,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -567,11 +549,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -631,11 +611,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [
           "user",
           "posts",
@@ -699,14 +677,12 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [
           "user",
           "paginated",
         ],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [
           "posts",
         ],
@@ -771,11 +747,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [
           "paginated",
         ],
@@ -830,13 +804,11 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [
           "paginated",
         ],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -890,7 +862,6 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {
@@ -899,7 +870,6 @@ test.group('Inertia.page', () => {
             "paginated",
           ],
         },
-        "encryptHistory": false,
         "mergeProps": [
           "user",
           "posts",
@@ -957,11 +927,9 @@ test.group('Inertia.page', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [
           "paginated",
         ],
@@ -1028,11 +996,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -1110,11 +1076,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "user": {
@@ -1170,11 +1134,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -1231,11 +1193,9 @@ test.group('Inertia.page | Transformers', () => {
     })
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "posts": [
@@ -1297,7 +1257,6 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {
@@ -1306,7 +1265,6 @@ test.group('Inertia.page | Transformers', () => {
             "paginated",
           ],
         },
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "posts": [
@@ -1368,11 +1326,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -1436,11 +1392,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "posts": [
@@ -1504,11 +1458,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -1580,11 +1532,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -1668,11 +1618,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {
           "paginated": {
@@ -1753,11 +1701,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [
           "user",
           "posts",
@@ -1843,11 +1789,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [
           "paginated",
         ],
@@ -1920,7 +1864,6 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {
@@ -1929,7 +1872,6 @@ test.group('Inertia.page | Transformers', () => {
             "paginated",
           ],
         },
-        "encryptHistory": false,
         "mergeProps": [
           "user",
           "posts",
@@ -2000,11 +1942,9 @@ test.group('Inertia.page | Transformers', () => {
 
     assert.snapshot(page).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [
           "paginated",
         ],

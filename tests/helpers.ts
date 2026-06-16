@@ -10,6 +10,7 @@
 import { Edge } from 'edge.js'
 import { test } from '@japa/runner'
 import { type InlineConfig } from 'vite'
+import { getInitialPageFromDOM } from '@inertiajs/core'
 import type { Test } from '@japa/runner/core'
 import { HttpContext } from '@adonisjs/core/http'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
@@ -23,6 +24,7 @@ import { defineConfig as defineViteConfig, Vite } from '@adonisjs/vite'
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http'
 
 import { defineConfig } from '../src/define_config.ts'
+import { edgePluginInertia } from '../src/plugins/edge/plugin.js'
 import { inertiaApiClient } from '../src/plugins/japa/api_client.js'
 
 export const BASE_URL = new URL('./tmp/', import.meta.url)
@@ -149,6 +151,72 @@ export async function setupApp(providers?: ProviderNode[]) {
   ace.ui.switchMode('raw')
 
   return { ace, app, ignitor }
+}
+
+/**
+ * Minimal, faithful DOM shim that implements just enough of
+ * `document.querySelector` for the real `@inertiajs/core` `getInitialPageFromDOM`
+ * helper to run against a server-rendered HTML string.
+ *
+ * It parses every `<script>...</script>` block out of the markup and matches
+ * the `script[attr="value"]...` selector the v3 client builds. The regex stops
+ * at the first *unescaped* `</script>`, which is exactly the boundary the
+ * browser's HTML parser uses — so an escaped `<\/script>` inside the JSON
+ * payload does not terminate the element early.
+ */
+export function createDocumentFrom(html: string) {
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)].map((match) => {
+    const attributes: Record<string, string> = {}
+    for (const attr of match[1].matchAll(/([\w-]+)="([^"]*)"/g)) {
+      attributes[attr[1]] = attr[2]
+    }
+    return { attributes, textContent: match[2] }
+  })
+
+  return {
+    querySelector(selector: string) {
+      if (!selector.startsWith('script')) return null
+      const conditions = [...selector.matchAll(/\[([\w-]+)="([^"]*)"\]/g)].map(
+        (condition) => [condition[1], condition[2]] as const
+      )
+      const element = scripts.find((script) =>
+        conditions.every(([key, value]) => script.attributes[key] === value)
+      )
+      return element ?? null
+    },
+  }
+}
+
+/**
+ * Render a page object the way an application root view does, through the real
+ * `@inertia()` Edge global, then hand the resulting markup to the real v3
+ * client helper and return whatever it reconstructs.
+ */
+export async function roundTripThroughClient(
+  page: Record<string, any>,
+  attributes?: Record<string, any>
+) {
+  const edge = Edge.create().use(edgePluginInertia())
+  const expression = attributes ? `@inertia(${JSON.stringify(attributes)})` : `@inertia()`
+  const html = await edge.renderRaw(expression, { page })
+
+  const id = attributes?.id ?? 'app'
+  const previousWindow = (globalThis as any).window
+  const previousDocument = (globalThis as any).document
+
+  /**
+   * `getInitialPageFromDOM` bails out when `window` is undefined, so we make
+   * both globals available for the duration of the call.
+   */
+  ;(globalThis as any).window = {}
+  ;(globalThis as any).document = createDocumentFrom(html)
+
+  try {
+    return { html, page: getInitialPageFromDOM(id) }
+  } finally {
+    ;(globalThis as any).window = previousWindow
+    ;(globalThis as any).document = previousDocument
+  }
 }
 
 export const setupFakeAdonisProject = test.macro(async ($test) => {

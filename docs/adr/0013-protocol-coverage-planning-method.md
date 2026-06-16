@@ -77,8 +77,18 @@ fragment-preserving redirects, shared-props tracking) are **v3-only** while the
 adapter still targets v2 — making a v2→v3 client upgrade an upstream
 prerequisite. Verify specs against the installed client source, not memory.
 
+### Update (2026-06-16): v3 prerequisite satisfied
+
+The v2→v3 client upgrade this ADR identified as the gating prerequisite for the
+v3-only features (rescued deferred props, fragment-preserving redirects, shared
+props tracking) has landed — see
+[ADR 0014](0014-upgrade-bundled-client-to-inertia-v3.md). The adapter now targets
+`@inertiajs/core` `3.4.0`; specs `04`, `07`, and `08` are unblocked, and the
+`planning/README.md` baseline was re-pinned to v3.
+
 ## More Information
 
 - Source: `planning/README.md` and `planning/01..09-*.md`
-- Related: [ADR index](README.md) "Proposed" section
-- Validation baseline: Inertia `3.4.0` (latest) vs installed `2.3.23` (legacy line)
+- Related: [ADR index](README.md) "Proposed" section;
+  [ADR 0014](0014-upgrade-bundled-client-to-inertia-v3.md) (satisfies the v3 prerequisite)
+- Validation baseline: Inertia `3.4.0` (latest); adapter upgraded from `2.3.23` (legacy line) to `3.4.0`

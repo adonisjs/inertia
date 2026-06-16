@@ -13,7 +13,7 @@ import { test } from '@japa/runner'
 import { edgePluginInertia } from '../../src/plugins/edge/plugin.js'
 
 test.group('Edge plugin', () => {
-  test('generate root div with data-page attribute', async ({ assert }) => {
+  test('generate script payload element and root mount div', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
     edge.registerTemplate('components/layout', {
       template: `@inertia()`,
@@ -22,10 +22,12 @@ test.group('Edge plugin', () => {
       template: `@!component('components/layout', { page })`,
     })
     const html = await edge.render('root_template', { page: {} })
-    assert.deepEqual(html.split('\n'), ['<div id="app" data-page="{}"></div>'])
+    assert.deepEqual(html.split('\n'), [
+      '<script data-page="app" type="application/json">{}</script><div id="app"></div>',
+    ])
   })
 
-  test('@inertia generate a root dive with data-page filled and encoded', async ({ assert }) => {
+  test('@inertia embeds the page payload as raw JSON inside the script tag', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
     edge.registerTemplate('components/layout', {
       template: `@inertia()`,
@@ -39,7 +41,33 @@ test.group('Edge plugin', () => {
     })
 
     assert.deepEqual(html.split('\n'), [
-      '<div id="app" data-page="{&quot;foo&quot;:&quot;bar&quot;}"></div>',
+      '<script data-page="app" type="application/json">{"foo":"bar"}</script><div id="app"></div>',
+    ])
+  })
+
+  test('escape forward slashes so a </script> sequence cannot close the tag', async ({
+    assert,
+  }) => {
+    const edge = Edge.create().use(edgePluginInertia())
+
+    const html = await edge.renderRaw(`@inertia()`, {
+      page: { url: '/users', html: '</script><script>alert(1)</script>' },
+    })
+
+    assert.notInclude(html, '</script><script>alert(1)')
+    assert.include(html, '<\\/script><script>alert(1)<\\/script>')
+    assert.include(html, '"url":"\\/users"')
+  })
+
+  test('use the custom id for both the script data-page and the mount element', async ({
+    assert,
+  }) => {
+    const edge = Edge.create().use(edgePluginInertia())
+
+    const html = await edge.renderRaw(`@inertia({ id: 'app-root' })`, { page: {} })
+
+    assert.deepEqual(html.split('\n'), [
+      '<script data-page="app-root" type="application/json">{}</script><div id="app-root"></div>',
     ])
   })
 
@@ -56,17 +84,21 @@ test.group('Edge plugin', () => {
       page: {},
     })
 
-    assert.deepEqual(html.split('\n'), ['<div id="app" class="foo" data-page="{}"></div>'])
+    assert.deepEqual(html.split('\n'), [
+      '<script data-page="app" type="application/json">{}</script><div id="app" class="foo"></div>',
+    ])
   })
 
-  test('render root div as another tag', async ({ assert }) => {
+  test('render the mount element as another tag', async ({ assert }) => {
     const edge = Edge.create().use(edgePluginInertia())
 
     const html = await edge.renderRaw(`@inertia({ as: 'main' })`, {
       page: {},
     })
 
-    assert.deepEqual(html.split('\n'), ['<main id="app" data-page="{}"></main>'])
+    assert.deepEqual(html.split('\n'), [
+      '<script data-page="app" type="application/json">{}</script><main id="app"></main>',
+    ])
   })
 
   test('render SSR body when exists', async ({ assert }) => {

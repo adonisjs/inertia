@@ -39,11 +39,9 @@ test.group('Inertia', () => {
     const response = await inertia.render('home', {})
     assert.snapshot(response).matchInline(`
       {
-        "clearHistory": false,
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
-        "encryptHistory": false,
         "mergeProps": [],
         "props": {},
         "url": "",
@@ -65,8 +63,6 @@ test.group('Inertia', () => {
       version: '1',
       props: { foo: 'bar' },
       url: '',
-      clearHistory: false,
-      encryptHistory: false,
       deferredProps: {},
       mergeProps: [],
       deepMergeProps: [],
@@ -98,8 +94,6 @@ test.group('Inertia', () => {
       version: '1',
       props: { foo: 'bar' },
       url: '',
-      encryptHistory: false,
-      clearHistory: false,
       deferredProps: {},
       mergeProps: [],
       deepMergeProps: [],
