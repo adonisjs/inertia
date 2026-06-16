@@ -41,6 +41,6 @@ jobs:
 
       - run: npm audit signatures
 
-      - run: npm run release -- --ci
+      - run: npm run release -- --ci --preRelease=next
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
