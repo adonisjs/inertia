@@ -12,6 +12,7 @@ import { type ContainerResolver } from '@adonisjs/core/container'
 import type { JSONDataTypes } from '@adonisjs/core/types/transformers'
 import type { AsyncOrSync, DeepPartial, Prettify } from '@adonisjs/core/types/common'
 import {
+  type ONCE_PROP,
   type DEEP_MERGE,
   type ALWAYS_PROP,
   type OPTIONAL_PROP,
@@ -65,6 +66,8 @@ export type RequestInfo = {
   resetProps?: string[]
   /** Error bag identifier for validation errors */
   errorBag?: string
+  /** Once-keys the client already holds a fresh, cached value for */
+  exceptOnceProps?: string[]
 }
 
 /**
@@ -88,6 +91,8 @@ export type AlwaysProp<T extends UnPackedPageProps> = {
 export type OptionalProp<T extends UnPackedPageProps> = {
   /** Function that computes the prop value when requested */
   compute: () => AsyncOrSync<T>
+  /** Remember this prop on the client across visits */
+  once(options?: OnceOptions): OnceProp<OptionalProp<T>>
   /** Brand symbol to identify this as an optional prop */
   [OPTIONAL_PROP]: true
 }
@@ -106,6 +111,8 @@ export type DeferProp<T extends UnPackedPageProps> = {
   merge(): MergeableProp<DeferProp<T>>
   /** Creates a deep-mergeable version of this deferred prop */
   deepMerge(): MergeableProp<DeferProp<T>>
+  /** Remember this prop on the client across visits */
+  once(options?: OnceOptions): OnceProp<DeferProp<T>>
   /** Brand symbol to identify this as a deferred prop */
   [DEFERRED_PROP]: true
 }
@@ -118,9 +125,76 @@ export type DeferProp<T extends UnPackedPageProps> = {
 export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>> = {
   /** The prop value to be merged */
   value: T
+  /** Remember this prop on the client across visits */
+  once(options?: OnceOptions): OnceProp<MergeableProp<T>>
   /** Brand symbol to identify this prop for merging */
   [TO_BE_MERGED]: true
   [DEEP_MERGE]: boolean
+}
+
+/**
+ * Expiry configuration for a once prop. Accepts either a relative TTL or an
+ * absolute expiry; both normalize to epoch-milliseconds at response-build time.
+ *
+ * @example
+ * ```ts
+ * { expiresIn: '2h' }            // relative, parsed via @poppinss/utils
+ * { expiresIn: 3_600_000 }       // relative, milliseconds
+ * { expiresAt: new Date(...) }   // absolute
+ * ```
+ */
+export type OnceExpiry = {
+  /** Relative time-to-live: milliseconds (number) or a duration string like '2h' */
+  expiresIn?: number | string
+  /** Absolute expiry: a Date or epoch-milliseconds */
+  expiresAt?: Date | number
+}
+
+/**
+ * Options accepted by `inertia.once()` and the `.once()` chaining method.
+ */
+export type OnceOptions = OnceExpiry & {
+  /**
+   * Custom once-key the client uses to identify the cached value across pages.
+   * Defaults to the prop's top-level path.
+   */
+  key?: string
+  /**
+   * Resolve the value for this response regardless of the client cache. Returns
+   * to normal once semantics on the next response.
+   */
+  fresh?: boolean
+}
+
+/**
+ * Represents a prop that is remembered by the client across visits. The server
+ * skips re-resolving it when the client reports a fresh cached value, and always
+ * emits the prop's caching metadata in the page object's `onceProps` field.
+ *
+ * @template T - The wrapped value or inner prop wrapper (`defer`/`optional`/`merge`)
+ */
+export type OnceProp<T> = {
+  /** The wrapped value or inner prop wrapper */
+  value: T
+  /** Custom once-key; `undefined` means "use the prop path" */
+  onceKey?: string
+  /** Raw expiry config, normalized to epoch-ms at build time */
+  expiry: OnceExpiry
+  /** Force resolution for this response, ignoring the client cache */
+  fresh: boolean
+  /** Brand symbol to identify this as a once prop */
+  [ONCE_PROP]: true
+}
+
+/**
+ * Per-request context that drives the once-prop resolution gate while building
+ * props. Passed from the Inertia instance into the prop builders.
+ */
+export type OnceContext = {
+  /** Once-keys the client already holds a fresh cached value for */
+  exceptOnce: Set<string>
+  /** Reference timestamp (epoch-ms) used to normalize relative expiry */
+  now: number
 }
 
 /**
@@ -192,7 +266,9 @@ export type PagePropsDataTypes<T extends JSONDataTypes = JSONDataTypes> =
  */
 export type PageProps = Record<
   string,
-  PagePropsDataTypes | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>
+  | PagePropsDataTypes
+  | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>
+  | OnceProp<PagePropsDataTypes | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>>
 >
 
 /**
@@ -202,23 +278,34 @@ export type PageProps = Record<
 export type ComponentProps = Record<string, JSONDataTypes>
 
 /**
+ * Predicate that resolves to `true` when a prop value may be absent on the
+ * client (optional/deferred, possibly undefined, a deferred merge, or a once
+ * prop wrapping any of those).
+ *
+ * @template Value - The prop value type to classify
+ */
+export type IsOptionalPropValue<Value> = [Value] extends [OptionalProp<any>]
+  ? true
+  : [Value] extends [DeferProp<any>]
+    ? true
+    : [undefined] extends [Value]
+      ? true
+      : [Value] extends [MergeableProp<infer A>]
+        ? [A] extends [DeferProp<any>]
+          ? true
+          : false
+        : [Value] extends [OnceProp<infer Inner>]
+          ? IsOptionalPropValue<Inner>
+          : false
+
+/**
  * Utility type to extract optional and deferred prop keys from a props object
  * Identifies props that are not required and may not be present in the component
  *
  * @template Props - The page props object type to analyze
  */
 export type GetOptionalProps<Props> = {
-  [K in keyof Props]: Props[K] extends OptionalProp<any>
-    ? K
-    : Props[K] extends DeferProp<any>
-      ? K
-      : [undefined] extends [Props[K]]
-        ? K
-        : Props[K] extends MergeableProp<infer A>
-          ? A extends DeferProp<any>
-            ? K
-            : never
-          : never
+  [K in keyof Props]: IsOptionalPropValue<Props[K]> extends true ? K : never
 }[keyof Props]
 
 /**
@@ -228,17 +315,7 @@ export type GetOptionalProps<Props> = {
  * @template Props - The page props object type to analyze
  */
 export type GetRequiredProps<Props> = {
-  [K in keyof Props]: Props[K] extends OptionalProp<any>
-    ? never
-    : Props[K] extends DeferProp<any>
-      ? never
-      : [undefined] extends [Props[K]]
-        ? never
-        : Props[K] extends MergeableProp<infer A>
-          ? A extends DeferProp<any>
-            ? never
-            : K
-          : K
+  [K in keyof Props]: IsOptionalPropValue<Props[K]> extends true ? never : K
 }[keyof Props]
 
 /**
@@ -248,13 +325,15 @@ export type GetRequiredProps<Props> = {
  * @template Value - The prop value type to unwrap
  */
 export type GetRequiredPropValue<Value> =
-  Value extends AlwaysProp<infer A>
-    ? UnpackProp<A>
-    : Value extends MergeableProp<infer B>
-      ? UnpackProp<B>
-      : Value extends () => AsyncOrSync<infer C>
-        ? UnpackProp<C>
-        : UnpackProp<Value>
+  Value extends OnceProp<infer Inner>
+    ? GetRequiredPropValue<Inner>
+    : Value extends AlwaysProp<infer A>
+      ? UnpackProp<A>
+      : Value extends MergeableProp<infer B>
+        ? UnpackProp<B>
+        : Value extends () => AsyncOrSync<infer C>
+          ? UnpackProp<C>
+          : UnpackProp<Value>
 
 /**
  * Utility type to simplify value of an optional prop by unwrapping branded types
@@ -263,17 +342,19 @@ export type GetRequiredPropValue<Value> =
  * @template Value - The optional prop value type to unwrap
  */
 export type GetOptionalPropValue<Value> =
-  Value extends DeferProp<infer A>
-    ? UnpackProp<A>
-    : Value extends MergeableProp<infer B>
-      ? B extends DeferProp<infer BA>
-        ? UnpackProp<BA>
-        : UnpackProp<B>
-      : Value extends OptionalProp<infer C>
-        ? UnpackProp<C>
-        : Value extends () => AsyncOrSync<infer D>
-          ? UnpackProp<D>
-          : UnpackProp<Value>
+  Value extends OnceProp<infer Inner>
+    ? GetOptionalPropValue<Inner>
+    : Value extends DeferProp<infer A>
+      ? UnpackProp<A>
+      : Value extends MergeableProp<infer B>
+        ? B extends DeferProp<infer BA>
+          ? UnpackProp<BA>
+          : UnpackProp<B>
+        : Value extends OptionalProp<infer C>
+          ? UnpackProp<C>
+          : Value extends () => AsyncOrSync<infer D>
+            ? UnpackProp<D>
+            : UnpackProp<Value>
 
 /**
  * Converts the Page props to Component props that will be available to the frontend
@@ -303,10 +384,17 @@ export type AsPageProps<Props extends ComponentProps> = Prettify<
     }[keyof Props]]?:
       | PagePropsDataTypes<Props[K]>
       | MergeableProp<UnPackedPageProps<Props[K]> | DeferProp<UnPackedPageProps<Props[K]>>>
+      | OnceProp<
+          | PagePropsDataTypes<Props[K]>
+          | MergeableProp<UnPackedPageProps<Props[K]> | DeferProp<UnPackedPageProps<Props[K]>>>
+        >
   } & {
     [K in {
       [O in keyof Props]: [undefined] extends [Props[O]] ? never : O
-    }[keyof Props]]: PagePropsEagerDataTypes<Props[K]> | MergeableProp<UnPackedPageProps<Props[K]>>
+    }[keyof Props]]:
+      | PagePropsEagerDataTypes<Props[K]>
+      | MergeableProp<UnPackedPageProps<Props[K]>>
+      | OnceProp<PagePropsEagerDataTypes<Props[K]> | MergeableProp<UnPackedPageProps<Props[K]>>>
   }
 >
 
@@ -416,6 +504,18 @@ export type PageObject<Props> = {
    * existing props on the page
    */
   deepMergeProps?: string[]
+
+  /**
+   * Metadata for props the client should remember across visits, keyed by
+   * once-key. Emitted even when the value itself is skipped, so the client can
+   * keep using its cached copy.
+   */
+  onceProps?: {
+    [onceKey: string]: {
+      prop: string
+      expiresAt?: number | null
+    }
+  }
 
   /**
    * Encrypt history flag to be sent to the client with every request.

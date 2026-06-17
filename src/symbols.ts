@@ -36,3 +36,10 @@ export const DEFERRED_PROP = Symbol.for('DEFERRED_PROP')
  * Deep merging recursively merges nested objects and arrays.
  */
 export const DEEP_MERGE = Symbol.for('DEEP_MERGE')
+
+/**
+ * Symbol used to mark props that are remembered by the client across visits.
+ * The server skips re-resolving a once prop when the client reports it already
+ * holds the value, and always emits the prop's caching metadata.
+ */
+export const ONCE_PROP = Symbol.for('ONCE_PROP')

@@ -1,5 +1,9 @@
 # Once Props
 
+> **Implemented:** this adapter ships once props as of
+> [ADR 0017](../docs/adr/0017-once-props.md) — full spec, including custom keys,
+> expiry, force-fresh, and composition with `defer`/`optional`/`merge`.
+
 > **Inertia version:** available in **both v2 (legacy, 2.3.x) and v3 (latest)**.
 > The `X-Inertia-Except-Once-Props` header and the `onceProps` page-object field
 > are present in `@inertiajs/core` `2.3.23` (the line this adapter targets). This

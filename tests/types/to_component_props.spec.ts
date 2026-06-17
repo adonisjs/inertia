@@ -16,6 +16,7 @@ import {
 } from '@adonisjs/core/transformers'
 
 import {
+  type OnceProp,
   type DeferProp,
   type AlwaysProp,
   type OptionalProp,
@@ -965,4 +966,149 @@ test.group('To component props | Always', () => {
         | undefined
     }>()
   }).skip(true, 'Have to check if Inertia supports this')
+})
+
+test.group('To component props | once', () => {
+  test('a once prop wrapping a plain value is required', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      lookups: OnceProp<{ id: number; label: string }[]>
+      user: OnceProp<{ id: number; timestamps: boolean }>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      lookups: { id: number; label: string }[]
+      user: { id: number; timestamps: boolean }
+    }>()
+  })
+
+  test('a once prop wrapping a lazy callback is required and unwrapped', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      user: OnceProp<() => Promise<{ id: number; timestamps: boolean }>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user: { id: number; timestamps: boolean }
+    }>()
+  })
+
+  test('a once prop wrapping a deferred prop is optional', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      stats: OnceProp<DeferProp<{ total: number }>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      stats?: { total: number }
+    }>()
+  })
+
+  test('a once prop wrapping an optional prop is optional', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      audit: OnceProp<OptionalProp<{ entries: string[] }>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      audit?: { entries: string[] }
+    }>()
+  })
+
+  test('a once prop wrapping a mergeable prop is required', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      feed: OnceProp<MergeableProp<{ id: number }[]>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      feed: { id: number }[]
+    }>()
+  })
+
+  test('a once prop wrapping a mergeable deferred prop is optional', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      feed: OnceProp<MergeableProp<DeferProp<{ id: number }[]>>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      feed?: { id: number }[]
+    }>()
+  })
+
+  test('a once prop wrapping a possibly-undefined value is optional', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      user: OnceProp<{ id: number } | undefined>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user?: { id: number } | undefined
+    }>()
+  })
+})
+
+test.group('To component props | once with transformers', () => {
+  test('a once prop wrapping a transformer is required and resolved', ({ expectTypeOf }) => {
+    class UserTransformer extends BaseTransformer<any> {
+      toObject() {
+        return { id: 1, timestamps: true }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      user: OnceProp<Item<UserTransformer, 1, 'toObject'>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user: { id: number; timestamps: boolean }
+    }>()
+  })
+
+  test('a once prop wrapping a deferred transformer is optional', ({ expectTypeOf }) => {
+    class UserTransformer extends BaseTransformer<any> {
+      toObject() {
+        return { id: 1, timestamps: true }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      user: OnceProp<DeferProp<Item<UserTransformer, 1, 'toObject'>>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user?: { id: number; timestamps: boolean }
+    }>()
+  })
+
+  test('a once prop wrapping a mergeable transformer is required', ({ expectTypeOf }) => {
+    class UserTransformer extends BaseTransformer<any> {
+      toObject() {
+        return { id: 1, timestamps: true }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      user: OnceProp<MergeableProp<Item<UserTransformer, 1, 'toObject'>>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user: { id: number; timestamps: boolean }
+    }>()
+  })
+
+  test('a once prop wrapping a paginator transformer resolves to data + metadata', ({
+    expectTypeOf,
+  }) => {
+    class PostsTransformer extends BaseTransformer<any> {
+      toObject() {
+        return { id: 1, title: 'Hello world' }
+      }
+    }
+
+    type Data = ToComponentProps<{
+      posts: OnceProp<Paginator<PostsTransformer, 1, 'toObject'>>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      posts: {
+        data: { id: number; title: string }[]
+        metadata: any
+      }
+    }>()
+  })
 })

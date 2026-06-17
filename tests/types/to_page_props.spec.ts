@@ -11,7 +11,7 @@ import { test } from '@japa/runner'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
 import { type AsPageProps } from '../../src/types.ts'
-import { always, defer, merge, optional } from '../../src/props.ts'
+import { once, always, defer, merge, optional } from '../../src/props.ts'
 
 function createRenderer<Input extends Record<string, any>>() {
   return function render<T extends AsPageProps<Input>>(_: T): void {}
@@ -772,6 +772,93 @@ test.group('To page props | Transformers', () => {
           total: 10,
         })
       }).merge(),
+    })
+  })
+})
+
+test.group('To page props | once', () => {
+  test('allow defining required props via once helper', () => {
+    type Props = {
+      user: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title: string }[]
+      paginated: {
+        data: { id: number; title: string }[]
+        total: number
+      }
+    }
+
+    const render = createRenderer<Props>()
+    render({
+      user: once({ id: 1, timestamps: true }),
+      posts: once(() => [{ id: 1, title: 'Hello world' }]),
+      paginated: merge({
+        data: [{ id: 1, title: 'Hello world' }],
+        total: 10,
+      }).once(),
+    })
+  })
+
+  test('allow defining optional props via once + defer/optional helper', () => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const render = createRenderer<Props>()
+    render({
+      user: defer(() => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }).once(),
+      posts: [{ id: 1 }],
+      paginated: optional(() => {
+        return {
+          data: [{ id: 1 }],
+        }
+      }).once(),
+    })
+  })
+
+  test('disallow defining required props via once + defer helper', () => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const render = createRenderer<Props>()
+    render({
+      user: defer(() => {
+        return {
+          id: 1,
+          timestamps: true,
+        }
+      }).once(),
+      // @ts-expect-error a deferred once prop cannot satisfy a required prop
+      posts: defer(() => [{ id: 1 }]).once(),
+      paginated: optional(() => {
+        return {
+          data: [{ id: 1 }],
+        }
+      }).once(),
     })
   })
 })

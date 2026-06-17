@@ -71,4 +71,28 @@ test.group('v3 client contract', () => {
     assert.notProperty(clientPage, 'clearHistory')
     assert.notProperty(clientPage, 'encryptHistory')
   })
+
+  test('the v3 client reconstructs once-prop metadata from the page object', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const serverPage = await inertia.page('home', {
+      lookups: inertia.once(() => ['/dashboard', '/settings'], { key: 'lookups' }),
+    })
+
+    /**
+     * The server emits the value plus its caching metadata on first encounter.
+     */
+    assert.deepEqual((serverPage as any).onceProps, {
+      lookups: { prop: 'lookups', expiresAt: null },
+    })
+
+    const { page: clientPage } = await roundTripThroughClient(serverPage)
+
+    /**
+     * The real v3 client must reconstruct the page object, `onceProps` included,
+     * exactly as the server produced it.
+     */
+    assert.deepEqual(clientPage, serverPage)
+    assert.deepEqual((clientPage as any).onceProps, (serverPage as any).onceProps)
+  })
 })

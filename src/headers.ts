@@ -74,4 +74,11 @@ export const InertiaHeaders = {
    * Used to identify which component is being partially reloaded.
    */
   PartialComponent: 'x-inertia-partial-component',
+
+  /**
+   * Header containing comma-separated list of once-keys the client already holds
+   * a fresh, cached value for. The server skips re-resolving those once props and
+   * omits their values from the response.
+   */
+  ExceptOnceProps: 'x-inertia-except-once-props',
 } as const

@@ -42,6 +42,7 @@ We use the [MADR](https://adr.github.io/madr/) format. See
 | 0012 | [Japa `api_client` plugin for testing Inertia responses](0012-japa-api-client-plugin.md) | Accepted |
 | 0013 | [Tech-agnostic protocol-coverage planning method](0013-protocol-coverage-planning-method.md) | Accepted |
 | 0014 | [Upgrade the bundled client adapters to Inertia v3](0014-upgrade-bundled-client-to-inertia-v3.md) | Accepted |
+| 0017 | [Once props](0017-once-props.md)                                                   | Accepted |
 
 ## Proposed (planned protocol features)
 
@@ -56,7 +57,6 @@ features (04, 07, 08).
 | ----------- | ------- | ---- |
 | 0015 | Multiple errors per field        | [`planning/01-multiple-errors-per-field.md`](../../planning/01-multiple-errors-per-field.md) |
 | 0016 | Prefetch awareness               | [`planning/02-prefetch-awareness.md`](../../planning/02-prefetch-awareness.md) |
-| 0017 | Once props                       | [`planning/03-once-props.md`](../../planning/03-once-props.md) |
 | 0018 | Rescued deferred props           | [`planning/04-rescued-deferred-props.md`](../../planning/04-rescued-deferred-props.md) |
 | 0019 | Keyed and directional merges     | [`planning/05-keyed-and-directional-merges.md`](../../planning/05-keyed-and-directional-merges.md) |
 | 0020 | Infinite scroll                  | [`planning/06-infinite-scroll.md`](../../planning/06-infinite-scroll.md) |

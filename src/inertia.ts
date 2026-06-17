@@ -27,6 +27,7 @@ import type {
 } from './types.js'
 import {
   defer,
+  once,
   merge,
   always,
   optional,
@@ -147,6 +148,20 @@ export class Inertia<Pages> {
   deepMerge = deepMerge
 
   /**
+   * Remember a prop on the client across visits. The server skips re-resolving
+   * it when the client reports a fresh cached value. Compose with
+   * `defer`/`optional`/`merge` via their `.once()` method.
+   *
+   * @example
+   * ```js
+   * {
+   *   lookups: inertia.once(() => loadLookupTables(), { expiresIn: '1h' })
+   * }
+   * ```
+   */
+  once = once
+
+  /**
    * Creates a new Inertia instance
    *
    * @param ctx - HTTP context for the current request
@@ -241,6 +256,12 @@ export class Inertia<Pages> {
       finalProps = { ...pageProps }
     }
 
+    /**
+     * Reference timestamp used to normalize relative once-prop expiry for this
+     * response.
+     */
+    const now = Date.now()
+
     if (requestInfo.partialComponent === component) {
       const only = requestInfo.onlyProps
       const except = requestInfo.exceptProps ?? []
@@ -254,11 +275,24 @@ export class Inertia<Pages> {
       debug('building props for a partial reload %O', requestInfo)
       debug('cherry picking props %s', cherryPickProps)
 
-      return buildPartialRequestProps(finalProps, cherryPickProps, this.ctx.containerResolver)
+      /**
+       * Partial reloads ignore the client's once cache, so only the clock is
+       * threaded through — not the except-once set.
+       */
+      return buildPartialRequestProps(finalProps, cherryPickProps, this.ctx.containerResolver, now)
+    }
+
+    /**
+     * Standard visits gate once props on the client cache: the set of once-keys
+     * the client already holds, plus the reference timestamp.
+     */
+    const onceContext = {
+      exceptOnce: new Set(requestInfo.exceptOnceProps ?? []),
+      now,
     }
 
     debug('building props for a standard visit %O', requestInfo)
-    return buildStandardVisitProps(finalProps, this.ctx.containerResolver)
+    return buildStandardVisitProps(finalProps, this.ctx.containerResolver, onceContext)
   }
 
   /**
@@ -350,6 +384,7 @@ export class Inertia<Pages> {
       exceptProps: this.ctx.request.header(InertiaHeaders.PartialExcept)?.split(','),
       resetProps: this.ctx.request.header(InertiaHeaders.Reset)?.split(','),
       errorBag: this.ctx.request.header(InertiaHeaders.ErrorBag),
+      exceptOnceProps: this.ctx.request.header(InertiaHeaders.ExceptOnceProps)?.split(','),
     }
 
     return this.#cachedRequestInfo
@@ -466,11 +501,8 @@ export class Inertia<Pages> {
       : never
   ): Promise<PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
-    const { props, mergeProps, deferredProps, deepMergeProps } = await this.#buildPageProps(
-      page,
-      requestInfo,
-      pageProps
-    )
+    const { props, mergeProps, deferredProps, deepMergeProps, onceProps } =
+      await this.#buildPageProps(page, requestInfo, pageProps)
 
     const pageObject: PageObject<Pages[Page]> = {
       component: page,
@@ -480,6 +512,7 @@ export class Inertia<Pages> {
       deferredProps,
       mergeProps,
       deepMergeProps,
+      onceProps,
     }
 
     /**

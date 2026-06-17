@@ -164,6 +164,22 @@ export class InertiaFactory<Pages extends Record<string, ComponentProps>> {
   }
 
   /**
+   * Simulates a client that already holds fresh, cached values for the given
+   * once-keys by setting the `X-Inertia-Except-Once-Props` request header.
+   *
+   * @param keys - The once-keys the client reports as cached
+   *
+   * @example
+   * ```typescript
+   * const inertia = factory.withExceptOnceProps(['lookups']).create()
+   * ```
+   */
+  withExceptOnceProps(keys: string[]) {
+    this.#parameters.ctx.request.request.headers[InertiaHeaders.ExceptOnceProps] = keys.join(',')
+    return this
+  }
+
+  /**
    * Sets the assets version for cache busting
    *
    * @param version - Version string or function for asset versioning
