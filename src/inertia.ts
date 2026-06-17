@@ -34,6 +34,7 @@ import {
   buildStandardVisitProps,
   buildPartialRequestProps,
 } from './props.ts'
+import Macroable from '@poppinss/macroable'
 import debug from './debug.ts'
 import { type AsyncOrSync } from '@poppinss/utils/types'
 
@@ -57,7 +58,7 @@ import { type AsyncOrSync } from '@poppinss/utils/types'
  * inertia.location('/dashboard')
  * ```
  */
-export class Inertia<Pages> {
+export class Inertia<Pages> extends Macroable {
   #sharedStateProviders?: (PageProps | (() => AsyncOrSync<PageProps>))[]
   #cachedRequestInfo?: RequestInfo
 
@@ -168,6 +169,7 @@ export class Inertia<Pages> {
     vite?: Vite,
     serverRenderer?: ServerRenderer
   ) {
+    super()
     if (debug.enabled) {
       debug(
         'instantiating inertia instance for request "%s" using config %O',
