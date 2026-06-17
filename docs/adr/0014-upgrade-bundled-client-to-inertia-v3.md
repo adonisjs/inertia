@@ -89,7 +89,7 @@ Sourced from `@inertiajs/core@3.4.0` and `inertia-laravel v2.0.21..v3.0.0`.
 | - | ------ | ----- | ------ |
 | 1 | Initial page payload via `<script type="application/json">` only; `data-page` attribute path removed | **Hard break** (in-package) | ✅ Fixed here |
 | 2 | `clearHistory` / `encryptHistory` omitted unless `true` | Cosmetic / spec-correctness | ✅ Fixed here |
-| 3 | Props resolve at **any nesting depth**; partial-reload metadata uses **dot-notation paths** (`auth.notifications`). Our resolver is top-level only | Latent correctness gap for nested props | ⛔ Deferred → its own task |
+| 3 | Props resolve at **any nesting depth**; partial-reload metadata uses **dot-notation paths** (`auth.notifications`). Our resolver is top-level only | Deliberate divergence — see decision below | 🚫 Won't implement (top-level only) |
 | 4 | New page-object fields: `prependProps`, `matchPropsOn`, `rescuedProps`, `sharedProps`, `preserveFragment`, first-class `flash` | Feature gap | ⛔ Backlog → planning 04/05/07/08/09 |
 | 5 | New headers: `X-Inertia-Redirect`, `X-Inertia-Infinite-Scroll-Merge-Intent`, `X-Inertia-Except-Once-Props` | Feature gap (graceful no-op today) | ⛔ Backlog → planning 03/06/07 |
 | 6 | Fragment-redirect middleware (`409` + `X-Inertia-Redirect` when `Location` has `#` and not a prefetch) | Additive feature | ⛔ Backlog → planning 07 |
@@ -101,15 +101,48 @@ PUT/PATCH/DELETE redirect → `303` unchanged; SSR `{ head, body }` contract sta
 `data-inertia`); re-exported `Link` / `Form` / `router` still resolve (typecheck
 clean). No page-object field this adapter currently emits was removed in v3.
 
+### Decision: prop resolution stays top-level — no nested support
+
+Item 3 above (resolving `defer` / `optional` / `merge` / `always` at any nesting
+depth and emitting dot-notation paths) is **deliberately out of scope**. Prop
+wrappers and partial-reload matching remain **top-level only**.
+
+Rationale:
+
+- **Cost.** Finding a wrapper nested anywhere in a plain object requires walking
+  every plain node of the props tree on every render — a second full traversal on
+  top of serialization. There is no short-circuit: you cannot know a wrapper is
+  absent without looking. This is the same cost that led us to keep transformer
+  serialization top-level only (see issue #83, nested transformers), so supporting
+  nested wrappers while declining nested transformers would be inconsistent.
+- **Precedent.** The new, v3-aware official `@hono/inertia` adapter resolves props
+  **top-level only** — single `Object.entries` pass, `onlyKeys.includes(key)`
+  matching, no recursion — even though it implements newer features (scroll,
+  prepend, `matchOn`, deepMerge). Among the JS/TS adapters, top-level is the norm.
+- **History.** inertia-laravel shipped dot-notation partial reloads (#620), could
+  not stabilise the breakage, and **reverted** it (#641); it only landed properly
+  in v3 behind a dedicated 681-line `PropsResolver`. We are not taking on that
+  surface for a capability with no demonstrated AdonisJS demand.
+- **Escape hatch.** Apps that want nesting in the output can author **dotted
+  top-level keys** (e.g. `{ 'auth.invoices': inertia.optional(...) }`) and expand
+  them at write time — which needs no tree walk and produces identical wire output
+  — should we choose to add that later.
+
+Consequence to document for users: a wrapper nested inside a plain object
+(`{ auth: { invoices: optional() } }`) is **not detected** and will be serialized
+as-is. The supported contract is: wrappers live at the **top level** of the props
+bag.
+
 ### Consequences
 
 - **Good:** 04/07/08 are unblocked; the adapter tracks the latest line.
 - **Good:** the one contract that actually breaks (initial-page markup) is fixed
   and pinned by a test that exercises the real v3 client, not a hand-rolled
   assertion.
-- **Bad / cost:** item 3 (nested/dot-notation resolution) is a real divergence
-  from v3 left unimplemented; apps using nested deferred/merge props with partial
-  reloads will mis-cherry-pick until it lands. Tracked, not fixed.
+- **Bad / cost:** we deliberately diverge from v3 on nested/dot-notation
+  resolution (item 3, decided above). Wrappers nested inside plain objects are
+  unsupported by design; apps must keep wrappers at the top level. Accepted to
+  avoid the per-render tree walk, matching `@hono/inertia`.
 - **Bad / cost:** several v3 breaking changes live in userland; a published
   migration guide and starter-kit updates (item 7) are required and are **not**
   covered by this package's tests.

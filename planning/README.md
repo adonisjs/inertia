@@ -45,7 +45,8 @@ v3-gated features (04, 07, 08) can be slotted wherever their dependencies allow.
 8. [Fragment-preserving redirects](./07-fragment-preserving-redirects.md) — now unblocked.
 9. [Shared props tracking](./08-shared-props-tracking.md) — now unblocked.
 
-> **Cross-cutting prerequisite (ADR 0014, item 3):** v3 resolves props at any
-> nesting depth and uses dot-notation paths in partial-reload metadata, while the
-> current resolver is top-level only. Several features above (notably 05/06) and
-> nested-prop partial reloads depend on closing that gap.
+> **Scope limit (ADR 0014):** prop resolution is **top-level only** — resolving
+> wrappers at any nesting depth and dot-notation partial-reload paths are
+> **deliberately out of scope** (cost of the per-render tree walk; matches
+> `@hono/inertia`). The features above are implemented against top-level props;
+> wrappers nested inside plain objects are unsupported by design.
