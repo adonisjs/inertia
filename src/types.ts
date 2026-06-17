@@ -18,6 +18,8 @@ import {
   type OPTIONAL_PROP,
   type TO_BE_MERGED,
   type DEFERRED_PROP,
+  type MERGE_PREPEND,
+  type MERGE_MATCH_ON,
 } from './symbols.ts'
 
 /**
@@ -125,11 +127,22 @@ export type DeferProp<T extends UnPackedPageProps> = {
 export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>> = {
   /** The prop value to be merged */
   value: T
+  /** Prepend incoming array items instead of appending (shallow merge only) */
+  prepend(): MergeableProp<T>
+  /** Append incoming array items (the default; restores append after `prepend`) */
+  append(): MergeableProp<T>
+  /** Dedupe/replace incoming array items by the given match path */
+  matchOn(key: string): MergeableProp<T>
   /** Remember this prop on the client across visits */
   once(options?: OnceOptions): OnceProp<MergeableProp<T>>
   /** Brand symbol to identify this prop for merging */
   [TO_BE_MERGED]: true
+  /** Whether the merge is deep (recursive) rather than a shallow array merge */
   [DEEP_MERGE]: boolean
+  /** Direction flag for shallow array merges: `true` prepends, `false` appends */
+  [MERGE_PREPEND]: boolean
+  /** Match path for keyed merges, relative to the prop; `undefined` when unkeyed */
+  [MERGE_MATCH_ON]?: string
 }
 
 /**
@@ -504,6 +517,19 @@ export type PageObject<Props> = {
    * existing props on the page
    */
   deepMergeProps?: string[]
+
+  /**
+   * An array with the keys of props whose incoming array value should be
+   * prepended to (rather than appended onto) the existing array on the page
+   */
+  prependProps?: string[]
+
+  /**
+   * Keyed-merge configuration. Each entry is `"<propPath>.<matchField>"`; the
+   * client dedupes/replaces incoming array items by the match field instead of
+   * concatenating. The client splits each entry on its last dot.
+   */
+  matchPropsOn?: string[]
 
   /**
    * Metadata for props the client should remember across visits, keyed by

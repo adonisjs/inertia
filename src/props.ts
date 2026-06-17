@@ -20,6 +20,8 @@ import {
   DEFERRED_PROP,
   OPTIONAL_PROP,
   TO_BE_MERGED,
+  MERGE_PREPEND,
+  MERGE_MATCH_ON,
 } from './symbols.ts'
 import {
   type DeferProp,
@@ -190,13 +192,43 @@ export function always<T extends UnPackedPageProps>(value: T): AlwaysProp<T> {
 export function merge<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>>(
   value: T
 ): MergeableProp<T> {
+  return createMergeableProp(value, false)
+}
+
+/**
+ * Builds a mergeable prop wrapper shared by `merge` and `deepMerge`. The chainable
+ * `prepend`/`append`/`matchOn` methods mutate the wrapper's symbol-keyed config in
+ * place and return it, so they compose fluently (e.g. `merge(v).prepend().matchOn('id')`).
+ *
+ * @param value - The value (or inner prop wrapper) to be merged
+ * @param deep - Whether the merge is deep (recursive) rather than a shallow array merge
+ * @returns A mergeable prop wrapper carrying merge metadata
+ */
+function createMergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>>(
+  value: T,
+  deep: boolean
+): MergeableProp<T> {
   return {
     value,
+    prepend() {
+      this[MERGE_PREPEND] = true
+      return this
+    },
+    append() {
+      this[MERGE_PREPEND] = false
+      return this
+    },
+    matchOn(key: string) {
+      this[MERGE_MATCH_ON] = key
+      return this
+    },
     once(options?: OnceOptions) {
       return once(this, options)
     },
     [TO_BE_MERGED]: true,
-    [DEEP_MERGE]: false,
+    [DEEP_MERGE]: deep,
+    [MERGE_PREPEND]: false,
+    [MERGE_MATCH_ON]: undefined,
   }
 }
 
@@ -232,14 +264,7 @@ export function merge<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>
 export function deepMerge<T extends UnPackedPageProps | DeferProp<UnPackedPageProps>>(
   value: T
 ): MergeableProp<T> {
-  return {
-    value,
-    once(options?: OnceOptions) {
-      return once(this, options)
-    },
-    [TO_BE_MERGED]: true,
-    [DEEP_MERGE]: true,
-  }
+  return createMergeableProp(value, true)
 }
 
 /**
@@ -480,10 +505,13 @@ function emitOnceMetadata(
 export async function buildStandardVisitProps(
   pageProps: PageProps,
   containerResolver: ContainerResolver<any>,
-  onceContext: OnceContext = { exceptOnce: new Set(), now: Date.now() }
+  onceContext: OnceContext = { exceptOnce: new Set(), now: Date.now() },
+  resetProps: Set<string> = new Set()
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
+  const prependProps: string[] = []
+  const matchPropsOn: string[] = []
   const newProps: ComponentProps = {}
   const deferredProps: { [group: string]: string[] } = {}
   const onceProps: OncePropsMap = {}
@@ -544,10 +572,22 @@ export async function buildStandardVisitProps(
        * value
        */
       if (isMergeableProp(value)) {
-        if (value[DEEP_MERGE]) {
-          deepMergeProps.push(key)
-        } else {
-          mergeProps.push(key)
+        /**
+         * A prop named in `X-Inertia-Reset` is left unlabeled so the client
+         * replaces it rather than merging; its value is still emitted below.
+         */
+        if (!resetProps.has(key)) {
+          if (value[DEEP_MERGE]) {
+            deepMergeProps.push(key)
+          } else if (value[MERGE_PREPEND]) {
+            prependProps.push(key)
+          } else {
+            mergeProps.push(key)
+          }
+
+          if (value[MERGE_MATCH_ON] !== undefined) {
+            matchPropsOn.push(`${key}.${value[MERGE_MATCH_ON]}`)
+          }
         }
 
         /**
@@ -605,6 +645,8 @@ export async function buildStandardVisitProps(
     props: newProps,
     mergeProps,
     deepMergeProps,
+    prependProps,
+    matchPropsOn,
     deferredProps,
     onceProps,
   }
@@ -643,10 +685,13 @@ export async function buildPartialRequestProps(
    * branch below), so this builder takes only the reference clock for expiry —
    * not the full once context.
    */
-  now: number = Date.now()
+  now: number = Date.now(),
+  resetProps: Set<string> = new Set()
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
+  const prependProps: string[] = []
+  const matchPropsOn: string[] = []
   const newProps: ComponentProps = {}
   const onceProps: OncePropsMap = {}
   const unpackedValues: Array<{
@@ -709,10 +754,22 @@ export async function buildPartialRequestProps(
        * Inform the client about the mergeable prop
        */
       if (isMergeableProp(value)) {
-        if (value[DEEP_MERGE]) {
-          deepMergeProps.push(key)
-        } else {
-          mergeProps.push(key)
+        /**
+         * A prop named in `X-Inertia-Reset` is left unlabeled so the client
+         * replaces it rather than merging; its value is still emitted below.
+         */
+        if (!resetProps.has(key)) {
+          if (value[DEEP_MERGE]) {
+            deepMergeProps.push(key)
+          } else if (value[MERGE_PREPEND]) {
+            prependProps.push(key)
+          } else {
+            mergeProps.push(key)
+          }
+
+          if (value[MERGE_MATCH_ON] !== undefined) {
+            matchPropsOn.push(`${key}.${value[MERGE_MATCH_ON]}`)
+          }
         }
 
         /**
@@ -775,6 +832,8 @@ export async function buildPartialRequestProps(
     props: newProps,
     mergeProps,
     deepMergeProps,
+    prependProps,
+    matchPropsOn,
     deferredProps: {},
     onceProps,
   }

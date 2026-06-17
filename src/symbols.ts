@@ -38,6 +38,21 @@ export const DEFERRED_PROP = Symbol.for('DEFERRED_PROP')
 export const DEEP_MERGE = Symbol.for('DEEP_MERGE')
 
 /**
+ * Symbol carrying the direction of a shallow array merge. When `true` the client
+ * prepends the incoming items (`prependProps`); when `false` it appends them
+ * (`mergeProps`). Ignored for deep merges — the client deep-merge path has no
+ * direction.
+ */
+export const MERGE_PREPEND = Symbol.for('MERGE_PREPEND')
+
+/**
+ * Symbol carrying the match path (relative to the prop) used for keyed merges.
+ * When set, the client dedupes/replaces array items by this field rather than
+ * concatenating. Emitted on the wire as `"<propPath>.<matchOn>"` in `matchPropsOn`.
+ */
+export const MERGE_MATCH_ON = Symbol.for('MERGE_MATCH_ON')
+
+/**
  * Symbol used to mark props that are remembered by the client across visits.
  * The server skips re-resolving a once prop when the client reports it already
  * holds the value, and always emits the prop's caching metadata.

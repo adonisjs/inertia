@@ -48,8 +48,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -116,8 +118,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "user": {
             "id": 1,
@@ -164,8 +168,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -216,8 +222,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -274,8 +282,10 @@ test.group('Inertia.page', () => {
             "paginated",
           ],
         },
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -329,8 +339,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -383,8 +395,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -438,8 +452,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -493,8 +509,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -561,8 +579,10 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -624,12 +644,14 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [
           "user",
           "posts",
           "paginated",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -694,10 +716,12 @@ test.group('Inertia.page', () => {
           "paginated",
         ],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [
           "posts",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -762,10 +786,12 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [
           "paginated",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -822,8 +848,10 @@ test.group('Inertia.page', () => {
           "paginated",
         ],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -884,12 +912,14 @@ test.group('Inertia.page', () => {
             "paginated",
           ],
         },
+        "matchPropsOn": [],
         "mergeProps": [
           "user",
           "posts",
           "paginated",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -945,10 +975,12 @@ test.group('Inertia.page', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [
           "paginated",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1015,8 +1047,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1096,8 +1130,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "user": {
             "id": 1,
@@ -1155,8 +1191,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1215,8 +1253,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -1285,8 +1325,10 @@ test.group('Inertia.page | Transformers', () => {
             "paginated",
           ],
         },
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -1350,8 +1392,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1417,8 +1461,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -1484,8 +1530,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1559,8 +1607,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1646,8 +1696,10 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1730,12 +1782,14 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [
           "user",
           "posts",
           "paginated",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1819,10 +1873,12 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [
           "paginated",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [
@@ -1900,12 +1956,14 @@ test.group('Inertia.page | Transformers', () => {
             "paginated",
           ],
         },
+        "matchPropsOn": [],
         "mergeProps": [
           "user",
           "posts",
           "paginated",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "posts": [
             {
@@ -1974,10 +2032,12 @@ test.group('Inertia.page | Transformers', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [
           "paginated",
         ],
         "onceProps": {},
+        "prependProps": [],
         "props": {
           "paginated": {
             "data": [

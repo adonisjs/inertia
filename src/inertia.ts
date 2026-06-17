@@ -262,6 +262,12 @@ export class Inertia<Pages> {
      */
     const now = Date.now()
 
+    /**
+     * Prop paths the client asked to reset (via `X-Inertia-Reset`). Reset props
+     * are emitted unlabeled so the client replaces them instead of merging.
+     */
+    const resetProps = new Set(requestInfo.resetProps ?? [])
+
     if (requestInfo.partialComponent === component) {
       const only = requestInfo.onlyProps
       const except = requestInfo.exceptProps ?? []
@@ -279,7 +285,13 @@ export class Inertia<Pages> {
        * Partial reloads ignore the client's once cache, so only the clock is
        * threaded through — not the except-once set.
        */
-      return buildPartialRequestProps(finalProps, cherryPickProps, this.ctx.containerResolver, now)
+      return buildPartialRequestProps(
+        finalProps,
+        cherryPickProps,
+        this.ctx.containerResolver,
+        now,
+        resetProps
+      )
     }
 
     /**
@@ -292,7 +304,7 @@ export class Inertia<Pages> {
     }
 
     debug('building props for a standard visit %O', requestInfo)
-    return buildStandardVisitProps(finalProps, this.ctx.containerResolver, onceContext)
+    return buildStandardVisitProps(finalProps, this.ctx.containerResolver, onceContext, resetProps)
   }
 
   /**
@@ -501,8 +513,15 @@ export class Inertia<Pages> {
       : never
   ): Promise<PageObject<Pages[Page]>> {
     const requestInfo = this.requestInfo()
-    const { props, mergeProps, deferredProps, deepMergeProps, onceProps } =
-      await this.#buildPageProps(page, requestInfo, pageProps)
+    const {
+      props,
+      mergeProps,
+      deferredProps,
+      deepMergeProps,
+      prependProps,
+      matchPropsOn,
+      onceProps,
+    } = await this.#buildPageProps(page, requestInfo, pageProps)
 
     const pageObject: PageObject<Pages[Page]> = {
       component: page,
@@ -512,6 +531,8 @@ export class Inertia<Pages> {
       deferredProps,
       mergeProps,
       deepMergeProps,
+      prependProps,
+      matchPropsOn,
       onceProps,
     }
 

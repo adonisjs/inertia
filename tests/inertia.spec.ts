@@ -42,8 +42,10 @@ test.group('Inertia', () => {
         "component": "home",
         "deepMergeProps": [],
         "deferredProps": {},
+        "matchPropsOn": [],
         "mergeProps": [],
         "onceProps": {},
+        "prependProps": [],
         "props": {},
         "url": "",
         "version": "1",
@@ -67,6 +69,8 @@ test.group('Inertia', () => {
       deferredProps: {},
       mergeProps: [],
       deepMergeProps: [],
+      prependProps: [],
+      matchPropsOn: [],
       onceProps: {},
     })
   })
@@ -99,6 +103,8 @@ test.group('Inertia', () => {
       deferredProps: {},
       mergeProps: [],
       deepMergeProps: [],
+      prependProps: [],
+      matchPropsOn: [],
       onceProps: {},
     })
   })
