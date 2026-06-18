@@ -26,6 +26,7 @@ import {
 } from './symbols.ts'
 import {
   type DeferProp,
+  type DeferOptions,
   type OnceProp,
   type PageProps,
   type AlwaysProp,
@@ -72,6 +73,9 @@ function isObject(value: unknown): value is Record<PropertyKey, any> {
  * specifically requested by the client.
  *
  * @param fn - Function that computes the prop value when requested
+ * @param options - A group name string, or `{ group, rescue }`. Pass
+ *   `{ rescue: true }` to catch resolution errors, omit the prop, and report its
+ *   path via `rescuedProps` so the client can render the `<Deferred>` rescue slot.
  * @returns A deferred prop object with compute and merge capabilities
  *
  * @example
@@ -86,14 +90,21 @@ function isObject(value: unknown): value is Record<PropertyKey, any> {
  *   user: user,
  *   stats: userStats // Only loaded when explicitly requested
  * })
+ *
+ * // Rescue resolution failures instead of erroring the whole reload
+ * const permissions = defer(() => Permission.all(), { rescue: true })
  * ```
  */
 export function defer<T extends UnPackedPageProps>(
   fn: () => AsyncOrSync<T>,
-  group: string = 'default'
+  groupOrOptions: string | DeferOptions = {}
 ): DeferProp<T> {
+  const { group = 'default', rescue = false } =
+    typeof groupOrOptions === 'string' ? { group: groupOrOptions } : groupOrOptions
+
   return {
     group,
+    rescue,
     compute: fn,
     merge() {
       return merge(this)
@@ -871,6 +882,13 @@ export async function buildStandardVisitProps(
     deferredProps,
     onceProps,
     scrollProps,
+    /**
+     * Deferred props are never computed on a standard visit, so nothing can be
+     * rescued here. Emitted for a uniform shape with the partial-reload builder
+     * and to match the always-present v3 `rescuedProps` wire field.
+     */
+    rescuedProps: [] as string[],
+    rescuedErrors: [] as { prop: string; error: unknown }[],
   }
 }
 
@@ -919,6 +937,8 @@ export async function buildPartialRequestProps(
   const onceProps: OncePropsMap = {}
   const scrollProps: { [prop: string]: ScrollMetaData } = {}
   const unpackedValues: UnpackEntry[] = []
+  const rescuedProps: string[] = []
+  const rescuedErrors: { prop: string; error: unknown }[] = []
 
   /**
    * Classifies a single prop entry, mutating the accumulators above. Extracted
@@ -959,7 +979,7 @@ export async function buildPartialRequestProps(
        * Unpack deferred prop
        */
       if (isDeferredProp(value)) {
-        unpackedValues.push({ key, value: value.compute })
+        unpackedValues.push({ key, value: value.compute, rescue: value.rescue })
         return
       }
 
@@ -1018,7 +1038,7 @@ export async function buildPartialRequestProps(
          * Unpack deferred mergeable prop
          */
         if (isObject(value.value) && isDeferredProp(value.value)) {
-          unpackedValues.push({ key, value: value.value.compute })
+          unpackedValues.push({ key, value: value.value.compute, rescue: value.value.rescue })
         } else {
           unpackedValues.push({ key, value: value.value })
         }
@@ -1074,7 +1094,25 @@ export async function buildPartialRequestProps(
         return
       }
 
-      const { key, value } = entry
+      const { key, value, rescue } = entry
+
+      /**
+       * A rescuable deferred prop swallows a resolution error: the value is
+       * omitted from `props` (never emitted as `null`), the path is recorded in
+       * `rescuedProps`, and the error is collected for out-of-band reporting so
+       * it never propagates into the response pipeline.
+       */
+      if (rescue) {
+        try {
+          const resolved = typeof value === 'function' ? await value() : value
+          newProps[key] = await unpackPropValue(resolved, containerResolver)
+        } catch (error) {
+          rescuedProps.push(key)
+          rescuedErrors.push({ prop: key, error })
+        }
+        return
+      }
+
       if (typeof value === 'function') {
         return Promise.resolve(value())
           .then((r) => unpackPropValue(r, containerResolver))
@@ -1098,5 +1136,7 @@ export async function buildPartialRequestProps(
     deferredProps: {},
     onceProps,
     scrollProps,
+    rescuedProps,
+    rescuedErrors,
   }
 }

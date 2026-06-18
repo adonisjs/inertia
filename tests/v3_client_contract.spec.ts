@@ -95,4 +95,26 @@ test.group('v3 client contract', () => {
     assert.deepEqual(clientPage, serverPage)
     assert.deepEqual((clientPage as any).onceProps, (serverPage as any).onceProps)
   })
+
+  test('the server emits rescuedProps and the v3 client preserves it', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const serverPage = await inertia.page('home', { ok: true })
+
+    /**
+     * Every response carries a top-level `rescuedProps` array (empty here, since
+     * deferred props are never resolved on a standard visit), matching the
+     * non-optional v3 `Page.rescuedProps` field.
+     */
+    assert.deepEqual((serverPage as any).rescuedProps, [])
+
+    /**
+     * A non-empty list (as a partial reload would produce) round-trips intact:
+     * the client keeps the paths so `<Deferred>` can render its rescue slot.
+     */
+    const rescuedPage = { ...serverPage, rescuedProps: ['stats'] }
+    const { page: clientPage } = await roundTripThroughClient(rescuedPage)
+
+    assert.deepEqual((clientPage as any).rescuedProps, ['stats'])
+  })
 })

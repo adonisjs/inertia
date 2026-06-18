@@ -121,6 +121,36 @@ test.group('To page props', () => {
     })
   })
 
+  test('defer options (group / rescue) do not perturb the optional component type', () => {
+    type Props = {
+      user?: {
+        id: number
+        timestamps: boolean
+      }
+      posts?: { id: number; title?: string }[]
+      paginated?: {
+        data: { id: number; title?: string }[]
+        total?: number
+      }
+    }
+
+    const render = createRenderer<Props>()
+    render({
+      // bare group string (backwards compatible) still typechecks
+      user: defer(() => {
+        return { id: 1, timestamps: true }
+      }, 'group1'),
+      // options object with rescue resolves to the same optional prop type
+      posts: defer(() => [{ id: 1 }], { rescue: true }),
+      paginated: defer(
+        () => {
+          return { data: [{ id: 1 }] }
+        },
+        { group: 'group1', rescue: true }
+      ),
+    })
+  })
+
   test('disallow defining required props via deferred helper', () => {
     type Props = {
       user?: {

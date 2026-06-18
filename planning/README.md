@@ -41,7 +41,7 @@ v3-gated features (04, 07, 08) can be slotted wherever their dependencies allow.
 4. [Infinite scroll](./06-infinite-scroll.md) — ✅ implemented ([ADR 0020](../docs/adr/0020-infinite-scroll.md)); depends on (3).
 5. [Flash messages](./09-flash-messages.md) — adopt the first-class `flash` field.
 6. [Prefetch awareness](./02-prefetch-awareness.md) — mostly a generic-HTTP flag; see banner.
-7. [Rescued deferred props](./04-rescued-deferred-props.md) — now unblocked.
+7. [Rescued deferred props](./04-rescued-deferred-props.md) — ✅ implemented ([ADR 0018](../docs/adr/0018-rescued-deferred-props.md)).
 8. [Fragment-preserving redirects](./07-fragment-preserving-redirects.md) — now unblocked.
 9. [Shared props tracking](./08-shared-props-tracking.md) — now unblocked.
 

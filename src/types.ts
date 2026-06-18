@@ -265,6 +265,13 @@ export type OptionalProp<T extends UnPackedPageProps> = {
  */
 export type DeferProp<T extends UnPackedPageProps> = {
   group: string
+  /**
+   * When `true`, a resolution error is caught: the prop is omitted from the
+   * response and its path is reported to the client via `rescuedProps` so the
+   * `<Deferred>` component can render its `rescue` slot instead of staying in a
+   * loading state. The error is reported out of band (see {@link RescueListener}).
+   */
+  rescue: boolean
   /** Function that computes the prop value when requested */
   compute: () => AsyncOrSync<T>
   /** Creates a mergeable version of this deferred prop */
@@ -276,6 +283,30 @@ export type DeferProp<T extends UnPackedPageProps> = {
   /** Brand symbol to identify this as a deferred prop */
   [DEFERRED_PROP]: true
 }
+
+/**
+ * Options for creating a deferred prop. The second argument to `defer` also
+ * accepts a bare group name string for backwards compatibility.
+ */
+export type DeferOptions = {
+  /** Group deferred props so the client fetches them together */
+  group?: string
+  /**
+   * Opt into graceful failure: catch resolution errors, omit the prop, and
+   * report its path via `rescuedProps`. Defaults to `false`.
+   */
+  rescue?: boolean
+}
+
+/**
+ * Listener invoked when a rescuable deferred prop's resolution throws. Register
+ * one via `Inertia.onRescue(...)`; when none is registered, the error is logged
+ * through the request logger (`ctx.logger.error`).
+ *
+ * @param error - The thrown error that was rescued
+ * @param context - The prop path that failed and its HTTP context
+ */
+export type RescueListener = (error: unknown, context: { prop: string; ctx: HttpContext }) => void
 
 /**
  * Represents a prop that should be merged with existing props on the page rather than replaced
@@ -461,7 +492,15 @@ export type OncePropsMap = { [onceKey: string]: { prop: string; expiresAt?: numb
  * value and pagination cursor are resolved together.
  */
 export type UnpackEntry =
-  | { key: string; value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>) }
+  | {
+      key: string
+      value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
+      /**
+       * When `true`, a resolution error is caught: the value is omitted and the
+       * key is recorded in `rescuedProps`. Set only for rescuable deferred props.
+       */
+      rescue?: boolean
+    }
   | { key: string; scroll: ScrollProp<any, boolean> }
 
 /**
@@ -723,6 +762,14 @@ export type PageObject<Props> = {
   scrollProps?: {
     [prop: string]: ScrollMetaData
   }
+
+  /**
+   * Paths of deferred props whose resolution threw and was rescued. The prop is
+   * omitted from `props`; the client renders the `<Deferred>` `rescue` slot for
+   * each listed path. Emitted on every response (as `[]` when nothing was
+   * rescued) to match the non-optional v3 `Page.rescuedProps` field.
+   */
+  rescuedProps?: string[]
 
   /**
    * Metadata for props the client should remember across visits, keyed by

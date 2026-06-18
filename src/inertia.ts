@@ -24,6 +24,7 @@ import type {
   InertiaConfig,
   ComponentProps,
   SharedProps,
+  RescueListener,
 } from './types.js'
 import {
   defer,
@@ -60,6 +61,35 @@ import { type AsyncOrSync } from '@poppinss/utils/types'
  * ```
  */
 export class Inertia<Pages> {
+  /**
+   * Listener invoked when a rescuable deferred prop's resolution throws. Shared
+   * across all per-request instances; defaults to logging the error through the
+   * request logger.
+   */
+  static #rescueListener: RescueListener = (error, { prop, ctx }) => {
+    ctx.logger.error({ err: error }, `Rescued deferred prop "${prop}"`)
+  }
+
+  /**
+   * Register a global listener for rescued deferred-prop errors. The listener
+   * receives the thrown error along with the failing prop path and the HTTP
+   * context. Call with no argument to restore the default logger-based reporter.
+   *
+   * @example
+   * ```ts
+   * Inertia.onRescue((error, { prop, ctx }) => {
+   *   ctx.logger.error({ err: error }, `deferred prop "${prop}" failed`)
+   * })
+   * ```
+   */
+  static onRescue(listener?: RescueListener) {
+    Inertia.#rescueListener =
+      listener ??
+      ((error, { prop, ctx }) => {
+        ctx.logger.error({ err: error }, `Rescued deferred prop "${prop}"`)
+      })
+  }
+
   #sharedStateProviders?: (PageProps | (() => AsyncOrSync<PageProps>))[]
   #cachedRequestInfo?: RequestInfo
 
@@ -548,7 +578,18 @@ export class Inertia<Pages> {
       matchPropsOn,
       onceProps,
       scrollProps,
+      rescuedProps,
+      rescuedErrors,
     } = await this.#buildPageProps(page, requestInfo, pageProps as unknown as PageProps)
+
+    /**
+     * Report any rescued deferred-prop errors out of band through the registered
+     * listener (the logger-based default unless an app overrode it). The errors
+     * were already caught during resolution, so this never affects the response.
+     */
+    for (const { prop, error } of rescuedErrors) {
+      Inertia.#rescueListener(error, { prop, ctx: this.ctx })
+    }
 
     const pageObject: PageObject<Pages[Page]> = {
       component: page,
@@ -562,6 +603,7 @@ export class Inertia<Pages> {
       matchPropsOn,
       onceProps,
       scrollProps,
+      rescuedProps,
     }
 
     /**
