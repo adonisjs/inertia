@@ -47,6 +47,7 @@ test.group('Inertia', () => {
         "onceProps": {},
         "prependProps": [],
         "props": {},
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -72,6 +73,7 @@ test.group('Inertia', () => {
       prependProps: [],
       matchPropsOn: [],
       onceProps: {},
+      scrollProps: {},
     })
   })
 
@@ -106,6 +108,7 @@ test.group('Inertia', () => {
       prependProps: [],
       matchPropsOn: [],
       onceProps: {},
+      scrollProps: {},
     })
   })
 

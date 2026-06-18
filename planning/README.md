@@ -36,9 +36,9 @@ With the v3 upgrade done, the original linear order applies; the previously
 v3-gated features (04, 07, 08) can be slotted wherever their dependencies allow.
 
 1. [Multiple errors per field](./01-multiple-errors-per-field.md) — small, opt-in, non-breaking.
-2. [Once props](./03-once-props.md) — spec verified accurate.
-3. [Keyed and directional merges](./05-keyed-and-directional-merges.md).
-4. [Infinite scroll](./06-infinite-scroll.md) — depends on (3).
+2. [Once props](./03-once-props.md) — ✅ implemented ([ADR 0017](../docs/adr/0017-once-props.md)).
+3. [Keyed and directional merges](./05-keyed-and-directional-merges.md) — ✅ implemented ([ADR 0019](../docs/adr/0019-keyed-and-directional-merges.md)).
+4. [Infinite scroll](./06-infinite-scroll.md) — ✅ implemented ([ADR 0020](../docs/adr/0020-infinite-scroll.md)); depends on (3).
 5. [Flash messages](./09-flash-messages.md) — adopt the first-class `flash` field.
 6. [Prefetch awareness](./02-prefetch-awareness.md) — mostly a generic-HTTP flag; see banner.
 7. [Rescued deferred props](./04-rescued-deferred-props.md) — now unblocked.

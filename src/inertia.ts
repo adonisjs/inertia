@@ -29,6 +29,7 @@ import {
   defer,
   once,
   merge,
+  scroll,
   always,
   optional,
   deepMerge,
@@ -162,6 +163,20 @@ export class Inertia<Pages> {
   once = once
 
   /**
+   * Create an infinite-scroll prop: a paginated value the client keeps extending
+   * as the user scrolls. The cursor is auto-derived from a transformer paginator,
+   * or supplied via a provider callback for other sources.
+   *
+   * @example
+   * ```js
+   * {
+   *   users: inertia.scroll(() => UserTransformer.paginate(rows, paginator.getMeta()))
+   * }
+   * ```
+   */
+  scroll = scroll
+
+  /**
    * Creates a new Inertia instance
    *
    * @param ctx - HTTP context for the current request
@@ -290,7 +305,8 @@ export class Inertia<Pages> {
         cherryPickProps,
         this.ctx.containerResolver,
         now,
-        resetProps
+        resetProps,
+        requestInfo.mergeIntent
       )
     }
 
@@ -304,7 +320,13 @@ export class Inertia<Pages> {
     }
 
     debug('building props for a standard visit %O', requestInfo)
-    return buildStandardVisitProps(finalProps, this.ctx.containerResolver, onceContext, resetProps)
+    return buildStandardVisitProps(
+      finalProps,
+      this.ctx.containerResolver,
+      onceContext,
+      resetProps,
+      requestInfo.mergeIntent
+    )
   }
 
   /**
@@ -397,6 +419,10 @@ export class Inertia<Pages> {
       resetProps: this.ctx.request.header(InertiaHeaders.Reset)?.split(','),
       errorBag: this.ctx.request.header(InertiaHeaders.ErrorBag),
       exceptOnceProps: this.ctx.request.header(InertiaHeaders.ExceptOnceProps)?.split(','),
+      mergeIntent:
+        this.ctx.request.header(InertiaHeaders.InfiniteScrollMergeIntent) === 'prepend'
+          ? 'prepend'
+          : 'append',
     }
 
     return this.#cachedRequestInfo
@@ -521,7 +547,8 @@ export class Inertia<Pages> {
       prependProps,
       matchPropsOn,
       onceProps,
-    } = await this.#buildPageProps(page, requestInfo, pageProps)
+      scrollProps,
+    } = await this.#buildPageProps(page, requestInfo, pageProps as unknown as PageProps)
 
     const pageObject: PageObject<Pages[Page]> = {
       component: page,
@@ -534,6 +561,7 @@ export class Inertia<Pages> {
       prependProps,
       matchPropsOn,
       onceProps,
+      scrollProps,
     }
 
     /**

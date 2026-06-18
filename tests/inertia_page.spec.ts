@@ -73,6 +73,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -128,6 +129,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -191,6 +193,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -234,6 +237,7 @@ test.group('Inertia.page', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -293,6 +297,7 @@ test.group('Inertia.page', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -352,6 +357,7 @@ test.group('Inertia.page', () => {
             ],
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -406,6 +412,7 @@ test.group('Inertia.page', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -469,6 +476,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -534,6 +542,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -604,6 +613,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -673,6 +683,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -743,6 +754,7 @@ test.group('Inertia.page', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -803,6 +815,7 @@ test.group('Inertia.page', () => {
             "total": 10,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -863,6 +876,7 @@ test.group('Inertia.page', () => {
             "total": 10,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -928,6 +942,7 @@ test.group('Inertia.page', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -992,6 +1007,7 @@ test.group('Inertia.page', () => {
             "total": 10,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1074,6 +1090,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1140,6 +1157,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1216,6 +1234,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1265,6 +1284,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1336,6 +1356,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1406,6 +1427,7 @@ test.group('Inertia.page | Transformers', () => {
             "metadata": {},
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1472,6 +1494,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1548,6 +1571,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1634,6 +1658,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1723,6 +1748,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1813,6 +1839,7 @@ test.group('Inertia.page | Transformers', () => {
             "timestamps": true,
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1892,6 +1919,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -1972,6 +2000,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           ],
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }
@@ -2051,6 +2080,7 @@ test.group('Inertia.page | Transformers', () => {
             },
           },
         },
+        "scrollProps": {},
         "url": "",
         "version": "1",
       }

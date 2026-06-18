@@ -58,3 +58,19 @@ export const MERGE_MATCH_ON = Symbol.for('MERGE_MATCH_ON')
  * holds the value, and always emits the prop's caching metadata.
  */
 export const ONCE_PROP = Symbol.for('ONCE_PROP')
+
+/**
+ * Symbol used to mark an infinite-scroll prop. Scroll props layer pagination
+ * metadata (emitted under the page object's `scrollProps`) on top of the keyed
+ * and directional merge primitive, so the client can continuously load pages as
+ * the user scrolls.
+ */
+export const SCROLL_PROP = Symbol.for('SCROLL_PROP')
+
+/**
+ * Type-only discriminant carrying whether a scroll prop has been deferred via
+ * `.deferred()`. A deferred scroll prop is absent on the initial load, so this
+ * flag lets the type system treat it as optional — rejecting it on a required
+ * client prop, exactly like `defer()`. It is never set at runtime.
+ */
+export const SCROLL_DEFERRED = Symbol.for('SCROLL_DEFERRED')

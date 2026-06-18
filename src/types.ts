@@ -14,11 +14,13 @@ import type { AsyncOrSync, DeepPartial, Prettify } from '@adonisjs/core/types/co
 import {
   type ONCE_PROP,
   type DEEP_MERGE,
+  type SCROLL_PROP,
   type ALWAYS_PROP,
   type OPTIONAL_PROP,
   type TO_BE_MERGED,
   type DEFERRED_PROP,
   type MERGE_PREPEND,
+  type SCROLL_DEFERRED,
   type MERGE_MATCH_ON,
 } from './symbols.ts'
 
@@ -70,6 +72,162 @@ export type RequestInfo = {
   errorBag?: string
   /** Once-keys the client already holds a fresh, cached value for */
   exceptOnceProps?: string[]
+  /**
+   * Infinite-scroll merge direction requested by the client. `prepend` loads an
+   * earlier page, `append` (the default when the header is absent) loads a later
+   * one.
+   */
+  mergeIntent?: 'append' | 'prepend'
+}
+
+/**
+ * The infinite-scroll cursor a provider returns and the adapter auto-derives
+ * from a transformer paginator. Does not include `reset` — that is driven by the
+ * `X-Inertia-Reset` request header, not user code.
+ */
+export type ScrollProps = {
+  /** Query-string parameter the client uses to request a page (e.g. `page`). */
+  pageName: string
+  /** Identifier for the page currently in the response. */
+  currentPage: number | string | null
+  /** Identifier for the next page, or `null` when there is none. */
+  nextPage: number | string | null
+  /** Identifier for the previous page, or `null` when there is none. */
+  previousPage: number | string | null
+}
+
+/**
+ * Full per-prop entry emitted under the page object's `scrollProps` map: the
+ * cursor plus the `reset` flag the client uses to discard cached items.
+ */
+export type ScrollMetaData = ScrollProps & {
+  /** When `true`, the client discards cached items for this prop before merging. */
+  reset: boolean
+}
+
+/**
+ * Callback that computes the infinite-scroll cursor from the resolved prop value.
+ * Required whenever the value is not a transformer paginator the adapter can
+ * auto-derive from. Runs only when the prop is resolved, so a deferred scroll
+ * prop computes its cursor on the partial reload rather than the initial visit.
+ *
+ * @template T - The resolved prop value handed to the provider
+ */
+export type ScrollPropsProvider<T = any> = (value: T) => AsyncOrSync<ScrollProps>
+
+/**
+ * The resolved value shape a scroll prop accepts: any object exposing a typed
+ * `data` array. Only `data` is type-checked; the rest of the object is opaque
+ * display data the adapter reads only to auto-derive the cursor.
+ *
+ * @template Item - The item type of the paginated `data` array
+ */
+export type ScrollResolvedValue<Item> = { data: Item[] } & Record<string, any>
+
+/**
+ * The two forms a scroll prop value can take once resolved: a transformer
+ * paginator (a resolvable that resolves to `{ data, metadata }`) or a plain
+ * object with a typed `data` array.
+ *
+ * @template Item - The item type of the paginated `data` array
+ */
+export type ScrollValue<Item> = ScrollResolvedValue<Item> | ResolvableOf<ScrollResolvedValue<Item>>
+
+/**
+ * Phantom brand distinguishing a `Scroll<Item>` marker from a plain object so
+ * `AsPageProps` can require the `scroll()` helper for that prop. Never present at
+ * runtime.
+ */
+declare const SCROLL_BRAND: unique symbol
+
+/**
+ * Marker a client component uses to declare an infinite-scroll prop. The
+ * component receives the resolved `data` array; on the server, `AsPageProps`
+ * requires the matching prop to be built with `inertia.scroll()`.
+ *
+ * @template Item - The item type of the paginated `data` array
+ *
+ * @example
+ * ```ts
+ * declare module '@adonisjs/inertia/types' {
+ *   interface InertiaPages {
+ *     'users/index': { users: Scroll<User> }
+ *   }
+ * }
+ * ```
+ */
+export type Scroll<Item> = {
+  data: Item[]
+  readonly [SCROLL_BRAND]: true
+}
+
+/**
+ * Detects a `Scroll<Item>` marker by its phantom brand.
+ *
+ * @template V - The client prop value to test
+ */
+export type IsScrollMarker<V> = [V] extends [never]
+  ? false
+  : [V] extends [{ readonly [SCROLL_BRAND]: any }]
+    ? true
+    : false
+
+/**
+ * Extracts the item type from a `Scroll<Item>` marker.
+ *
+ * @template V - The `Scroll` marker to read
+ */
+export type ScrollItemOf<V> = V extends { data: (infer Item)[] } ? Item : never
+
+/**
+ * Pagination metadata produced by an AdonisJS Lucid paginator's `getMeta()`.
+ * Exposed for typing the `meta` of a scroll prop value when desired.
+ */
+export type PaginationMeta = {
+  total: number
+  perPage: number
+  currentPage: number
+  pageName: string
+  lastPage: number
+  firstPage: number
+  firstPageUrl: string
+  lastPageUrl: string
+  nextPageUrl: string | null
+  previousPageUrl: string | null
+}
+
+/**
+ * Represents an infinite-scroll prop: a mergeable, paginated value carrying the
+ * pagination cursor the client needs to keep loading pages as the user scrolls.
+ * The cursor is auto-derived from a transformer paginator or supplied by a
+ * provider callback.
+ *
+ * @template Item - The item type of the paginated `data` array
+ * @template Deferred - `true` once `.deferred()` is chained; makes the prop
+ *   optional on the client (absent on the initial load), so a deferred scroll
+ *   prop only satisfies an optional client prop — never a required one.
+ */
+export type ScrollProp<Item = any, Deferred extends boolean = false> = {
+  /** The paginated value (or a callback resolving to it) */
+  value: ScrollValue<Item> | (() => AsyncOrSync<ScrollValue<Item>>)
+  /**
+   * Computes the cursor from the resolved value. Defaults to a paginator-aware
+   * provider that auto-derives from a transformer paginator and throws when the
+   * value is not paginator data.
+   */
+  provider: ScrollPropsProvider<ScrollResolvedValue<Item>>
+  /** Defer group when deferred via `.deferred()`; `undefined` ⇒ not deferred */
+  group?: string
+  /** Exclude the first page from the initial load; loaded on demand */
+  deferred(group?: string): ScrollProp<Item, true>
+  /** Dedupe/replace incoming items by the given key, relative to `data` */
+  matchOn(key: string): ScrollProp<Item, Deferred>
+  /** Brand symbol to identify this as a scroll prop */
+  [SCROLL_PROP]: true
+  /** Type-only flag: `true` once deferred. Never present at runtime. */
+  [SCROLL_DEFERRED]?: Deferred
+  /** Match key for keyed merges; `undefined` when unkeyed */
+  [MERGE_MATCH_ON]?: string
 }
 
 /**
@@ -281,6 +439,7 @@ export type PageProps = Record<
   string,
   | PagePropsDataTypes
   | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>
+  | ScrollProp<any, boolean>
   | OnceProp<PagePropsDataTypes | MergeableProp<UnPackedPageProps | DeferProp<UnPackedPageProps>>>
 >
 
@@ -289,6 +448,21 @@ export type PageProps = Record<
  * Maps prop names to JSON-serializable values that components can consume directly
  */
 export type ComponentProps = Record<string, JSONDataTypes>
+
+/**
+ * Map of once-prop caching metadata, keyed by once-key, accumulated while
+ * building a response.
+ */
+export type OncePropsMap = { [onceKey: string]: { prop: string; expiresAt?: number | null } }
+
+/**
+ * A pending resolution entry collected while classifying props: either a plain
+ * value/callback to serialize into a prop, or a scroll prop whose serialized
+ * value and pagination cursor are resolved together.
+ */
+export type UnpackEntry =
+  | { key: string; value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>) }
+  | { key: string; scroll: ScrollProp<any, boolean> }
 
 /**
  * Predicate that resolves to `true` when a prop value may be absent on the
@@ -307,9 +481,13 @@ export type IsOptionalPropValue<Value> = [Value] extends [OptionalProp<any>]
         ? [A] extends [DeferProp<any>]
           ? true
           : false
-        : [Value] extends [OnceProp<infer Inner>]
-          ? IsOptionalPropValue<Inner>
-          : false
+        : [Value] extends [ScrollProp<any, true>]
+          ? true
+          : [Value] extends [ScrollProp<any, false>]
+            ? false
+            : [Value] extends [OnceProp<infer Inner>]
+              ? IsOptionalPropValue<Inner>
+              : false
 
 /**
  * Utility type to extract optional and deferred prop keys from a props object
@@ -344,9 +522,11 @@ export type GetRequiredPropValue<Value> =
       ? UnpackProp<A>
       : Value extends MergeableProp<infer B>
         ? UnpackProp<B>
-        : Value extends () => AsyncOrSync<infer C>
-          ? UnpackProp<C>
-          : UnpackProp<Value>
+        : Value extends ScrollProp<infer Item, any>
+          ? Scroll<Item>
+          : Value extends () => AsyncOrSync<infer C>
+            ? UnpackProp<C>
+            : UnpackProp<Value>
 
 /**
  * Utility type to simplify value of an optional prop by unwrapping branded types
@@ -363,11 +543,13 @@ export type GetOptionalPropValue<Value> =
         ? B extends DeferProp<infer BA>
           ? UnpackProp<BA>
           : UnpackProp<B>
-        : Value extends OptionalProp<infer C>
-          ? UnpackProp<C>
-          : Value extends () => AsyncOrSync<infer D>
-            ? UnpackProp<D>
-            : UnpackProp<Value>
+        : Value extends ScrollProp<infer Item, any>
+          ? Scroll<Item>
+          : Value extends OptionalProp<infer C>
+            ? UnpackProp<C>
+            : Value extends () => AsyncOrSync<infer D>
+              ? UnpackProp<D>
+              : UnpackProp<Value>
 
 /**
  * Converts the Page props to Component props that will be available to the frontend
@@ -397,6 +579,7 @@ export type AsPageProps<Props extends ComponentProps> = Prettify<
     }[keyof Props]]?:
       | PagePropsDataTypes<Props[K]>
       | MergeableProp<UnPackedPageProps<Props[K]> | DeferProp<UnPackedPageProps<Props[K]>>>
+      | ScrollProp<ScrollItemOf<Props[K]>, boolean>
       | OnceProp<
           | PagePropsDataTypes<Props[K]>
           | MergeableProp<UnPackedPageProps<Props[K]> | DeferProp<UnPackedPageProps<Props[K]>>>
@@ -407,6 +590,7 @@ export type AsPageProps<Props extends ComponentProps> = Prettify<
     }[keyof Props]]:
       | PagePropsEagerDataTypes<Props[K]>
       | MergeableProp<UnPackedPageProps<Props[K]>>
+      | ScrollProp<ScrollItemOf<Props[K]>, false>
       | OnceProp<PagePropsEagerDataTypes<Props[K]> | MergeableProp<UnPackedPageProps<Props[K]>>>
   }
 >
@@ -530,6 +714,15 @@ export type PageObject<Props> = {
    * concatenating. The client splits each entry on its last dot.
    */
   matchPropsOn?: string[]
+
+  /**
+   * Pagination cursors for infinite-scroll props, keyed by prop name. Each entry
+   * tells the client which page-name query parameter to use and the identifiers
+   * for the previous/current/next pages, plus a `reset` flag.
+   */
+  scrollProps?: {
+    [prop: string]: ScrollMetaData
+  }
 
   /**
    * Metadata for props the client should remember across visits, keyed by

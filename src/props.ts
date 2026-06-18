@@ -8,15 +8,16 @@
  */
 
 import string from '@poppinss/utils/string'
-import { BaseSerializer } from '@adonisjs/core/transformers'
 import { type AsyncOrSync } from '@adonisjs/core/types/common'
 import { type JSONDataTypes } from '@adonisjs/core/types/transformers'
+import { BaseSerializer, type Paginator } from '@adonisjs/core/transformers'
 
 import debug from './debug.ts'
 import {
   ONCE_PROP,
   ALWAYS_PROP,
   DEEP_MERGE,
+  SCROLL_PROP,
   DEFERRED_PROP,
   OPTIONAL_PROP,
   TO_BE_MERGED,
@@ -28,12 +29,20 @@ import {
   type OnceProp,
   type PageProps,
   type AlwaysProp,
+  type ScrollProp,
+  type UnpackEntry,
+  type ScrollValue,
   type OnceContext,
   type OnceOptions,
+  type ScrollProps,
+  type OncePropsMap,
   type OptionalProp,
   type MergeableProp,
   type ComponentProps,
+  type ScrollMetaData,
   type UnPackedPageProps,
+  type ScrollPropsProvider,
+  type ScrollResolvedValue,
 } from './types.ts'
 import { type ContainerResolver } from '@adonisjs/core/container'
 
@@ -233,6 +242,99 @@ function createMergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPag
 }
 
 /**
+ * Detects an `@adonisjs/core` transformer paginator (the result of
+ * `Transformer.paginate()`) via its `$type` discriminator. Its `metaData` is the
+ * free-form object passed to `.paginate()` — by convention an AdonisJS Lucid
+ * paginator's `getMeta()` output.
+ *
+ * @param value - The value to test
+ * @returns True when the value is a transformer paginator
+ */
+function isTransformerPaginator(value: unknown): value is Paginator<any, any, any> {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    (value as any).$type === 'paginator' &&
+    isObject((value as any).metaData)
+  )
+}
+
+/**
+ * Extracts the infinite-scroll cursor from a transformer paginator's `metaData`,
+ * mirroring `inertia-laravel`'s `ScrollMetadata::fromPaginator` for offset
+ * paginators: the page identifiers are the adjacent page numbers (or `null` at
+ * the boundaries), and `pageName` comes straight from the paginator meta.
+ *
+ * @param metaData - The paginator's metadata (Lucid `getMeta()` shape)
+ * @returns The extracted cursor, or `null` when the metadata is not derivable
+ */
+function extractScrollPropsFromPaginatorMetaData(
+  metaData: Record<string, any>
+): ScrollProps | null {
+  const currentPage = metaData.currentPage
+  if (typeof currentPage !== 'number') {
+    return null
+  }
+
+  const lastPage = typeof metaData.lastPage === 'number' ? metaData.lastPage : currentPage
+  const firstPage = typeof metaData.firstPage === 'number' ? metaData.firstPage : 1
+  return {
+    pageName: typeof metaData.pageName === 'string' ? metaData.pageName : 'page',
+    currentPage,
+    nextPage: currentPage < lastPage ? currentPage + 1 : null,
+    previousPage: currentPage > firstPage ? currentPage - 1 : null,
+  }
+}
+
+/**
+ * The default scroll-props provider used when `scroll()` is called without one.
+ * Auto-derives the cursor from a transformer paginator's offset metadata and
+ * throws when no cursor can be derived (non-paginator values, or cursor
+ * paginators) — so a scroll prop over a custom source fails loudly unless an
+ * explicit provider is supplied.
+ *
+ * @param value - The resolved scroll prop value
+ * @returns The pagination cursor extracted from the paginator
+ */
+function paginatorScrollPropsProvider(value: unknown): ScrollProps {
+  if (isTransformerPaginator(value)) {
+    const cursor = extractScrollPropsFromPaginatorMetaData(value.metaData)
+    if (cursor !== null) {
+      return cursor
+    }
+  }
+
+  /**
+   * Reached when the value is not a transformer paginator, or is one whose
+   * metadata is not offset-paginated (e.g. a cursor paginator). Both need an
+   * explicit provider, so the message stays accurate for either case.
+   */
+  throw new Error(
+    'Cannot derive an infinite-scroll cursor from the value. Pass a scrollProps ' +
+      'callback as the second argument to "scroll()" for cursor or non-paginator sources.'
+  )
+}
+
+/**
+ * Computes the wire labels for a scroll prop's merge: the dotted `data`-array
+ * path the client merges directionally, and the optional keyed-match entry. The
+ * client splits each entry on its last dot, so `"<key>.data"` resolves to the
+ * `data` array under the prop and `"<key>.data.<matchOn>"` keys it.
+ *
+ * @param key - The prop's top-level path
+ * @param scrollProp - The scroll prop wrapper carrying the match key
+ * @returns The merge path and the optional `matchPropsOn` entry
+ */
+function scrollMergeLabels(key: string, scrollProp: ScrollProp<any, boolean>) {
+  const mergePath = `${key}.data`
+  const matchOn = scrollProp[MERGE_MATCH_ON]
+  return {
+    mergePath,
+    matchEntry: matchOn === undefined ? undefined : `${mergePath}.${matchOn}`,
+  }
+}
+
+/**
  * Creates a prop that should be deeply merged with existing props on the page.
  *
  * Unlike shallow merge, deep merge recursively merges nested objects and arrays,
@@ -300,6 +402,75 @@ export function once<T>(value: T, options: OnceOptions = {}): OnceProp<T> {
     fresh: options.fresh ?? false,
     [ONCE_PROP]: true,
   }
+}
+
+/**
+ * Creates an infinite-scroll prop: a mergeable, paginated value the client keeps
+ * extending as the user scrolls. The server labels the value's `data` array for
+ * keyed/directional merging (driven by the client's merge-intent header) and
+ * emits a pagination cursor under the page object's `scrollProps`.
+ *
+ * The value is a transformer paginator (cursor auto-derived from its metadata)
+ * or any `{ data, ... }`-shaped value, given directly or via a callback. For a
+ * non-paginator value, pass a `scrollProps` provider that computes the cursor
+ * from the resolved value. Chain `.deferred()` to skip the first page on the
+ * initial load, and `.matchOn()` to dedupe overlapping pages by a key.
+ *
+ * @param value - A transformer paginator or `{ data }` value (or a callback resolving to one)
+ * @param provider - Computes the cursor from the resolved value; omit for transformer paginators
+ * @returns A scroll prop wrapper carrying merge + pagination metadata
+ *
+ * @example
+ * ```js
+ * // Transformer paginator — cursor auto-derived from its metadata
+ * return inertia.render('users/index', {
+ *   users: inertia.scroll(() => UserTransformer.paginate(rows, paginator.getMeta()))
+ * })
+ *
+ * // Custom / cursor source — cursor computed by a provider
+ * return inertia.render('feed', {
+ *   posts: inertia.scroll(() => feed, (value) => ({
+ *     pageName: 'cursor',
+ *     currentPage: value.cursor,
+ *     nextPage: value.next,
+ *     previousPage: null,
+ *   }))
+ * })
+ * ```
+ */
+export function scroll<Item>(
+  value: ScrollValue<Item> | (() => AsyncOrSync<ScrollValue<Item>>),
+  provider?: ScrollPropsProvider<ScrollResolvedValue<Item>>
+): ScrollProp<Item> {
+  return {
+    value,
+    provider: provider ?? paginatorScrollPropsProvider,
+    deferred(group: string = 'default') {
+      this.group = group
+      /**
+       * The deferred flag is type-only (`[SCROLL_DEFERRED]`), so the runtime
+       * object is unchanged; the cast re-tags it as the deferred variant so it
+       * type-checks as optional on the client.
+       */
+      return this as unknown as ScrollProp<Item, true>
+    },
+    matchOn(key: string) {
+      this[MERGE_MATCH_ON] = key
+      return this
+    },
+    [SCROLL_PROP]: true,
+    [MERGE_MATCH_ON]: undefined,
+  }
+}
+
+/**
+ * Type guard that checks if a prop value is a scroll prop.
+ *
+ * @param propValue - The object to check for scroll prop characteristics
+ * @returns True if the prop value is a scroll prop
+ */
+export function isScrollProp(propValue: Object): propValue is ScrollProp<any, boolean> {
+  return SCROLL_PROP in propValue
 }
 
 /**
@@ -454,11 +625,6 @@ async function unpackPropValue(
  * // Returns: { props: { user: {...} }, deferredProps: { default: ['posts'] }, mergeProps: ['settings'] }
  * ```
  */
-/**
- * Map of once-prop caching metadata, keyed by once-key, accumulated while
- * building a response.
- */
-type OncePropsMap = { [onceKey: string]: { prop: string; expiresAt?: number | null } }
 
 /**
  * Records a once prop's caching metadata and returns its resolved once-key. The
@@ -506,7 +672,8 @@ export async function buildStandardVisitProps(
   pageProps: PageProps,
   containerResolver: ContainerResolver<any>,
   onceContext: OnceContext = { exceptOnce: new Set(), now: Date.now() },
-  resetProps: Set<string> = new Set()
+  resetProps: Set<string> = new Set(),
+  mergeIntent: 'append' | 'prepend' = 'append'
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
@@ -515,10 +682,8 @@ export async function buildStandardVisitProps(
   const newProps: ComponentProps = {}
   const deferredProps: { [group: string]: string[] } = {}
   const onceProps: OncePropsMap = {}
-  const unpackedValues: Array<{
-    key: string
-    value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
-  }> = []
+  const scrollProps: { [prop: string]: ScrollMetaData } = {}
+  const unpackedValues: UnpackEntry[] = []
 
   /**
    * Classifies a single prop entry, mutating the accumulators above. Extracted
@@ -564,6 +729,43 @@ export async function buildStandardVisitProps(
        */
       if (isAlwaysProp(value)) {
         unpackedValues.push({ key, value: value.value })
+        return
+      }
+
+      /**
+       * Infinite-scroll props are mergeable, paginated props. We label the
+       * value's `data` array for keyed/directional merging per the client's
+       * merge intent, then resolve the value and its pagination cursor.
+       */
+      if (isScrollProp(value)) {
+        /**
+         * A prop named in `X-Inertia-Reset` is left unlabeled so the client
+         * replaces rather than merges; the `reset` flag in `scrollProps` then
+         * tells it to discard cached items.
+         */
+        if (!resetProps.has(key)) {
+          const { mergePath, matchEntry } = scrollMergeLabels(key, value)
+          if (mergeIntent === 'prepend') {
+            prependProps.push(mergePath)
+          } else {
+            mergeProps.push(mergePath)
+          }
+          if (matchEntry !== undefined) {
+            matchPropsOn.push(matchEntry)
+          }
+        }
+
+        /**
+         * A deferred scroll prop skips its first page on a standard visit; its
+         * cursor is emitted only once the value resolves (on the partial reload).
+         */
+        if (value.group !== undefined) {
+          deferredProps[value.group] = deferredProps[value.group] ?? []
+          deferredProps[value.group].push(key)
+          return
+        }
+
+        unpackedValues.push({ key, scroll: value })
         return
       }
 
@@ -626,7 +828,26 @@ export async function buildStandardVisitProps(
   }
 
   await Promise.all(
-    unpackedValues.map(async ({ key, value }) => {
+    unpackedValues.map(async (entry) => {
+      /**
+       * Scroll props resolve their value and pagination cursor together: invoke
+       * the value callback once, then compute the cursor via the prop's provider
+       * (the paginator-aware default unless an explicit one was supplied).
+       */
+      if ('scroll' in entry) {
+        const { key, scroll: scrollProp } = entry
+        let raw: any = scrollProp.value
+        if (typeof raw === 'function') {
+          raw = await raw()
+        }
+
+        const cursor = await scrollProp.provider(raw)
+        newProps[key] = await unpackPropValue(raw, containerResolver)
+        scrollProps[key] = { ...cursor, reset: resetProps.has(key) }
+        return
+      }
+
+      const { key, value } = entry
       if (typeof value === 'function') {
         return Promise.resolve(value())
           .then((r) => unpackPropValue(r, containerResolver))
@@ -649,6 +870,7 @@ export async function buildStandardVisitProps(
     matchPropsOn,
     deferredProps,
     onceProps,
+    scrollProps,
   }
 }
 
@@ -686,7 +908,8 @@ export async function buildPartialRequestProps(
    * not the full once context.
    */
   now: number = Date.now(),
-  resetProps: Set<string> = new Set()
+  resetProps: Set<string> = new Set(),
+  mergeIntent: 'append' | 'prepend' = 'append'
 ) {
   const mergeProps: string[] = []
   const deepMergeProps: string[] = []
@@ -694,10 +917,8 @@ export async function buildPartialRequestProps(
   const matchPropsOn: string[] = []
   const newProps: ComponentProps = {}
   const onceProps: OncePropsMap = {}
-  const unpackedValues: Array<{
-    key: string
-    value: UnPackedPageProps | (() => AsyncOrSync<UnPackedPageProps>)
-  }> = []
+  const scrollProps: { [prop: string]: ScrollMetaData } = {}
+  const unpackedValues: UnpackEntry[] = []
 
   /**
    * Classifies a single prop entry, mutating the accumulators above. Extracted
@@ -747,6 +968,27 @@ export async function buildPartialRequestProps(
        */
       if (isOptionalProp(value)) {
         unpackedValues.push({ key, value: value.compute })
+        return
+      }
+
+      /**
+       * Resolve a requested scroll prop: label its `data` array for the merge
+       * per the client's intent, then resolve the value and emit its cursor.
+       */
+      if (isScrollProp(value)) {
+        if (!resetProps.has(key)) {
+          const { mergePath, matchEntry } = scrollMergeLabels(key, value)
+          if (mergeIntent === 'prepend') {
+            prependProps.push(mergePath)
+          } else {
+            mergeProps.push(mergePath)
+          }
+          if (matchEntry !== undefined) {
+            matchPropsOn.push(matchEntry)
+          }
+        }
+
+        unpackedValues.push({ key, scroll: value })
         return
       }
 
@@ -813,7 +1055,26 @@ export async function buildPartialRequestProps(
   }
 
   await Promise.all(
-    unpackedValues.map(async ({ key, value }) => {
+    unpackedValues.map(async (entry) => {
+      /**
+       * Scroll props resolve their value and pagination cursor together: invoke
+       * the value callback once, then compute the cursor via the prop's provider
+       * (the paginator-aware default unless an explicit one was supplied).
+       */
+      if ('scroll' in entry) {
+        const { key, scroll: scrollProp } = entry
+        let raw: any = scrollProp.value
+        if (typeof raw === 'function') {
+          raw = await raw()
+        }
+
+        const cursor = await scrollProp.provider(raw)
+        newProps[key] = await unpackPropValue(raw, containerResolver)
+        scrollProps[key] = { ...cursor, reset: resetProps.has(key) }
+        return
+      }
+
+      const { key, value } = entry
       if (typeof value === 'function') {
         return Promise.resolve(value())
           .then((r) => unpackPropValue(r, containerResolver))
@@ -836,5 +1097,6 @@ export async function buildPartialRequestProps(
     matchPropsOn,
     deferredProps: {},
     onceProps,
+    scrollProps,
   }
 }

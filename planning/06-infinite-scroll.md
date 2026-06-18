@@ -7,6 +7,16 @@
 > `useInfiniteScroll`. Builds on keyed/directional merges (`planning/05`).
 > This spec was verified accurate against the installed client. Last verified 2026-06-13.
 
+> **Correction (2026-06-18, implemented):** the "Merge metadata coupling" and
+> "Wrapper convention" sections below imply the `{ data, meta }` wrapper is
+> listed directly in `mergeProps`/`prependProps`. Verified against
+> `@inertiajs/core@3.4.0`, that clobbers `data` (the client shallow-merges
+> object-valued props and only merges *arrays* directionally). The adapter
+> instead targets the array path directly — it emits `"<prop>.data"` in
+> `mergeProps`/`prependProps` and `"<prop>.data.<key>"` in `matchPropsOn`, so the
+> client merges the wrapper's array while the fresh `meta` rides along. See
+> [ADR 0020](../docs/adr/0020-infinite-scroll.md).
+
 ## Overview
 
 Infinite scroll layers on top of the keyed-and-directional-merge primitive to support continuously loading paginated data as the user scrolls. The server provides paginated values plus pagination metadata; the client decides direction (next page vs previous page) and informs the server of its merge intent on each follow-up request.

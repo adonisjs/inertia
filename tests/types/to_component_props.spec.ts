@@ -16,9 +16,11 @@ import {
 } from '@adonisjs/core/transformers'
 
 import {
+  type Scroll,
   type OnceProp,
   type DeferProp,
   type AlwaysProp,
+  type ScrollProp,
   type OptionalProp,
   type MergeableProp,
   type ToComponentProps,
@@ -1109,6 +1111,54 @@ test.group('To component props | once with transformers', () => {
         data: { id: number; title: string }[]
         metadata: any
       }
+    }>()
+  })
+})
+
+test.group('To component props | scroll', () => {
+  test('a scroll prop resolves to the Scroll marker shape and is required', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      users: ScrollProp<{ id: number; name: string }>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      users: Scroll<{ id: number; name: string }>
+    }>()
+  })
+
+  test('a deferred scroll prop resolves to an optional Scroll marker shape', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      users: ScrollProp<{ id: number; name: string }, true>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      users?: Scroll<{ id: number; name: string }>
+    }>()
+  })
+
+  test('each scroll prop resolves to its own marker shape', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      users: ScrollProp<{ id: number }>
+      posts: ScrollProp<{ id: number; title: string }>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      users: Scroll<{ id: number }>
+      posts: Scroll<{ id: number; title: string }>
+    }>()
+  })
+
+  test('a scroll prop alongside other prop kinds resolves correctly', ({ expectTypeOf }) => {
+    type Data = ToComponentProps<{
+      user: { id: number }
+      posts: DeferProp<{ id: number }[]>
+      feed: ScrollProp<{ id: number; title: string }>
+    }>
+
+    expectTypeOf<Data>().toEqualTypeOf<{
+      user: { id: number }
+      posts?: { id: number }[]
+      feed: Scroll<{ id: number; title: string }>
     }>()
   })
 })

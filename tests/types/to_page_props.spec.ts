@@ -10,8 +10,9 @@
 import { test } from '@japa/runner'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
-import { type AsPageProps } from '../../src/types.ts'
-import { once, always, defer, merge, optional } from '../../src/props.ts'
+import { type Scroll, type AsPageProps } from '../../src/types.ts'
+import { once, always, defer, merge, scroll, optional } from '../../src/props.ts'
+import { type User, userRows } from '../helpers.js'
 
 function createRenderer<Input extends Record<string, any>>() {
   return function render<T extends AsPageProps<Input>>(_: T): void {}
@@ -859,6 +860,105 @@ test.group('To page props | once', () => {
           data: [{ id: 1 }],
         }
       }).once(),
+    })
+  })
+})
+
+test.group('To page props | scroll', () => {
+  /**
+   * A minimal scroll-props provider reused across the cases below. The value
+   * form (transformer paginator vs provider) does not change the AsPageProps
+   * type behaviour; the paginator-inference path is type-checked in
+   * `tests/scroll.spec.ts`.
+   */
+  const cursor = () => ({ pageName: 'page', currentPage: 1, nextPage: 2, previousPage: null })
+
+  test('require the scroll helper for a required Scroll-marked prop', () => {
+    type Props = { users: Scroll<User> }
+
+    const render = createRenderer<Props>()
+    render({
+      users: scroll(() => ({ data: userRows }), cursor).matchOn('id'),
+    })
+  })
+
+  test('allow the scroll helper for an optional Scroll-marked prop', () => {
+    type Props = { users?: Scroll<User> }
+
+    const render = createRenderer<Props>()
+    render({
+      users: scroll(() => ({ data: userRows }), cursor),
+    })
+  })
+
+  test('allow a deferred scroll prop on an optional Scroll-marked prop', () => {
+    type Props = { users?: Scroll<User> }
+
+    const render = createRenderer<Props>()
+    render({
+      users: scroll(() => ({ data: userRows }), cursor)
+        .deferred()
+        .matchOn('id'),
+    })
+  })
+
+  test('disallow a deferred scroll prop on a required Scroll-marked prop', () => {
+    type Props = { users: Scroll<User> }
+
+    const render = createRenderer<Props>()
+    render({
+      // @ts-expect-error a deferred scroll prop is absent on first load, so it cannot be required
+      users: scroll(() => ({ data: userRows }), cursor).deferred(),
+    })
+  })
+
+  test('disallow a plain array value for a Scroll-marked prop', () => {
+    type Props = { users: Scroll<User> }
+
+    const render = createRenderer<Props>()
+    render({
+      // @ts-expect-error a Scroll-marked prop must be built with scroll()
+      users: userRows,
+    })
+  })
+
+  test('disallow a plain { data } object for a Scroll-marked prop', () => {
+    type Props = { users: Scroll<User> }
+
+    const render = createRenderer<Props>()
+    render({
+      // @ts-expect-error a data-shaped object is not a scroll prop without scroll()
+      users: { data: userRows },
+    })
+  })
+
+  test('disallow the merge helper on a Scroll-marked prop', () => {
+    type Props = { users: Scroll<User> }
+
+    const render = createRenderer<Props>()
+    render({
+      // @ts-expect-error a Scroll-marked prop must use scroll(), not merge()
+      users: merge(userRows),
+    })
+  })
+
+  test('disallow a scroll prop whose item type does not match the marker', () => {
+    type Props = { users: Scroll<User> }
+
+    const render = createRenderer<Props>()
+    render({
+      // @ts-expect-error the data items are missing the `name` field
+      users: scroll(() => ({ data: [{ id: 1 }] }), cursor),
+    })
+  })
+
+  test('disallow the scroll helper on a prop that is not Scroll-marked', () => {
+    type Props = { posts: User[] }
+
+    const render = createRenderer<Props>()
+    render({
+      // @ts-expect-error a non-Scroll prop cannot be built with scroll()
+      posts: scroll(() => ({ data: userRows }), cursor),
     })
   })
 })

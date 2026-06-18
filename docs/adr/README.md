@@ -44,6 +44,7 @@ We use the [MADR](https://adr.github.io/madr/) format. See
 | 0014 | [Upgrade the bundled client adapters to Inertia v3](0014-upgrade-bundled-client-to-inertia-v3.md) | Accepted |
 | 0017 | [Once props](0017-once-props.md)                                                   | Accepted |
 | 0019 | [Keyed and directional merges](0019-keyed-and-directional-merges.md)               | Accepted |
+| 0020 | [Infinite scroll](0020-infinite-scroll.md)                                         | Accepted |
 
 ## Proposed (planned protocol features)
 
@@ -59,7 +60,6 @@ features (04, 07, 08).
 | 0015 | Multiple errors per field        | [`planning/01-multiple-errors-per-field.md`](../../planning/01-multiple-errors-per-field.md) |
 | 0016 | Prefetch awareness               | [`planning/02-prefetch-awareness.md`](../../planning/02-prefetch-awareness.md) |
 | 0018 | Rescued deferred props           | [`planning/04-rescued-deferred-props.md`](../../planning/04-rescued-deferred-props.md) |
-| 0020 | Infinite scroll                  | [`planning/06-infinite-scroll.md`](../../planning/06-infinite-scroll.md) |
 | 0021 | Fragment-preserving redirects    | [`planning/07-fragment-preserving-redirects.md`](../../planning/07-fragment-preserving-redirects.md) |
 | 0022 | Shared props tracking            | [`planning/08-shared-props-tracking.md`](../../planning/08-shared-props-tracking.md) |
 | 0023 | Flash messages                   | [`planning/09-flash-messages.md`](../../planning/09-flash-messages.md) |

@@ -16,6 +16,7 @@ import { HttpContext } from '@adonisjs/core/http'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { ApiClient, apiClient } from '@japa/api-client'
 import { IgnitorFactory } from '@adonisjs/core/factories'
+import { BaseTransformer } from '@adonisjs/core/transformers'
 import { type ProviderNode } from '@adonisjs/core/types/app'
 import { runner, syncReporter } from '@japa/runner/factories'
 import { type ApplicationService } from '@adonisjs/core/types'
@@ -28,6 +29,39 @@ import { edgePluginInertia } from '../src/plugins/edge/plugin.js'
 import { inertiaApiClient } from '../src/plugins/japa/api_client.js'
 
 export const BASE_URL = new URL('./tmp/', import.meta.url)
+
+/**
+ * Shared fixtures for the infinite-scroll tests: a pass-through transformer used
+ * to build transformer paginators, a sample row set, and a Lucid-`getMeta()`-
+ * shaped metadata builder for a given page.
+ */
+export type User = { id: number; name: string }
+
+export class UserTransformer extends BaseTransformer<User> {
+  toObject() {
+    return this.resource
+  }
+}
+
+export const userRows: User[] = [
+  { id: 1, name: 'Jane' },
+  { id: 2, name: 'John' },
+]
+
+export function paginatorMeta(currentPage: number, lastPage: number, pageName = 'page') {
+  return {
+    total: lastPage * 2,
+    perPage: 2,
+    currentPage,
+    pageName,
+    lastPage,
+    firstPage: 1,
+    firstPageUrl: `/?${pageName}=1`,
+    lastPageUrl: `/?${pageName}=${lastPage}`,
+    nextPageUrl: currentPage < lastPage ? `/?${pageName}=${currentPage + 1}` : null,
+    previousPageUrl: currentPage > 1 ? `/?${pageName}=${currentPage - 1}` : null,
+  }
+}
 
 /**
  * Create a http server that will be closed automatically

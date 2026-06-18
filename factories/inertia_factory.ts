@@ -180,6 +180,23 @@ export class InertiaFactory<Pages extends Record<string, ComponentProps>> {
   }
 
   /**
+   * Simulates the infinite-scroll merge intent the client sends on follow-up
+   * scroll requests by setting the `X-Inertia-Infinite-Scroll-Merge-Intent`
+   * header. Absence is treated as `append`.
+   *
+   * @param intent - The merge direction the client requests
+   *
+   * @example
+   * ```typescript
+   * const inertia = factory.withMergeIntent('prepend').create()
+   * ```
+   */
+  withMergeIntent(intent: 'append' | 'prepend') {
+    this.#parameters.ctx.request.request.headers[InertiaHeaders.InfiniteScrollMergeIntent] = intent
+    return this
+  }
+
+  /**
    * Sets the assets version for cache busting
    *
    * @param version - Version string or function for asset versioning

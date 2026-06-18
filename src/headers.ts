@@ -81,4 +81,12 @@ export const InertiaHeaders = {
    * omits their values from the response.
    */
   ExceptOnceProps: 'x-inertia-except-once-props',
+
+  /**
+   * Header sent by the client on infinite-scroll follow-up requests, declaring
+   * whether the incoming page should be appended (loading the next page) or
+   * prepended (loading the previous page) to the cached items. Absence is
+   * treated as `append`.
+   */
+  InfiniteScrollMergeIntent: 'x-inertia-infinite-scroll-merge-intent',
 } as const
