@@ -784,6 +784,16 @@ export type PageObject<Props> = {
   }
 
   /**
+   * First-class flash bag (Inertia v2.3+). Lives alongside `props` rather than
+   * inside it; the client treats it as ephemeral — stripped from history state
+   * and surfaced via the `onFlash` visit callback and the `inertia:flash` event.
+   * Populated from the Inertia middleware's `flash()` method; omitted entirely
+   * when no flash provider is registered, so the default wire format is
+   * unchanged.
+   */
+  flash?: FlashData
+
+  /**
    * Encrypt history flag to be sent to the client with every request.
    */
   encryptHistory?: boolean
@@ -793,6 +803,13 @@ export type PageObject<Props> = {
    */
   clearHistory?: boolean
 }
+
+/**
+ * Default shape of the first-class flash bag. Apps narrow the actual shape by
+ * typing the middleware's `flash()` method return type and bridging it into the
+ * client via {@link InferFlashData}.
+ */
+export type FlashData = Record<string, any>
 
 /**
  * The shared props inferred from the user-land
@@ -863,5 +880,38 @@ export type InferSharedProps<T> = T extends {
 }
   ? Awaited<R> extends PageProps
     ? ToComponentProps<Awaited<R>>
+    : never
+  : never
+
+/**
+ * Type helper to infer the flash-bag shape from the `flash()` method of an
+ * Inertia middleware, mirroring {@link InferSharedProps}. Unlike shared props,
+ * flash is plain JSON (no branded prop wrappers), so the method's return type is
+ * used as-is. Bridge the result into the client's `@inertiajs/core`
+ * `flashDataType` config so `page.flash`, the `onFlash` callback, and
+ * `router.flash()` are typed end-to-end from the server's `flash()` method.
+ *
+ * @template T - The middleware class type that defines a `flash` method
+ *
+ * @example
+ * ```typescript
+ * class InertiaMiddleware extends BaseInertiaMiddleware {
+ *   flash(ctx: HttpContext) {
+ *     return ctx.session.flashMessages.all()
+ *   }
+ * }
+ *
+ * declare module '@inertiajs/core' {
+ *   interface InertiaConfig {
+ *     flashDataType: InferFlashData<InertiaMiddleware>
+ *   }
+ * }
+ * ```
+ */
+export type InferFlashData<T> = T extends {
+  flash(...args: any[]): infer R
+}
+  ? Awaited<R> extends Record<string, any>
+    ? Awaited<R>
     : never
   : never

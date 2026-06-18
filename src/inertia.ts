@@ -18,6 +18,7 @@ import { InertiaHeaders } from './headers.js'
 import { type ServerRenderer } from './server_renderer.js'
 import type {
   PageProps,
+  FlashData,
   PageObject,
   AsPageProps,
   RequestInfo,
@@ -91,6 +92,13 @@ export class Inertia<Pages> {
   }
 
   #sharedStateProviders?: (PageProps | (() => AsyncOrSync<PageProps>))[]
+
+  /**
+   * Provider for the page object's top-level `flash` field. Registered by the
+   * Inertia middleware from its `flash()` method; resolved once per response.
+   */
+  #flashProvider?: () => AsyncOrSync<FlashData>
+
   #cachedRequestInfo?: RequestInfo
 
   /**
@@ -546,6 +554,27 @@ export class Inertia<Pages> {
   }
 
   /**
+   * Register the provider for the page object's top-level `flash` field.
+   *
+   * Unlike shared state, the resolved value is emitted as a sibling of `props`
+   * (not merged into them). The Inertia middleware calls this with its `flash()`
+   * method; the last registration wins. When no provider is registered, the
+   * `flash` field is omitted from the page object entirely.
+   *
+   * @param provider - Callback resolving the flash bag for this response
+   * @returns The Inertia instance for method chaining
+   *
+   * @example
+   * ```js
+   * inertia.flash(() => ctx.session.flashMessages.all())
+   * ```
+   */
+  flash(provider: () => AsyncOrSync<FlashData>): this {
+    this.#flashProvider = provider
+    return this
+  }
+
+  /**
    * Build a page object with processed props and metadata
    *
    * Creates the complete page object that will be sent to the client or used for SSR.
@@ -616,6 +645,15 @@ export class Inertia<Pages> {
     }
     if (this.#shouldEncryptHistory) {
       pageObject.encryptHistory = true
+    }
+
+    /**
+     * Resolve the first-class flash bag from the registered provider, if any,
+     * and emit it as a top-level field. Omitted entirely when no provider is
+     * registered, so the default wire format stays unchanged.
+     */
+    if (this.#flashProvider) {
+      pageObject.flash = await this.#flashProvider()
     }
 
     return pageObject

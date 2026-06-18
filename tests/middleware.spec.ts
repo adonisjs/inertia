@@ -346,3 +346,59 @@ test.group('Middleware | Errors', () => {
     assert.deepEqual(middleware.getValidationErrors(ctx), {})
   })
 })
+
+test.group('Middleware | Flash', () => {
+  test('emit middleware flash() under the page flash field', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+    ctx.containerResolver = app.container.createResolver()
+    ctx.request.request.headers[InertiaHeaders.Inertia] = 'true'
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+    ctx.session.flashMessages.set('success', 'User created')
+
+    class FlashMiddleware extends BaseInertiaMiddleware {
+      share() {
+        return {}
+      }
+
+      flash(c: HttpContext) {
+        return c.session.flashMessages.all()
+      }
+    }
+
+    const middleware = new FlashMiddleware()
+    await middleware.init(ctx)
+
+    const result: any = await (ctx.inertia as any).render('foo', {})
+    assert.deepEqual(result.flash, { success: 'User created' })
+  })
+
+  test('omit flash field when the middleware has no flash method', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+    ctx.containerResolver = app.container.createResolver()
+    ctx.request.request.headers[InertiaHeaders.Inertia] = 'true'
+
+    const middleware = new InertiaMiddleware()
+    await middleware.init(ctx)
+
+    const result: any = await (ctx.inertia as any).render('foo', {})
+    assert.notProperty(result, 'flash')
+  })
+})

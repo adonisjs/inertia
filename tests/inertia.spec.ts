@@ -177,6 +177,34 @@ test.group('Inertia', () => {
     })
   })
 
+  test('emit flash bag under the top-level flash field', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const result: any = await inertia
+      .flash(() => ({ success: 'User created' }))
+      .render('foo', { foo: 'bar' })
+
+    assert.deepEqual(result.flash, { success: 'User created' })
+    assert.deepEqual(result.props, { foo: 'bar' })
+  })
+
+  test('resolve flash bag from an async provider', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const result: any = await inertia
+      .flash(async () => ({ message: 'Welcome' }))
+      .render('foo', { foo: 'bar' })
+
+    assert.deepEqual(result.flash, { message: 'Welcome' })
+  })
+
+  test('omit flash field when no provider is registered', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+    const result: any = await inertia.render('foo', { foo: 'bar' })
+
+    assert.notProperty(result, 'flash')
+  })
+
   test('render props should take precedence over sharedData', async ({ assert }) => {
     const inertia = new InertiaFactory().create()
 

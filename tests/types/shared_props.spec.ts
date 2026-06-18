@@ -11,7 +11,7 @@ import { test } from '@japa/runner'
 import { type HttpContext } from '@adonisjs/core/http'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
-import { type InferSharedProps } from '../../src/types.ts'
+import { type InferFlashData, type InferSharedProps } from '../../src/types.ts'
 import BaseInertiaMiddleware from '../../src/inertia_middleware.ts'
 
 test.group('Infer shared props', () => {
@@ -75,5 +75,54 @@ test.group('Infer shared props', () => {
           }
       user?: { id: number; timestamps: boolean }
     }>()
+  })
+})
+
+test.group('Infer flash data', () => {
+  test('infer flash data from the middleware flash method', ({ expectTypeOf }) => {
+    class InertiaMiddleware extends BaseInertiaMiddleware {
+      share() {
+        return {}
+      }
+
+      flash(_ctx: HttpContext) {
+        return {
+          success: 'Saved' as string | undefined,
+          newUserId: 42 as number | undefined,
+        }
+      }
+    }
+
+    type FlashData = InferFlashData<InertiaMiddleware>
+    expectTypeOf<FlashData>().toEqualTypeOf<{
+      success: string | undefined
+      newUserId: number | undefined
+    }>()
+  })
+
+  test('infer flash data from an async flash method', ({ expectTypeOf }) => {
+    class InertiaMiddleware extends BaseInertiaMiddleware {
+      share() {
+        return {}
+      }
+
+      async flash(_ctx: HttpContext) {
+        return { message: 'Welcome' as string | undefined }
+      }
+    }
+
+    type FlashData = InferFlashData<InertiaMiddleware>
+    expectTypeOf<FlashData>().toEqualTypeOf<{ message: string | undefined }>()
+  })
+
+  test('resolve to never when the middleware has no flash method', ({ expectTypeOf }) => {
+    class InertiaMiddleware extends BaseInertiaMiddleware {
+      share() {
+        return {}
+      }
+    }
+
+    type FlashData = InferFlashData<InertiaMiddleware>
+    expectTypeOf<FlashData>().toEqualTypeOf<never>()
   })
 })

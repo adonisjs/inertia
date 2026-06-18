@@ -14,7 +14,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { type Inertia } from './inertia.js'
 import { InertiaHeaders } from './headers.js'
 import { InertiaManager } from './inertia_manager.ts'
-import type { ComponentProps, InertiaPages, PageProps } from './types.js'
+import type { ComponentProps, FlashData, InertiaPages, PageProps } from './types.js'
 import debug from './debug.ts'
 
 declare module '@adonisjs/core/http' {
@@ -112,6 +112,26 @@ export default abstract class BaseInertiaMiddleware {
   abstract share?(ctx: HttpContext): PageProps | Promise<PageProps>
 
   /**
+   * Provide the first-class flash bag sent to every Inertia page under the
+   * top-level `flash` field (a sibling of `props`, not merged into them).
+   *
+   * Typically reads the framework's session flash messages. Optional — when the
+   * method is not defined, no `flash` field is emitted. Type the return value to
+   * get end-to-end type safety via `InferFlashData`.
+   *
+   * @param ctx - The HTTP context object
+   * @returns The flash bag for the current response
+   *
+   * @example
+   * ```js
+   * flash(ctx) {
+   *   return ctx.session.flashMessages.all()
+   * }
+   * ```
+   */
+  flash?(ctx: HttpContext): FlashData | Promise<FlashData>
+
+  /**
    * Initialize the Inertia instance for the current request
    *
    * This method creates an Inertia instance and attaches it to the
@@ -133,6 +153,9 @@ export default abstract class BaseInertiaMiddleware {
       >(ctx)
     if (this.share) {
       ctx.inertia.share(() => this.share!(ctx))
+    }
+    if (this.flash) {
+      ctx.inertia.flash(() => this.flash!(ctx))
     }
   }
 

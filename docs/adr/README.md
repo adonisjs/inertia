@@ -46,6 +46,7 @@ We use the [MADR](https://adr.github.io/madr/) format. See
 | 0018 | [Rescued deferred props](0018-rescued-deferred-props.md)                           | Accepted |
 | 0019 | [Keyed and directional merges](0019-keyed-and-directional-merges.md)               | Accepted |
 | 0020 | [Infinite scroll](0020-infinite-scroll.md)                                         | Accepted |
+| 0021 | [First-class flash messages](0021-first-class-flash-messages.md)                   | Accepted |
 
 ## Proposed (planned protocol features)
 
@@ -55,15 +56,15 @@ recording the adapter-specific design decision. Until then they are tracked here
 as proposed slots referencing their spec. The v3 client upgrade
 ([ADR 0014](0014-upgrade-bundled-client-to-inertia-v3.md)) unblocks the v3-only
 features (07, 08); rescued deferred props (04) shipped as
-[ADR 0018](0018-rescued-deferred-props.md).
+[ADR 0018](0018-rescued-deferred-props.md); flash messages (09) shipped as
+[ADR 0021](0021-first-class-flash-messages.md).
 
 | Planned ADR | Feature | Spec |
 | ----------- | ------- | ---- |
 | 0015 | Multiple errors per field        | [`planning/01-multiple-errors-per-field.md`](../../planning/01-multiple-errors-per-field.md) |
 | 0016 | Prefetch awareness               | [`planning/02-prefetch-awareness.md`](../../planning/02-prefetch-awareness.md) |
-| 0021 | Fragment-preserving redirects    | [`planning/07-fragment-preserving-redirects.md`](../../planning/07-fragment-preserving-redirects.md) |
-| 0022 | Shared props tracking            | [`planning/08-shared-props-tracking.md`](../../planning/08-shared-props-tracking.md) |
-| 0023 | Flash messages                   | [`planning/09-flash-messages.md`](../../planning/09-flash-messages.md) |
+| 0022 | Fragment-preserving redirects    | [`planning/07-fragment-preserving-redirects.md`](../../planning/07-fragment-preserving-redirects.md) |
+| 0023 | Shared props tracking            | [`planning/08-shared-props-tracking.md`](../../planning/08-shared-props-tracking.md) |
 
 > The number assignment above is indicative. Assign the next free number when an
 > ADR is actually written; do not let a placeholder block the sequence.
