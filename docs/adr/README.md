@@ -42,6 +42,7 @@ We use the [MADR](https://adr.github.io/madr/) format. See
 | 0012 | [Japa `api_client` plugin for testing Inertia responses](0012-japa-api-client-plugin.md) | Accepted |
 | 0013 | [Tech-agnostic protocol-coverage planning method](0013-protocol-coverage-planning-method.md) | Accepted |
 | 0014 | [Upgrade the bundled client adapters to Inertia v3](0014-upgrade-bundled-client-to-inertia-v3.md) | Accepted |
+| 0015 | [Multiple errors per field](0015-multiple-errors-per-field.md)                     | Accepted |
 | 0017 | [Once props](0017-once-props.md)                                                   | Accepted |
 | 0018 | [Rescued deferred props](0018-rescued-deferred-props.md)                           | Accepted |
 | 0019 | [Keyed and directional merges](0019-keyed-and-directional-merges.md)               | Accepted |
@@ -59,11 +60,11 @@ as proposed slots referencing their spec. The v3 client upgrade
 features (07, 08); rescued deferred props (04) shipped as
 [ADR 0018](0018-rescued-deferred-props.md); flash messages (09) shipped as
 [ADR 0021](0021-first-class-flash-messages.md); shared props tracking (08) shipped
-as [ADR 0022](0022-shared-props-tracking.md).
+as [ADR 0022](0022-shared-props-tracking.md); multiple errors per field (01)
+shipped as [ADR 0015](0015-multiple-errors-per-field.md).
 
 | Planned ADR | Feature | Spec |
 | ----------- | ------- | ---- |
-| 0015 | Multiple errors per field        | [`planning/01-multiple-errors-per-field.md`](../../planning/01-multiple-errors-per-field.md) |
 | 0016 | Prefetch awareness               | [`planning/02-prefetch-awareness.md`](../../planning/02-prefetch-awareness.md) |
 | 0023 | Fragment-preserving redirects    | [`planning/07-fragment-preserving-redirects.md`](../../planning/07-fragment-preserving-redirects.md) |
 

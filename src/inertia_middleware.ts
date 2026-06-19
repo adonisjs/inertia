@@ -55,7 +55,16 @@ export default abstract class BaseInertiaMiddleware {
    * them according to Inertia's error bag conventions. Supports both simple
    * error objects and error bags for multi-form scenarios.
    *
+   * By default every field collapses to its **first** message (`string`),
+   * matching Inertia's default error shape. Pass `{ allMessages: true }` to opt
+   * into the all-messages mode, where every field is emitted as a `string[]` —
+   * including single-message fields, which arrive as a one-element array. The
+   * shape is uniform across the response: never a mix of strings and arrays. An
+   * app running in all-messages mode types the client globally via
+   * `declare module '@inertiajs/core' { interface InertiaConfig { errorValueType: string[] } }`.
+   *
    * @param ctx - The HTTP context containing session data
+   * @param options - When `allMessages` is true, emit every field as `string[]`
    * @returns Formatted validation errors, either as a simple object or error bags
    *
    * @example
@@ -63,24 +72,38 @@ export default abstract class BaseInertiaMiddleware {
    * const errors = middleware.getValidationErrors(ctx)
    * // Returns: { email: 'Email is required', password: 'Password too short' }
    * // Or with error bags: { login: { email: 'Email is required' } }
+   *
+   * const allErrors = middleware.getValidationErrors(ctx, { allMessages: true })
+   * // Returns: { email: ['Email is required'], password: ['Too short', 'Needs a number'] }
    * ```
    */
-  getValidationErrors(ctx: HttpContext):
-    | Record<string, string>
-    | {
-        [errorBag: string]: Record<string, string>
-      } {
+  getValidationErrors(
+    ctx: HttpContext
+  ): Record<string, string> | { [errorBag: string]: Record<string, string> }
+  getValidationErrors(
+    ctx: HttpContext,
+    options: { allMessages: true }
+  ): Record<string, string[]> | { [errorBag: string]: Record<string, string[]> }
+  getValidationErrors(
+    ctx: HttpContext,
+    options?: { allMessages?: boolean }
+  ): Record<string, string | string[]> | { [errorBag: string]: Record<string, string | string[]> } {
     if (!ctx.session) {
       return {}
     }
 
+    const allMessages = options?.allMessages === true
     const inputErrors = ctx.session.flashMessages.get('inputErrorsBag', {})
     const errors = Object.entries(inputErrors).reduce(
       (result, [field, messages]) => {
-        result[field] = Array.isArray(messages) ? messages[0] : messages
+        if (allMessages) {
+          result[field] = Array.isArray(messages) ? messages : [messages]
+        } else {
+          result[field] = Array.isArray(messages) ? messages[0] : messages
+        }
         return result
       },
-      {} as Record<string, string>
+      {} as Record<string, string | string[]>
     )
 
     const errorBag = ctx.request.header(InertiaHeaders.ErrorBag)

@@ -345,6 +345,61 @@ test.group('Middleware | Errors', () => {
     const middleware = new InertiaMiddleware()
     assert.deepEqual(middleware.getValidationErrors(ctx), {})
   })
+
+  test('emit every field as an array in all-messages mode', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+
+    ctx.session.flashMessages.set('inputErrorsBag', {
+      name: 'name is required',
+      email: ['email is required', 'email must be formatted correctly'],
+    })
+
+    const middleware = new InertiaMiddleware()
+    assert.deepEqual(middleware.getValidationErrors(ctx, { allMessages: true }), {
+      name: ['name is required'],
+      email: ['email is required', 'email must be formatted correctly'],
+    })
+  })
+
+  test('scope all-messages errors under an error bag', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+    ctx.request.request.headers[InertiaHeaders.ErrorBag] = 'user'
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+
+    ctx.session.flashMessages.set('inputErrorsBag', {
+      name: 'name is required',
+      email: ['email is required', 'email must be formatted correctly'],
+    })
+
+    const middleware = new InertiaMiddleware()
+    assert.deepEqual(middleware.getValidationErrors(ctx, { allMessages: true }), {
+      user: {
+        name: ['name is required'],
+        email: ['email is required', 'email must be formatted correctly'],
+      },
+    })
+  })
 })
 
 test.group('Middleware | Flash', () => {

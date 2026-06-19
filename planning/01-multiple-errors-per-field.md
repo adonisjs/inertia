@@ -26,8 +26,8 @@ The `errors` prop on the page object is an object keyed by field path. The value
 {
   "errors": {
     "email": ["Email is required"],
-    "password": ["Must be at least 8 characters", "Must contain a number"]
-  }
+    "password": ["Must be at least 8 characters", "Must contain a number"],
+  },
 }
 ```
 
@@ -49,7 +49,9 @@ The client types `errors` as `Record<string, ErrorValue>`, where `ErrorValue = I
 
 ```ts
 declare module '@inertiajs/core' {
-  interface InertiaConfig { errorValueType: string[] }
+  interface InertiaConfig {
+    errorValueType: string[]
+  }
 }
 ```
 
