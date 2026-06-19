@@ -722,6 +722,23 @@ export type PageObject<Props> = {
   url: string
 
   /**
+   * Top-level keys registered through the `share()` pipeline (Inertia v3). The
+   * client uses it to carry shared prop values forward across instant
+   * (client-side) visits, where it swaps to the target component before the
+   * server responds and needs to know which props to keep from the current page.
+   *
+   * This is registration metadata, not a snapshot of `props`: every shared key is
+   * listed regardless of whether its value is present this response. A shared prop
+   * skipped as deferred/optional, or filtered out by a partial reload, is still
+   * listed — so the client keeps treating it as shared. Page-prop overrides keep
+   * the key too. Mirrors inertia-laravel, which collects the keys before
+   * resolution and filtering. Omitted entirely when no shared keys exist, so the
+   * default wire format is unchanged and the v2 client (which has no such field)
+   * is unaffected.
+   */
+  sharedProps?: string[]
+
+  /**
    * Grouped deferred props that can be loaded after the initial page
    * load
    */

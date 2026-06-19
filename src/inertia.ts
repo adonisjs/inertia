@@ -290,6 +290,13 @@ export class Inertia<Pages> {
     let finalProps: PageProps
 
     /**
+     * Top-level keys registered through the `share()` pipeline, in registration
+     * order. Emitted verbatim as the page object's `sharedProps` field —
+     * independent of which shared props actually make it into the response.
+     */
+    let sharedKeys: string[] = []
+
+    /**
      * Shared state could be defined as functions that must be lazily evaluated.
      * Therefore we invoke all the functions and create a final merged shared
      * state.
@@ -304,6 +311,7 @@ export class Inertia<Pages> {
           return { ...result, ...state }
         }, {})
       })
+      sharedKeys = Object.keys(sharedState)
       finalProps = { ...sharedState, ...pageProps }
     } else {
       finalProps = { ...pageProps }
@@ -338,7 +346,7 @@ export class Inertia<Pages> {
        * Partial reloads ignore the client's once cache, so only the clock is
        * threaded through — not the except-once set.
        */
-      return buildPartialRequestProps(
+      const partialResult = await buildPartialRequestProps(
         finalProps,
         cherryPickProps,
         this.ctx.containerResolver,
@@ -346,6 +354,13 @@ export class Inertia<Pages> {
         resetProps,
         requestInfo.mergeIntent
       )
+
+      /**
+       * `sharedProps` reports the registered shared keys, not a subset of the
+       * emitted props — so cherry-picking does not narrow it (mirrors
+       * inertia-laravel, which collects the keys before partial filtering).
+       */
+      return { ...partialResult, sharedProps: sharedKeys }
     }
 
     /**
@@ -358,13 +373,20 @@ export class Inertia<Pages> {
     }
 
     debug('building props for a standard visit %O', requestInfo)
-    return buildStandardVisitProps(
+    const standardResult = await buildStandardVisitProps(
       finalProps,
       this.ctx.containerResolver,
       onceContext,
       resetProps,
       requestInfo.mergeIntent
     )
+
+    /**
+     * Emit every registered shared key, including those skipped this visit as
+     * deferred/optional — the client still treats them as shared for
+     * instant-visit carry-over.
+     */
+    return { ...standardResult, sharedProps: sharedKeys }
   }
 
   /**
@@ -609,6 +631,7 @@ export class Inertia<Pages> {
       scrollProps,
       rescuedProps,
       rescuedErrors,
+      sharedProps,
     } = await this.#buildPageProps(page, requestInfo, pageProps as unknown as PageProps)
 
     /**
@@ -633,6 +656,16 @@ export class Inertia<Pages> {
       onceProps,
       scrollProps,
       rescuedProps,
+    }
+
+    /**
+     * Advertise the registered shared keys so the v3 client can carry shared
+     * props over during instant visits. Omitted when no shared keys exist, so the
+     * default wire format is unchanged (matches inertia-laravel, which drops the
+     * field when empty).
+     */
+    if (sharedProps.length > 0) {
+      pageObject.sharedProps = sharedProps
     }
 
     /**

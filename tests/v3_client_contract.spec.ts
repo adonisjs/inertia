@@ -96,6 +96,28 @@ test.group('v3 client contract', () => {
     assert.deepEqual((clientPage as any).onceProps, (serverPage as any).onceProps)
   })
 
+  test('the server emits sharedProps and the v3 client preserves it', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const serverPage = await inertia
+      .share({ user: { id: 1, name: 'Jane' } })
+      .page('home', { post: { id: 42 } })
+
+    /**
+     * The server advertises the registered shared keys alongside the merged props.
+     */
+    assert.deepEqual((serverPage as any).sharedProps, ['user'])
+
+    const { page: clientPage } = await roundTripThroughClient(serverPage)
+
+    /**
+     * The real v3 client must reconstruct the page object, `sharedProps` included,
+     * exactly as the server produced it.
+     */
+    assert.deepEqual(clientPage, serverPage)
+    assert.deepEqual((clientPage as any).sharedProps, ['user'])
+  })
+
   test('the server emits rescuedProps and the v3 client preserves it', async ({ assert }) => {
     const inertia = new InertiaFactory().create()
 

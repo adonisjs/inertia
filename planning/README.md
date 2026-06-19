@@ -43,7 +43,7 @@ v3-gated features (04, 07, 08) can be slotted wherever their dependencies allow.
 6. [Prefetch awareness](./02-prefetch-awareness.md) — mostly a generic-HTTP flag; see banner.
 7. [Rescued deferred props](./04-rescued-deferred-props.md) — ✅ implemented ([ADR 0018](../docs/adr/0018-rescued-deferred-props.md)).
 8. [Fragment-preserving redirects](./07-fragment-preserving-redirects.md) — now unblocked.
-9. [Shared props tracking](./08-shared-props-tracking.md) — now unblocked.
+9. [Shared props tracking](./08-shared-props-tracking.md) — ✅ implemented ([ADR 0022](../docs/adr/0022-shared-props-tracking.md)).
 
 > **Scope limit (ADR 0014):** prop resolution is **top-level only** — resolving
 > wrappers at any nesting depth and dot-notation partial-reload paths are

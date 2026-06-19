@@ -217,6 +217,72 @@ test.group('Inertia', () => {
     assert.deepEqual(result.props, { foo: 'baz' })
   })
 
+  test('emit sharedProps listing the top-level share() keys', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const result: any = await inertia
+      .share({ user: { id: 1 } })
+      .share(async () => ({ menu: ['home'] }))
+      .render('foo', { post: { id: 42 } })
+
+    assert.deepEqual(result.sharedProps, ['user', 'menu'])
+    assert.deepEqual(result.props, { user: { id: 1 }, menu: ['home'], post: { id: 42 } })
+  })
+
+  test('omit sharedProps when no shared state is registered', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+    const result: any = await inertia.render('foo', { foo: 'bar' })
+
+    assert.notProperty(result, 'sharedProps')
+  })
+
+  test('omit sharedProps when shared state has no keys', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+    const result: any = await inertia.share({}).render('foo', { foo: 'bar' })
+
+    assert.notProperty(result, 'sharedProps')
+  })
+
+  test('list a deferred shared prop even though its value is skipped', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const result: any = await inertia
+      .share({ stats: inertia.defer(() => ({ visits: 1 })) })
+      .render('foo', { foo: 'bar' })
+
+    /**
+     * The value is deferred (absent from props on a standard visit), but the key
+     * is still advertised as shared so the client carries it over once loaded.
+     */
+    assert.deepEqual(result.sharedProps, ['stats'])
+    assert.deepEqual(result.deferredProps, { default: ['stats'] })
+    assert.deepEqual(result.props, { foo: 'bar' })
+  })
+
+  test('keep an overridden shared key in sharedProps', async ({ assert }) => {
+    const inertia = new InertiaFactory().create()
+
+    const result: any = await inertia.share({ foo: 'shared' }).render('foo', { foo: 'page' })
+
+    assert.deepEqual(result.props, { foo: 'page' })
+    assert.deepEqual(result.sharedProps, ['foo'])
+  })
+
+  test('sharedProps is not narrowed by partial-reload cherry-picking', async ({ assert }) => {
+    const inertia = new InertiaFactory().partialReload('Auth/Login').only(['user']).create()
+
+    const result: any = await inertia
+      .share({ menu: ['home'] })
+      .render('Auth/Login', { user: 'jul', categories: [1, 2] })
+
+    /**
+     * `only(['user'])` filters `menu` out of props, yet `sharedProps` still names
+     * it — the field reports registered shared keys, not the emitted subset.
+     */
+    assert.deepEqual(result.props, { user: 'jul' })
+    assert.deepEqual(result.sharedProps, ['menu'])
+  })
+
   test('if x-inertia-partial-data header is present only return partial data', async ({
     assert,
   }) => {
