@@ -33,11 +33,11 @@
  *
  * @throws Error When none of the provided paths can be resolved in the pages registry
  */
-export async function resolvePageComponent<T>(
+export async function resolvePageComponent<T extends { default: unknown }>(
   path: string | string[],
   pages: Record<string, Promise<T> | (() => Promise<T>) | T>,
   layout?: any
-): Promise<T> {
+): Promise<T['default']> {
   for (const p of Array.isArray(path) ? path : [path]) {
     const page = pages[p]
     if (typeof page === 'undefined') {
