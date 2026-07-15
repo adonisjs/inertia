@@ -11,7 +11,7 @@
 > "Wrapper convention" sections below imply the `{ data, meta }` wrapper is
 > listed directly in `mergeProps`/`prependProps`. Verified against
 > `@inertiajs/core@3.4.0`, that clobbers `data` (the client shallow-merges
-> object-valued props and only merges *arrays* directionally). The adapter
+> object-valued props and only merges _arrays_ directionally). The adapter
 > instead targets the array path directly — it emits `"<prop>.data"` in
 > `mergeProps`/`prependProps` and `"<prop>.data.<key>"` in `matchPropsOn`, so the
 > client merges the wrapper's array while the fresh `meta` rides along. See
@@ -51,21 +51,21 @@ The page object carries a `scrollProps` map keyed by prop path. Each entry descr
       "previousPage": null,
       "nextPage": 2,
       "currentPage": 1,
-      "reset": false
-    }
-  }
+      "reset": false,
+    },
+  },
 }
 ```
 
 Field shape per entry:
 
-| Field          | Type                          | Description |
-| -------------- | ----------------------------- | --- |
-| `pageName`     | string                        | Query-string parameter the client should use when requesting the next or previous page (e.g. `page`, `users_page`, `cursor`). |
-| `previousPage` | `number \| string \| null`    | Identifier for the previous page, or `null` if there is no previous page. |
-| `nextPage`     | `number \| string \| null`    | Identifier for the next page, or `null` if there is no next page. |
-| `currentPage` | `number \| string \| null`     | Identifier for the page currently in the response. |
-| `reset`        | boolean                       | When true, instructs the client to discard cached items for this prop before merging. |
+| Field          | Type                       | Description                                                                                                                   |
+| -------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `pageName`     | string                     | Query-string parameter the client should use when requesting the next or previous page (e.g. `page`, `users_page`, `cursor`). |
+| `previousPage` | `number \| string \| null` | Identifier for the previous page, or `null` if there is no previous page.                                                     |
+| `nextPage`     | `number \| string \| null` | Identifier for the next page, or `null` if there is no next page.                                                             |
+| `currentPage`  | `number \| string \| null` | Identifier for the page currently in the response.                                                                            |
+| `reset`        | boolean                    | When true, instructs the client to discard cached items for this prop before merging.                                         |
 
 Identifiers are typed as numeric for offset paginators and string for cursor paginators.
 

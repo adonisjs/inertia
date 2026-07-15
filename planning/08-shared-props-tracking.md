@@ -23,12 +23,12 @@ That is, on client-side "instant" visits (where the server is not hit), the clie
 ```jsonc
 {
   "props": { "user": { "id": 1 }, "flash": { "message": "Saved" }, "post": { "id": 42 } },
-  "sharedProps": ["user", "flash"]
+  "sharedProps": ["user", "flash"],
 }
 ```
 
-| Field         | Type       | Description |
-| ------------- | ---------- | --- |
+| Field         | Type       | Description                                                                  |
+| ------------- | ---------- | ---------------------------------------------------------------------------- |
 | `sharedProps` | `string[]` | Top-level keys in `props` registered via the server's shared-state pipeline. |
 
 > Ordering, dedup, dotted-key collapsing, and override-precedence rules are **not** specified by the protocol — they are adapter implementation choices and must not be presented as protocol guarantees. (Normally Inertia does not distinguish shared vs page props at all; shared data is simply merged into `props`, page props taking precedence on key collisions. `sharedProps` is the one narrow exception, for instant-visit carry-over.)

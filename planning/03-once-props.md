@@ -36,22 +36,22 @@ The page object carries an `onceProps` field describing every once prop the serv
   "onceProps": {
     "user": {
       "prop": "user",
-      "expiresAt": 1736505600000
+      "expiresAt": 1736505600000,
     },
     "lookups": {
       "prop": "lookups",
-      "expiresAt": null
-    }
-  }
+      "expiresAt": null,
+    },
+  },
 }
 ```
 
 Field shape:
 
-| Field       | Type                  | Description |
-| ----------- | --------------------- | --- |
-| `prop`      | string                | Path to the prop inside `props`. Usually equal to the once-key, but may differ if a custom key was assigned. |
-| `expiresAt` | `number \| null`      | Unix epoch milliseconds at which the cached value should be considered stale. `null` means no expiration. |
+| Field       | Type             | Description                                                                                                  |
+| ----------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `prop`      | string           | Path to the prop inside `props`. Usually equal to the once-key, but may differ if a custom key was assigned. |
+| `expiresAt` | `number \| null` | Unix epoch milliseconds at which the cached value should be considered stale. `null` means no expiration.    |
 
 The map is keyed by **once-key**, not by prop name. If no custom key is assigned, the once-key equals the prop path.
 

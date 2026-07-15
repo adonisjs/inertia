@@ -24,13 +24,13 @@ They differ from regular props in three ways:
 {
   "component": "Users/Show",
   "props": { "user": { "id": 42, "name": "Jane" } },
-  "flash": { "message": "User created successfully", "newUserId": 42 }
+  "flash": { "message": "User created successfully", "newUserId": 42 },
 }
 ```
 
-| Field   | Type                       | Description |
-| ------- | -------------------------- | --- |
-| `flash` | `Record<string, unknown>`  | Map of arbitrary JSON-serializable values; keys are application-defined. |
+| Field   | Type                      | Description                                                              |
+| ------- | ------------------------- | ------------------------------------------------------------------------ |
+| `flash` | `Record<string, unknown>` | Map of arbitrary JSON-serializable values; keys are application-defined. |
 
 - The client normalizes `flash` to `{}` when absent, so component code can rely on a defined object. (This is a **client normalization**, not a documented server guarantee — a server-side contract that the field is always present is the adapter's own choice.)
 - Values are standard JSON; no wrapper/marker types.

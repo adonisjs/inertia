@@ -49,6 +49,8 @@ We use the [MADR](https://adr.github.io/madr/) format. See
 | 0020 | [Infinite scroll](0020-infinite-scroll.md)                                         | Accepted |
 | 0021 | [First-class flash messages](0021-first-class-flash-messages.md)                   | Accepted |
 | 0022 | [Shared props tracking](0022-shared-props-tracking.md)                             | Accepted |
+| 0023 | [Top-level-only prop resolution is permanent](0023-top-level-only-prop-resolution-permanent.md) | Accepted |
+| 0024 | [No Precognition support](0024-no-precognition-support.md)                         | Accepted |
 
 ## Proposed (planned protocol features)
 
@@ -66,7 +68,12 @@ shipped as [ADR 0015](0015-multiple-errors-per-field.md).
 | Planned ADR | Feature | Spec |
 | ----------- | ------- | ---- |
 | 0016 | Prefetch awareness               | [`planning/02-prefetch-awareness.md`](../../planning/02-prefetch-awareness.md) |
-| 0023 | Fragment-preserving redirects    | [`planning/07-fragment-preserving-redirects.md`](../../planning/07-fragment-preserving-redirects.md) |
+| 0025 | Fragment-preserving redirects    | [`planning/07-fragment-preserving-redirects.md`](../../planning/07-fragment-preserving-redirects.md) |
+
+> Prefetch awareness's observable surface — a request-level prefetch flag — now
+> ships in `@adonisjs/http-server` as `request.prefetch()` (checks `Sec-Purpose`,
+> `Purpose`, and `X-Moz`). The remaining slot covers only the adapter-side
+> decision of whether anything beyond documentation is needed.
 
 > The number assignment above is indicative. Assign the next free number when an
 > ADR is actually written; do not let a placeholder block the sequence.

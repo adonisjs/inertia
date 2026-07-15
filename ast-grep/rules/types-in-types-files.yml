@@ -1,0 +1,42 @@
+# Covers two related requirements:
+#
+#   1. All type declarations must live in a dedicated `types.ts` file or a
+#      `types/` folder.
+#   2. Files that contain functional code must not declare types inline.
+#
+# These are the same constraint seen from two angles, so a single rule
+# enforces both: flag every top-level `type` / `interface` / `enum`
+# declaration that is NOT inside one of the allowed type locations.
+#
+# --- CONFIGURING THE ALLOWED PATHS -------------------------------------------
+# `files:`   the source files this rule scans.
+# `ignores:` the locations where type declarations ARE allowed. Edit these
+#            globs to define the exact path(s) that may hold types.
+# -----------------------------------------------------------------------------
+id: types-in-types-files
+language: TypeScript
+severity: error
+message: >-
+  Type declarations are not allowed here. Move this `type` / `interface` /
+  `enum` into a `types.ts` file or a `types/` folder.
+files:
+  - 'src/**/*.ts'
+  - 'src/**/*.tsx'
+ignores:
+  - 'src/types.ts'
+  - 'src/types/**'
+  - 'src/**/types.ts'
+  - 'src/**/types/**'
+rule:
+  any:
+    - kind: type_alias_declaration
+    - kind: interface_declaration
+    - kind: enum_declaration
+  # Only flag declarations at the top level of the module (directly, or via an
+  # `export` statement). Types nested inside functions/classes are left alone.
+  inside:
+    any:
+      - kind: program
+      - kind: export_statement
+        inside:
+          kind: program

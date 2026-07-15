@@ -11,11 +11,11 @@ Mergeable props let the client combine incoming prop values with existing cached
 
 ## Wire format (page-object fields)
 
-| Field            | Type       | Description |
-| ---------------- | ---------- | --- |
-| `mergeProps`     | `string[]` | Prop paths whose array value is **appended** to the existing array. |
-| `prependProps`   | `string[]` | Prop paths whose array value is **prepended** to the existing array. |
-| `deepMergeProps` | `string[]` | Prop paths whose value is recursively (deep) merged. |
+| Field            | Type       | Description                                                            |
+| ---------------- | ---------- | ---------------------------------------------------------------------- |
+| `mergeProps`     | `string[]` | Prop paths whose array value is **appended** to the existing array.    |
+| `prependProps`   | `string[]` | Prop paths whose array value is **prepended** to the existing array.   |
+| `deepMergeProps` | `string[]` | Prop paths whose value is recursively (deep) merged.                   |
 | `matchPropsOn`   | `string[]` | Keyed-merge config; entries are `"<propPath>.<keyField>"` (see below). |
 
 A given prop path appears in at most one of `mergeProps` / `prependProps` / `deepMergeProps`, and MAY also appear in `matchPropsOn`. (This is an adapter-level invariant — the wire does not enforce exclusivity; a prop listed in two direction fields is processed by the client twice.)
@@ -25,7 +25,7 @@ A given prop path appears in at most one of `mergeProps` / `prependProps` / `dee
   "mergeProps": ["users"],
   "prependProps": ["activity"],
   "deepMergeProps": ["settings"],
-  "matchPropsOn": ["users.id", "activity.uuid"]
+  "matchPropsOn": ["users.id", "activity.uuid"],
 }
 ```
 

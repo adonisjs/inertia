@@ -49,4 +49,7 @@ v3-gated features (04, 07, 08) can be slotted wherever their dependencies allow.
 > wrappers at any nesting depth and dot-notation partial-reload paths are
 > **deliberately out of scope** (cost of the per-render tree walk; matches
 > `@hono/inertia`). The features above are implemented against top-level props;
-> wrappers nested inside plain objects are unsupported by design.
+> wrappers nested inside plain objects are unsupported by design. This limit is
+> **permanent** — see [ADR 0023](../docs/adr/0023-top-level-only-prop-resolution-permanent.md).
+> Likewise, Laravel Precognition (which appears on the v3 protocol page) will
+> never be supported — see [ADR 0024](../docs/adr/0024-no-precognition-support.md).

@@ -19,15 +19,15 @@ The page object carries a top-level `rescuedProps` field (v3) listing prop paths
 ```jsonc
 {
   "props": { "user": { "id": 1, "name": "Jane" } },
-  "rescuedProps": ["stats"]
+  "rescuedProps": ["stats"],
 }
 ```
 
-| Field          | Type       | Description |
-| -------------- | ---------- | --- |
+| Field          | Type       | Description                                                |
+| -------------- | ---------- | ---------------------------------------------------------- |
 | `rescuedProps` | `string[]` | Prop paths whose deferred resolution threw and was caught. |
 
-The failed prop is **omitted from `props`** (it is *not* emitted as `null`) — the client keeps showing the rescue UI for that path.
+The failed prop is **omitted from `props`** (it is _not_ emitted as `null`) — the client keeps showing the rescue UI for that path.
 
 ## Server behavior
 

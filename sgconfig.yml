@@ -1,0 +1,10 @@
+# ast-grep configuration for the @adonisjs/inertia package.
+#
+# Run all rules with:        npx ast-grep scan
+# Run a single rule with:    npx ast-grep scan --filter <rule-id>
+#
+# Rules live in ./ast-grep/rules. Each rule documents the glob paths it
+# applies to (the `files:` / `ignores:` keys) so you can tune the exact
+# locations without touching the matching logic.
+ruleDirs:
+  - ast-grep/rules

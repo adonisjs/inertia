@@ -1,0 +1,57 @@
+# Requirement:
+#
+#   Test files must not have top-level function, class, or type declarations.
+#   Shared helpers belong in `tests/helpers.ts`; shared types belong in
+#   `tests/types.ts` (or a `tests/types/` folder).
+#
+# A test file should only wire up `test()` / `group()` calls. Anything
+# reusable should be extracted to the dedicated helper/type modules so it can
+# be shared and is not redefined per spec.
+#
+# Flags, at the top level of a test file:
+#   - `function foo() {}` / `export function foo() {}`
+#   - `export const foo = () => {}` function-valued exports
+#   - `class Foo {}`
+#   - `type` / `interface` / `enum` declarations
+#
+# --- CONFIGURING THE PATHS ---------------------------------------------------
+# `files:`   the test files this rule scans.
+# `ignores:` the allowed homes for shared helpers and types. Edit these to
+#            point at the exact files/folders you want to permit.
+# -----------------------------------------------------------------------------
+id: tests-no-top-level-helpers
+language: TypeScript
+severity: error
+message: >-
+  Test files must not declare top-level functions, classes, or types. Move
+  shared helpers to `tests/helpers.ts` and shared types to `tests/types.ts`.
+files:
+  - 'tests/**/*.ts'
+  - 'tests/**/*.tsx'
+ignores:
+  - 'tests/helpers.ts'
+  - 'tests/types.ts'
+  - 'tests/types/**'
+  - 'tests/**/helpers.ts'
+  - 'tests/**/types.ts'
+  - 'tests/**/types/**'
+rule:
+  any:
+    - kind: function_declaration
+    - kind: class_declaration
+    - kind: type_alias_declaration
+    - kind: interface_declaration
+    - kind: enum_declaration
+    - kind: lexical_declaration
+      has:
+        kind: variable_declarator
+        has:
+          any:
+            - kind: arrow_function
+            - kind: function_expression
+  inside:
+    any:
+      - kind: program
+      - kind: export_statement
+        inside:
+          kind: program

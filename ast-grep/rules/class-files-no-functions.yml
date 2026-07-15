@@ -1,0 +1,54 @@
+# Requirement:
+#
+#   Files that export a class must not have top-level function declarations
+#   or top-level function exports.
+#
+# A file that exports a class is treated as a "class module": its public
+# surface should be the class. Standalone helpers belong in their own module.
+#
+# This flags, in any file that exports at least one class:
+#   - top-level `function foo() {}`        (declared or exported)
+#   - top-level `export const foo = () => {}` / `function () {}` exports
+#
+# Class methods are `method_definition` nodes, not `function_declaration`, so
+# they are never matched. Functions nested inside other functions are also
+# ignored because the rule requires the program (module) scope.
+#
+# --- CONFIGURING THE PATHS ---------------------------------------------------
+# Edit `files:` to control which source files this rule scans.
+# -----------------------------------------------------------------------------
+id: class-files-no-functions
+language: TypeScript
+severity: error
+message: >-
+  This file exports a class, so it must not declare or export top-level
+  functions. Move the function into its own module.
+files:
+  - 'src/**/*.ts'
+  - 'src/**/*.tsx'
+rule:
+  any:
+    # `function foo() {}` and `export function foo() {}`
+    - kind: function_declaration
+    # `export const foo = () => {}` / `export const foo = function () {}`
+    - kind: lexical_declaration
+      has:
+        kind: variable_declarator
+        has:
+          any:
+            - kind: arrow_function
+            - kind: function_expression
+  # Restrict to the module's top level...
+  inside:
+    any:
+      - kind: program
+        # ...and only when the module also exports a class somewhere.
+        has:
+          kind: class_declaration
+          stopBy: end
+      - kind: export_statement
+        inside:
+          kind: program
+          has:
+            kind: class_declaration
+            stopBy: end

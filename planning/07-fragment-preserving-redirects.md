@@ -3,7 +3,7 @@
 > **Inertia version:** **v3 only (latest).** The `X-Inertia-Redirect` header and
 > the `preserveFragment` page-object field exist in `@inertiajs/core` `3.4.0`
 > but are **absent from `2.3.23`** (the line this adapter targets). The v2 client
-> has a *different*, automatic fragment behavior (see below) and will ignore
+> has a _different_, automatic fragment behavior (see below) and will ignore
 > `X-Inertia-Redirect` / `preserveFragment`. Server-side support here is
 > **blocked on a v2→v3 client upgrade**. Verified 2026-06-13.
 
@@ -14,7 +14,7 @@ A user navigates to a URL with a fragment (`/page#section`) and the server redir
 ## Two separate 409 mechanisms (do not conflate)
 
 - **External / asset-version redirects** use `409` + **`X-Inertia-Location`** → the client does a full `window.location` visit to that URL.
-- **Fragment-preserving redirects** (v3) use `409` + **`X-Inertia-Redirect`** → emitted **alone**, *not* together with `X-Inertia-Location`.
+- **Fragment-preserving redirects** (v3) use `409` + **`X-Inertia-Redirect`** → emitted **alone**, _not_ together with `X-Inertia-Location`.
 
 ## Wire format (v3)
 
@@ -36,8 +36,8 @@ When the server was asked to preserve the fragment for a subsequent render, the 
 { "preserveFragment": true }
 ```
 
-| Field              | Type    | Description |
-| ------------------ | ------- | --- |
+| Field              | Type    | Description                                                                       |
+| ------------------ | ------- | --------------------------------------------------------------------------------- |
 | `preserveFragment` | boolean | When true, the client retains the current URL fragment when applying the new URL. |
 
 ## Server behavior (v3, per inertia-laravel reference)
