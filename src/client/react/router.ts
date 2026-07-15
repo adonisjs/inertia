@@ -32,8 +32,7 @@ type VisitHrefParams = {
  * Union type for visit parameters - either route-based or direct href
  */
 type VisitParams<Route extends keyof InferRoutes<UserRegistry> = keyof InferRoutes<UserRegistry>> =
-  | VisitRouteParams<Route>
-  | VisitHrefParams
+  VisitRouteParams<Route> | VisitHrefParams
 
 /**
  * Custom hook providing type-safe navigation utilities for Inertia.js.
