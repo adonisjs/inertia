@@ -67,11 +67,34 @@ export type RouteQs<Route extends keyof Routes> =
     : Routes[Route]['types']['query']
 
 /**
+ * HTTP methods that Inertia can issue visits with.
+ */
+type VisitableMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
+
+/**
+ * HTTP methods registered for a route that Inertia can visit with, as
+ * lowercase literals. HEAD and OPTIONS registrations are excluded since
+ * Inertia never issues those visits.
+ *
+ * A collapsed (`never`) result widens back to every visitable method:
+ * React.createElement and Vue's h() validate the combined Form call
+ * signature with `Route` instantiated as a wildcard, where the
+ * `Extract<Lowercase<...>>` chain collapses to `never` and would otherwise
+ * reject every method.
+ */
+export type RouteMethod<Route extends keyof Routes> =
+  | Extract<Lowercase<Routes[Route]['methods'][number]>, VisitableMethod>
+  | ([Extract<Lowercase<Routes[Route]['methods'][number]>, VisitableMethod>] extends [never]
+      ? VisitableMethod
+      : never)
+
+/**
  * Parameters required for route navigation with proper type safety.
  */
 export type RouteParams<Route extends keyof Routes> = {
   route: Route
   qs?: RouteQs<Route>
+  method?: RouteMethod<Route>
 } & (RouteParamsFormats<Route> extends never
   ? { routeParams?: never }
   : AreAllOptional<ExtractParamsObject<Route>> extends true

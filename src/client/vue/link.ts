@@ -52,6 +52,10 @@ export const Link = defineComponent({
       type: Object as PropType<Record<string, any>>,
       required: false,
     },
+    method: {
+      type: String as PropType<string>,
+      required: false,
+    },
     href: {
       type: String,
       required: false,
@@ -86,7 +90,7 @@ export const Link = defineComponent({
         {
           ...attrs,
           href,
-          method: methods[0].toLowerCase() as any,
+          method: props.method ?? (methods[0].toLowerCase() as any),
         },
         slots
       )

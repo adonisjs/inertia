@@ -63,11 +63,18 @@ function LinkInner<Route extends keyof Routes>(
 
   // Route-based navigation. getRoute resolves the HTTP methods and urlFor
   // builds the URL, serializing query string parameters in one place.
-  const { route, routeParams: params, qs, ...linkProps } = props as LinkRouteProps<Route>
+  const { route, routeParams: params, qs, method, ...linkProps } = props as LinkRouteProps<Route>
   const { methods } = tuyau.getRoute(route, { params })
   const href = buildRouteUrl(tuyau, route, params, qs)
 
-  return <InertiaLink {...linkProps} href={href} method={methods[0].toLowerCase() as any} ref={ref} />
+  return (
+    <InertiaLink
+      {...linkProps}
+      href={href}
+      method={method ?? (methods[0].toLowerCase() as any)}
+      ref={ref}
+    />
+  )
 
 }
 

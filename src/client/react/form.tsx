@@ -119,14 +119,20 @@ function FormInner<
 
   // Route-based navigation. getRoute resolves the HTTP methods and urlFor
   // builds the URL, serializing query string parameters in one place.
-  const { route, routeParams: params, qs, ...formProps } = props as FormRouteProps<Route>
+  const {
+    route,
+    routeParams: params,
+    qs,
+    method,
+    ...formProps
+  } = props as FormRouteProps<Route>
   const { methods } = tuyau.getRoute(route, { params })
   const url = buildRouteUrl(tuyau, route, params, qs)
 
   return (
     <InertiaForm
       {...(formProps as any)}
-      action={{ url, method: methods[0].toLowerCase() as any }}
+      action={{ url, method: method ?? (methods[0].toLowerCase() as any) }}
       ref={ref}
     />
   )

@@ -71,6 +71,21 @@ const routes = {
       response: unknown
     },
   },
+  'posts.update': {
+    methods: ['PUT', 'PATCH'],
+    pattern: '/posts/:id',
+    tokens: [
+      { old: '/posts', type: 0, val: 'posts', end: '/' },
+      { old: ':id', type: 1, val: 'id', end: '' },
+    ],
+    types: null as any as {
+      body: {}
+      paramsTuple: [string]
+      params: { id: string }
+      query: {}
+      response: unknown
+    },
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 const registry = {
@@ -207,6 +222,23 @@ test.group('React | Typings', () => {
 
     // @ts-expect-error wrong value type for a declared query param
     Link({ route: 'posts.index', qs: { page: 'two' } })
+  }).fails()
+
+  test('method overrides the resolved route method', () => {
+    const router = useRouter()
+
+    // Any Inertia-visitable method registered for the route is accepted
+    Form({ route: 'posts.update', routeParams: ['1'], method: 'patch' })
+    router.visit({ route: 'posts.update', routeParams: ['1'], method: 'put' })
+
+    // @ts-expect-error HEAD registrations are not visitable by Inertia
+    Link({ route: 'users.index', method: 'head' })
+
+    // @ts-expect-error method not registered for the route
+    Link({ route: 'users.index', method: 'post' })
+
+    // @ts-expect-error method not registered for the route
+    Form({ route: 'posts.update', routeParams: ['1'], method: 'delete' })
   }).fails()
 
   test('Form with route-based navigation', () => {

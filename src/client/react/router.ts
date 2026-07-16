@@ -85,13 +85,13 @@ export function useRouter() {
       }
 
       // Route-based navigation
-      const { route, routeParams, qs } = props as VisitRouteParams<Route>
+      const { route, routeParams, qs, method } = props as VisitRouteParams<Route>
       const { methods } = tuyau.getRoute(route, { params: routeParams })
       const url = buildRouteUrl(tuyau, route, routeParams, qs)
 
       return InertiaRouter.visit(url, {
         ...options,
-        method: methods[0].toLowerCase() as any,
+        method: method ?? (methods[0].toLowerCase() as any),
       })
     },
   }

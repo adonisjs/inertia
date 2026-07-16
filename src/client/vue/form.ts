@@ -134,6 +134,10 @@ const FormImplementation = defineComponent({
       type: Object as PropType<Record<string, any>>,
       required: false,
     },
+    method: {
+      type: String as PropType<string>,
+      required: false,
+    },
     action: {
       type: Object as PropType<{ url: string; method: string }>,
       required: false,
@@ -182,7 +186,7 @@ const FormImplementation = defineComponent({
         {
           ...attrs,
           ref: inner,
-          action: { url, method: methods[0].toLowerCase() as any },
+          action: { url, method: props.method ?? (methods[0].toLowerCase() as any) },
         },
         slots
       )
