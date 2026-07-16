@@ -7,8 +7,10 @@
  * file that was distributed with this source code.
  */
 
+import { join } from 'node:path'
 import { test } from '@japa/runner'
 import { Vite } from '@adonisjs/vite'
+import { createHash } from 'node:crypto'
 import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
@@ -804,4 +806,47 @@ test.group('Inertia | Ssr', () => {
     const result2 = await renderer.render(pageObject)
     assert.deepEqual(result2.body, 'before restart')
   }).timeout(30_000)
+})
+
+test.group('Inertia | Assets version', () => {
+  test('fallback to version 1 in dev mode even when a stale build manifest exists', async ({
+    assert,
+    fs,
+    cleanup,
+  }) => {
+    /**
+     * A manifest left behind by a previous `node ace build`. It must exist
+     * before the Vite instance is constructed, since `hasManifestFile` is
+     * computed once at construction.
+     */
+    await fs.createJson('manifest.json', { 'app.ts': { file: 'assets/app-old.js' } })
+
+    const vite = new Vite({
+      buildDirectory: fs.basePath,
+      manifestFile: join(fs.basePath, 'manifest.json'),
+    })
+    await vite.createDevServer({ root: fs.basePath, clearScreen: false, logLevel: 'silent' })
+    cleanup(() => vite.stopDevServer())
+
+    const inertia = new InertiaFactory().withVite(vite).create()
+
+    assert.equal(inertia.getVersion(), '1')
+  })
+
+  test('compute version from the manifest hash outside dev mode', async ({ assert, fs }) => {
+    const manifest = { 'app.ts': { file: 'assets/app-abc123.js' } }
+    await fs.createJson('manifest.json', manifest)
+
+    const vite = new Vite({
+      buildDirectory: fs.basePath,
+      manifestFile: join(fs.basePath, 'manifest.json'),
+    })
+
+    const inertia = new InertiaFactory().withVite(vite).create()
+
+    assert.equal(
+      inertia.getVersion(),
+      createHash('md5').update(JSON.stringify(manifest)).digest('hex')
+    )
+  })
 })

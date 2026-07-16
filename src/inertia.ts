@@ -491,7 +491,10 @@ export class Inertia<Pages> {
   /**
    * Compute and cache the assets version
    *
-   * Uses Vite manifest hash when available, otherwise defaults to '1'.
+   * Uses Vite manifest hash when available, otherwise defaults to '1'. The
+   * manifest is only read outside dev mode: the dev server serves transformed
+   * assets directly, so a manifest left behind by a previous build describes
+   * a stale build and `vite.manifest()` refuses to read it.
    *
    * @returns The computed version string for asset versioning
    */
@@ -500,7 +503,7 @@ export class Inertia<Pages> {
       return this.#cachedVersion
     }
 
-    if (this.#vite?.hasManifestFile) {
+    if (this.#vite && !this.#vite.useDevServer && this.#vite.hasManifestFile) {
       this.#cachedVersion = createHash('md5')
         .update(JSON.stringify(this.#vite.manifest()))
         .digest('hex')
