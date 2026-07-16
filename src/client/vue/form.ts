@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import type { PropType, PublicProps, VNode } from 'vue'
 import { Form as InertiaForm } from '@inertiajs/vue3'
 // Inertia's declarations omit NodeNext-compatible extensions from internal type re-exports.
@@ -36,6 +36,13 @@ type RenameRouteParams<T> = T extends { routeParams: infer Params }
   : T extends { routeParams?: infer Params }
     ? Omit<T, 'routeParams'> & { params?: Params }
     : T
+
+/**
+ * Instance exposed on the Form template ref: the upstream Inertia form API
+ * (submit, reset, setError, ...), which shares its shape with the default
+ * slot props.
+ */
+export type FormRef = InertiaFormSlotProps
 
 /**
  * Parameters required for route navigation with proper type safety.
@@ -132,8 +139,21 @@ const FormImplementation = defineComponent({
       required: false,
     },
   },
-  setup(props, { attrs, slots }) {
+  setup(props, { attrs, slots, expose }) {
     const tuyau = useTuyau()
+    const inner = ref<FormRef>()
+
+    /**
+     * Forward the upstream form instance so template refs on the wrapper
+     * reach the Inertia form API (submit, reset, setError, ...). The proxy
+     * resolves lazily because the inner ref is only set after mount.
+     */
+    expose(
+      new Proxy({} as FormRef, {
+        get: (_, key) => (inner.value as any)?.[key],
+        has: (_, key) => (inner.value ? key in inner.value : false),
+      })
+    )
 
     return () => {
       // Check if using direct action
@@ -142,6 +162,7 @@ const FormImplementation = defineComponent({
           InertiaForm as any,
           {
             ...attrs,
+            ref: inner,
             action: props.action,
           },
           slots
@@ -160,6 +181,7 @@ const FormImplementation = defineComponent({
         InertiaForm as any,
         {
           ...attrs,
+          ref: inner,
           action: { url, method: methods[0].toLowerCase() as any },
         },
         slots

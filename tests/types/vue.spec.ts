@@ -16,10 +16,10 @@ import '@japa/assert'
 import { test } from '@japa/runner'
 import { createTuyau } from '@tuyau/core/client'
 import { type AdonisEndpoint } from '@tuyau/core/types'
-import { createApp, h } from 'vue'
+import { createApp, h, ref } from 'vue'
 
 import { Link } from '../../src/client/vue/link.ts'
-import { Form } from '../../src/client/vue/form.ts'
+import { Form, type FormRef } from '../../src/client/vue/form.ts'
 import { useRouter } from '../../src/client/vue/router.ts'
 import { TuyauProvider } from '../../src/client/vue/context.ts'
 
@@ -155,6 +155,15 @@ test.group('Vue | Form Component', () => {
         h(Form, { action: { url: '/users/1', method: 'delete' } }),
       ])
     })
+  })
+
+  test('Form template ref exposes the upstream form API', () => {
+    const formRef = ref<FormRef>()
+
+    // The exposed instance carries the Inertia form API
+    formRef.value?.submit
+    formRef.value?.reset
+    formRef.value?.setError
   })
 })
 
