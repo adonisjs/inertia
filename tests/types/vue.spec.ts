@@ -7,6 +7,12 @@
  * file that was distributed with this source code.
  */
 
+/**
+ * Side-effect import: brings the `ctx.assert` module augmentation into the
+ * standalone client typecheck (tsconfig.client.json), where bin/test.ts is
+ * not part of the program.
+ */
+import '@japa/assert'
 import { test } from '@japa/runner'
 import { createTuyau } from '@tuyau/core/client'
 import { type AdonisEndpoint } from '@tuyau/core/types'
@@ -61,6 +67,9 @@ test.group('Vue | Link Component', () => {
 
     assert.doesNotThrow(() => {
       h(TuyauProvider, { client }, () => [h(Link, { route: 'users.index' }, () => 'Users')])
+      h(TuyauProvider, { client }, () => [
+        h(Link, { route: 'users.index', qs: { page: 2 } }, () => 'Users'),
+      ])
     })
   })
 

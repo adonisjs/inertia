@@ -12,6 +12,7 @@ import type { UserRegistry, InferRoutes } from '@tuyau/core/types'
 
 import { useTuyau } from './context.ts'
 import type { LinkParams } from './link.ts'
+import { buildRouteUrl } from '../common.ts'
 
 /**
  * Parameters for route-based visit
@@ -81,19 +82,19 @@ export function useRouter() {
       options?: Parameters<typeof InertiaRouter.visit>[1]
     ) => {
       // Check if using direct href
-      if ('href' in props) {
+      if ('href' in props && props.href !== undefined) {
         return InertiaRouter.visit(props.href, options)
       }
 
-      // Route-based navigation
-      const routeInfo = tuyau.getRoute((props as VisitRouteParams<Route>).route, {
-        params: (props as VisitRouteParams<Route>).routeParams,
-      })
-      const url = routeInfo.url
+      // Route-based navigation. getRoute resolves the HTTP methods and urlFor
+      // builds the URL, serializing query string parameters in one place.
+      const { route, routeParams, qs } = props as VisitRouteParams<Route>
+      const { methods } = tuyau.getRoute(route, { params: routeParams })
+      const url = buildRouteUrl(tuyau, route, routeParams, qs)
 
       return InertiaRouter.visit(url, {
         ...options,
-        method: routeInfo.methods[0].toLowerCase() as any,
+        method: methods[0].toLowerCase() as any,
       })
     },
   }

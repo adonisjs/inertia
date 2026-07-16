@@ -47,6 +47,30 @@ const routes = {
       response: unknown
     },
   },
+  'posts.index': {
+    methods: ['GET', 'HEAD'],
+    pattern: '/posts',
+    tokens: [{ old: '/posts', type: 0, val: 'posts', end: '' }],
+    types: null as any as {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: { page?: number; status?: string }
+      response: unknown
+    },
+  },
+  'users.store': {
+    methods: ['POST'],
+    pattern: '/users',
+    tokens: [{ old: '/users', type: 0, val: 'users', end: '' }],
+    types: null as any as {
+      body: { email: string; remember?: boolean }
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+    },
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 const registry = {
@@ -167,6 +191,24 @@ test.group('React | Typings', () => {
     Link({ route: 'users.comments.edit', routeParams: ['1', '2'], href: '/users' })
   }).fails()
 
+  test('qs accepts query string parameters in route mode', () => {
+    const router = useRouter()
+
+    // Free-form qs for routes without declared query types
+    Link({ route: 'users.index', qs: { page: 2, anything: 'goes' } })
+    Form({ route: 'users.index', qs: { page: 2 } })
+    router.visit({ route: 'users.index', qs: { page: 2 } })
+
+    // qs follows the route's declared query types
+    Link({ route: 'posts.index', qs: { page: 2, status: 'published' } })
+
+    // @ts-expect-error unknown key when the route declares query types
+    Link({ route: 'posts.index', qs: { unknown: true } })
+
+    // @ts-expect-error wrong value type for a declared query param
+    Link({ route: 'posts.index', qs: { page: 'two' } })
+  }).fails()
+
   test('Form with route-based navigation', () => {
     // Form to a route without parameters
     Form({ route: 'users.index' })
@@ -194,6 +236,32 @@ test.group('React | Typings', () => {
     Form({ route: 'users.index', action: { url: '/users', method: 'post' } })
   }).fails()
 
+  test('Form types errors in the children render prop', () => {
+    // Route mode derives the form-data shape from the route's declared
+    // body, so the error keys come from the route itself. The negative
+    // assertions (unknown keys are rejected) live in react_client.spec.ts,
+    // which is only checked by tsconfig.client.json where the upstream
+    // client types resolve.
+    Form({
+      route: 'users.store',
+      children: (slot) => {
+        slot.errors.email
+        slot.errors.remember
+        return null
+      },
+    })
+
+    // Action mode has no route to derive from, so the form-data shape is
+    // given explicitly through the generic.
+    Form<{ email: string }>({
+      action: { url: '/users', method: 'post' },
+      children: (slot) => {
+        slot.errors.email
+        return null
+      },
+    })
+  }).fails()
+
   test('Form action and route are mutually exclusive', () => {
     // Valid: using route
     Form({ route: 'users.index' })
@@ -204,11 +272,9 @@ test.group('React | Typings', () => {
     // @ts-expect-error cannot use both route and action
     Form({ route: 'users.index', action: { url: '/users', method: 'post' } })
 
+    const action = { url: '/users', method: 'post' } as const
+
     // @ts-expect-error cannot use route with action
-    Form({
-      route: 'users.comments.edit',
-      routeParams: ['1', '2'],
-      action: { url: '/users', method: 'post' },
-    })
+    Form({ route: 'users.comments.edit', routeParams: ['1', '2'], action })
   }).fails()
 })

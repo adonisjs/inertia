@@ -9,21 +9,9 @@
 
 import React from 'react'
 import { Form as InertiaForm } from '@inertiajs/react'
-// Inertia's declarations omit NodeNext-compatible extensions from internal type re-exports.
-// @ts-ignore TypeScript resolves these exports correctly in client projects using Bundler resolution.
-import type { FormComponentProps, FormComponentRef, FormComponentSlotProps } from '@inertiajs/core'
+
 import { useTuyau } from './context.tsx'
-import type { ExtractRouteBody, RouteParams, Routes } from '../common.ts'
-
-const BaseForm = InertiaForm as any
-
-type InertiaFormProps<FormData extends object> = FormComponentProps<FormData> &
-  Omit<React.FormHTMLAttributes<HTMLFormElement>, keyof FormComponentProps | 'children'> &
-  Omit<React.AllHTMLAttributes<HTMLFormElement>, keyof FormComponentProps | 'children'> & {
-    children?: React.ReactNode | ((props: FormComponentSlotProps<FormData>) => React.ReactNode)
-  }
-
-export type FormRef<FormData extends object> = FormComponentRef<FormData>
+import { buildRouteUrl, type ExtractRouteBody, type RouteParams, type Routes } from '../common.ts'
 
 /**
  * Parameters required for route navigation with proper type safety.
@@ -31,14 +19,57 @@ export type FormRef<FormData extends object> = FormComponentRef<FormData>
 export type FormParams<Route extends keyof Routes> = RouteParams<Route>
 
 /**
- * Props for the Form component when using route-based navigation
+ * Props of the bundled Inertia Form component, keyed by the form-data shape.
+ * `ComponentPropsWithoutRef<typeof InertiaForm>` cannot be used here:
+ * inferring props from the generic call signature erases `TForm` to its bare
+ * constraint instead of applying the given form-data type, which collapses
+ * the render prop's `errors` to `{}`. The instantiation expression applies
+ * the form-data type eagerly.
+ */
+type InertiaFormProps<FormData extends object = Record<string, any>> = Omit<
+  Parameters<typeof InertiaForm<FormData>>[0],
+  'ref'
+>
+
+/**
+ * Slot props received by the children render prop, keyed by the form-data
+ * shape. In route mode the form-data shape is the route's declared body; in
+ * action mode it is the explicit `Form` generic.
+ */
+export type FormSlotProps<FormData extends object = Record<string, any>> = Parameters<
+  Extract<Parameters<typeof InertiaForm<FormData>>[0]['children'], (...args: any[]) => any>
+>[0]
+
+/**
+ * Instance exposed on the Form ref.
+ */
+export type FormRef<FormData extends object = Record<string, any>> =
+  NonNullable<Parameters<typeof InertiaForm<FormData>>[0]['ref']> extends React.Ref<infer R>
+    ? R
+    : never
+
+/**
+ * Children accepted by the Form component. Declared directly (rather than
+ * carried through `Omit` of a deferred type) so the render prop's parameter
+ * stays contextually typed at call sites.
+ */
+type FormChildren<FormData extends object> =
+  | React.ReactNode
+  | ((props: FormSlotProps<FormData>) => React.ReactNode)
+
+/**
+ * Props for the Form component when using route-based navigation. The
+ * form-data shape is derived from the route's declared body type, so the
+ * render prop, reset options, transform, and ref are all typed from the
+ * route without a manual generic.
  */
 export type FormRouteProps<Route extends keyof Routes> = Omit<
   InertiaFormProps<ExtractRouteBody<Route>>,
-  'action' | 'method'
+  'action' | 'method' | 'children'
 > &
   FormParams<Route> & {
     action?: never
+    children?: FormChildren<ExtractRouteBody<Route>>
   }
 
 /**
@@ -46,9 +77,10 @@ export type FormRouteProps<Route extends keyof Routes> = Omit<
  */
 export type FormActionProps<FormData extends object = Record<string, any>> = Omit<
   InertiaFormProps<FormData>,
-  'route'
+  'route' | 'children'
 > & {
   route?: never
+  children?: FormChildren<FormData>
 }
 
 /**
@@ -76,17 +108,25 @@ function FormInner<
 
   // Check if props has action (direct form submission)
   if ('action' in props) {
-    return <BaseForm {...props} ref={ref} />
+    /**
+     * The spreads are untyped on purpose: the public FormProps surface
+     * carries the type safety, while the upstream component would try to
+     * re-infer the form-data type from the spread and clash with the outer
+     * generic.
+     */
+    return <InertiaForm {...(props as any)} ref={ref} />
   }
 
-  // Route-based navigation
-  const { route: _route, routeParams: params, ...formProps } = props as FormRouteProps<Route>
-  const routeInfo = tuyau.getRoute((props as any).route, { params })
+  // Route-based navigation. getRoute resolves the HTTP methods and urlFor
+  // builds the URL, serializing query string parameters in one place.
+  const { route, routeParams: params, qs, ...formProps } = props as FormRouteProps<Route>
+  const { methods } = tuyau.getRoute(route, { params })
+  const url = buildRouteUrl(tuyau, route, params, qs)
 
   return (
-    <BaseForm
-      {...formProps}
-      action={{ url: routeInfo.url, method: routeInfo.methods[0].toLowerCase() as any }}
+    <InertiaForm
+      {...(formProps as any)}
+      action={{ url, method: methods[0].toLowerCase() as any }}
       ref={ref}
     />
   )

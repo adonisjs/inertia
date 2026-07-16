@@ -10,7 +10,7 @@
 import React from 'react'
 import { Link as InertiaLink } from '@inertiajs/react'
 import { useTuyau } from './context.tsx'
-import type { RouteParams, Routes } from '../common.ts'
+import { buildRouteUrl, type RouteParams, type Routes } from '../common.ts'
 
 /**
  * Parameters required for route navigation with proper type safety.
@@ -61,18 +61,14 @@ function LinkInner<Route extends keyof Routes>(
     return <InertiaLink {...props} ref={ref} />
   }
 
-  // Route-based navigation
-  const { route: _route, routeParams: params, ...linkProps } = props as LinkRouteProps<Route>
-  const routeInfo = tuyau.getRoute((props as any).route, { params })
+  // Route-based navigation. getRoute resolves the HTTP methods and urlFor
+  // builds the URL, serializing query string parameters in one place.
+  const { route, routeParams: params, qs, ...linkProps } = props as LinkRouteProps<Route>
+  const { methods } = tuyau.getRoute(route, { params })
+  const href = buildRouteUrl(tuyau, route, params, qs)
 
-  return (
-    <InertiaLink
-      {...linkProps}
-      href={routeInfo.url}
-      method={routeInfo.methods[0].toLowerCase() as any}
-      ref={ref}
-    />
-  )
+  return <InertiaLink {...linkProps} href={href} method={methods[0].toLowerCase() as any} ref={ref} />
+
 }
 
 /**

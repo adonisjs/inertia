@@ -26,8 +26,9 @@
   "scripts": {
     "pretest": "npm run lint",
     "test": "npm run quick:test",
-    "typecheck": "npm run typecheck:node && npm run typecheck:react && npm run typecheck:vue",
+    "typecheck": "npm run typecheck:node && npm run typecheck:client && npm run typecheck:react && npm run typecheck:vue",
     "typecheck:node": "tsc --noEmit",
+    "typecheck:client": "tsc --noEmit -p tsconfig.client.json",
     "typecheck:react": "tsc --noEmit -p tests/types/tsconfig.react.json",
     "typecheck:vue": "vue-tsc --noEmit -p tests/types/tsconfig.vue.json",
     "clean": "del-cli build",

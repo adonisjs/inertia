@@ -12,7 +12,7 @@ import { defineComponent, h } from 'vue'
 import { Link as InertiaLink } from '@inertiajs/vue3'
 
 import { useTuyau } from './context.ts'
-import type { RouteParams, RouteParamsFormats, Routes } from '../common.ts'
+import { buildRouteUrl, type RouteParams, type RouteParamsFormats, type Routes } from '../common.ts'
 
 /**
  * Parameters required for route navigation with proper type safety.
@@ -48,6 +48,10 @@ export const Link = defineComponent({
       type: [Array, Object] as PropType<RouteParamsFormats<keyof Routes>>,
       required: false,
     },
+    qs: {
+      type: Object as PropType<Record<string, any>>,
+      required: false,
+    },
     href: {
       type: String,
       required: false,
@@ -74,14 +78,15 @@ export const Link = defineComponent({
         throw new Error('Either route or href prop is required for Link component')
       }
 
-      const routeInfo = tuyau.getRoute(props.route, { params: props.params as any })
+      const { methods } = tuyau.getRoute(props.route, { params: props.params })
+      const href = buildRouteUrl(tuyau, props.route, props.params, props.qs)
 
       return h(
         InertiaLink as any,
         {
           ...attrs,
-          href: routeInfo.url,
-          method: routeInfo.methods[0].toLowerCase() as any,
+          href,
+          method: methods[0].toLowerCase() as any,
         },
         slots
       )

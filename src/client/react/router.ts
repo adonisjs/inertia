@@ -12,6 +12,7 @@ import { router as InertiaRouter } from '@inertiajs/react'
 
 import { useTuyau } from './context.tsx'
 import type { LinkParams } from './link.tsx'
+import { buildRouteUrl } from '../common.ts'
 
 /**
  * Parameters for route-based visit
@@ -79,19 +80,18 @@ export function useRouter() {
       options?: Parameters<typeof InertiaRouter.visit>[1]
     ) => {
       // Check if using direct href
-      if ('href' in props) {
+      if ('href' in props && props.href !== undefined) {
         return InertiaRouter.visit(props.href, options)
       }
 
       // Route-based navigation
-      const routeInfo = tuyau.getRoute((props as VisitRouteParams<Route>).route, {
-        params: (props as VisitRouteParams<Route>).routeParams,
-      })
-      const url = routeInfo.url
+      const { route, routeParams, qs } = props as VisitRouteParams<Route>
+      const { methods } = tuyau.getRoute(route, { params: routeParams })
+      const url = buildRouteUrl(tuyau, route, routeParams, qs)
 
       return InertiaRouter.visit(url, {
         ...options,
-        method: routeInfo.methods[0].toLowerCase() as any,
+        method: methods[0].toLowerCase() as any,
       })
     },
   }
