@@ -7,12 +7,13 @@
  * file that was distributed with this source code.
  */
 
+import type { Tuyau } from '@tuyau/core/client'
 import { router as InertiaRouter } from '@inertiajs/vue3'
 import type { UserRegistry, InferRoutes } from '@tuyau/core/types'
 
 import { useTuyau } from './context.ts'
 import type { LinkParams } from './link.ts'
-import { buildRouteUrl } from '../common.ts'
+import { buildRouteUrl, type RoutesWithMethod } from '../common.ts'
 
 /**
  * Parameters for route-based visit
@@ -34,6 +35,25 @@ type VisitHrefParams = {
  */
 type VisitParams<Route extends keyof InferRoutes<UserRegistry> = keyof InferRoutes<UserRegistry>> =
   VisitRouteParams<Route> | VisitHrefParams
+
+/**
+ * Parameters for the method sugar: the method is fixed by the call, so the
+ * override prop is not accepted.
+ */
+type MethodVisitParams<Route extends keyof InferRoutes<UserRegistry>> =
+  Omit<VisitRouteParams<Route>, 'method'> | VisitHrefParams
+
+/**
+ * Resolves the target URL for a visit: the href when given, otherwise the
+ * route URL with query string parameters serialized.
+ */
+function resolveUrl(tuyau: Tuyau<any>, props: MethodVisitParams<any>) {
+  if ('href' in props && props.href !== undefined) {
+    return props.href
+  }
+  const routeProps = props as VisitRouteParams<any>
+  return buildRouteUrl(tuyau, routeProps.route, routeProps.routeParams, routeProps.qs)
+}
 
 /**
  * Composable providing type-safe navigation utilities for Inertia.js.
@@ -97,5 +117,45 @@ export function useRouter() {
         method: method ?? (methods[0].toLowerCase() as any),
       })
     },
+
+    /**
+     * Method sugar mirroring the upstream router: each verb accepts only
+     * routes registered for it, or a direct href.
+     *
+     * @example
+     * ```ts
+     * router.get({ route: 'users.index', qs: { page: 2 } })
+     * router.post({ route: 'users.store' }, { name: 'Virk' })
+     * router.delete({ route: 'users.destroy', routeParams: [1] })
+     * ```
+     */
+    get: <Route extends RoutesWithMethod<'get'>>(
+      props: MethodVisitParams<Route>,
+      data?: Parameters<typeof InertiaRouter.get>[1],
+      options?: Parameters<typeof InertiaRouter.get>[2]
+    ) => InertiaRouter.get(resolveUrl(tuyau, props) as any, data, options),
+
+    post: <Route extends RoutesWithMethod<'post'>>(
+      props: MethodVisitParams<Route>,
+      data?: Parameters<typeof InertiaRouter.post>[1],
+      options?: Parameters<typeof InertiaRouter.post>[2]
+    ) => InertiaRouter.post(resolveUrl(tuyau, props) as any, data, options),
+
+    put: <Route extends RoutesWithMethod<'put'>>(
+      props: MethodVisitParams<Route>,
+      data?: Parameters<typeof InertiaRouter.put>[1],
+      options?: Parameters<typeof InertiaRouter.put>[2]
+    ) => InertiaRouter.put(resolveUrl(tuyau, props) as any, data, options),
+
+    patch: <Route extends RoutesWithMethod<'patch'>>(
+      props: MethodVisitParams<Route>,
+      data?: Parameters<typeof InertiaRouter.patch>[1],
+      options?: Parameters<typeof InertiaRouter.patch>[2]
+    ) => InertiaRouter.patch(resolveUrl(tuyau, props) as any, data, options),
+
+    delete: <Route extends RoutesWithMethod<'delete'>>(
+      props: MethodVisitParams<Route>,
+      options?: Parameters<typeof InertiaRouter.delete>[1]
+    ) => InertiaRouter.delete(resolveUrl(tuyau, props) as any, options),
   }
 }

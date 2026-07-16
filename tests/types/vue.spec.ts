@@ -175,8 +175,13 @@ test.group('Vue | useRouter Composable', () => {
       const app = createApp({
         setup() {
           const router = useRouter()
-          // Verify router has visit method
+          // Verify router has visit and the method sugar
           assert.isFunction(router.visit)
+          assert.isFunction(router.get)
+          assert.isFunction(router.post)
+          assert.isFunction(router.put)
+          assert.isFunction(router.patch)
+          assert.isFunction(router.delete)
           return () => h('div')
         },
       })

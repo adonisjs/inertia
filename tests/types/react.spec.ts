@@ -241,6 +241,25 @@ test.group('React | Typings', () => {
     Form({ route: 'posts.update', routeParams: ['1'], method: 'delete' })
   }).fails()
 
+  test('method sugar is route-aware', () => {
+    const router = useRouter()
+
+    // Each verb accepts routes registered for it, or a direct href
+    router.get({ route: 'users.index', qs: { page: 2 } })
+    router.put({ route: 'posts.update', routeParams: ['1'] })
+    router.patch({ route: 'posts.update', routeParams: ['1'] }, { title: 'Hello' })
+    router.post({ href: '/direct' })
+
+    // @ts-expect-error route not registered for POST
+    router.post({ route: 'users.index' })
+
+    // @ts-expect-error route not registered for GET
+    router.get({ route: 'posts.update', routeParams: ['1'] })
+
+    // @ts-expect-error the method is fixed by the sugar
+    router.put({ route: 'posts.update', routeParams: ['1'], method: 'patch' })
+  }).fails()
+
   test('Form with route-based navigation', () => {
     // Form to a route without parameters
     Form({ route: 'users.index' })

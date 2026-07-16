@@ -102,6 +102,15 @@ export type RouteParams<Route extends keyof Routes> = {
     : { routeParams: RouteParamsFormats<Route> })
 
 /**
+ * Names of the routes registered for a given HTTP method. Powers the
+ * route-aware router sugar, where `router.post()` only accepts routes
+ * that can actually be visited with POST.
+ */
+export type RoutesWithMethod<Method extends string> = {
+  [K in keyof Routes]: Method extends RouteMethod<K> ? K : never
+}[keyof Routes]
+
+/**
  * The vue flavor of {@link RouteParams}: the vue wrappers expose the route
  * parameters under the `params` prop instead of `routeParams`.
  */
