@@ -8,7 +8,7 @@
  */
 
 import { defineComponent, h, ref } from 'vue'
-import type { PropType, PublicProps, VNode } from 'vue'
+import type { PropType, PublicProps, SlotsType, VNode } from 'vue'
 import { Form as InertiaForm } from '@inertiajs/vue3'
 // Inertia's declarations omit NodeNext-compatible extensions from internal type re-exports.
 // @ts-ignore TypeScript resolves these exports correctly in client projects using Bundler resolution.
@@ -18,9 +18,9 @@ import { useTuyau } from './context.ts'
 import {
   buildRouteUrl,
   type ExtractRouteBody,
-  type RouteParams,
   type RouteParamsFormats,
   type Routes,
+  type VueRouteParams,
 } from '../common.ts'
 
 /**
@@ -31,39 +31,61 @@ export type InertiaFormDefaultSlot = InertiaFormSlots['default']
 export type InertiaFormSlotProps<FormData extends Record<string, any> = Record<string, any>> =
   FormComponentSlotProps<FormData>
 
-type RenameRouteParams<T> = T extends { routeParams: infer Params }
-  ? Omit<T, 'routeParams'> & { params: Params }
-  : T extends { routeParams?: infer Params }
-    ? Omit<T, 'routeParams'> & { params?: Params }
-    : T
-
 /**
  * Instance exposed on the Form template ref: the upstream Inertia form API
  * (submit, reset, setError, ...), which shares its shape with the default
- * slot props.
+ * slot props. In route mode the form-data shape is the route's declared
+ * body.
  */
-export type FormRef = InertiaFormSlotProps
+export type FormRef<FormData extends Record<string, any> = Record<string, any>> =
+  InertiaFormSlotProps<FormData>
 
 /**
  * Parameters required for route navigation with proper type safety.
  */
-export type FormParams<Route extends keyof Routes> = RenameRouteParams<RouteParams<Route>>
+export type FormParams<Route extends keyof Routes> = VueRouteParams<Route>
 
-export type FormRouteProps<Route extends keyof Routes> = Omit<
-  FormComponentProps<ExtractRouteBody<Route>>,
-  'action' | 'method'
+/**
+ * Props of the bundled Inertia Form component, extracted from its public
+ * instance so the wrapper stays in sync with the installed client version.
+ */
+type InertiaFormVueProps = InstanceType<typeof InertiaForm>['$props']
+
+/**
+ * The full upstream props surface, keyed by the form-data shape: the
+ * vue-specific instance props come from the installed component, while the
+ * form-data aware props (transform, resetOnSuccess, ...) are re-typed
+ * through the shared upstream props so they follow the route's declared
+ * body in route mode.
+ */
+type FormSharedProps<FormData extends Record<string, any>> = Omit<
+  InertiaFormVueProps,
+  'action' | 'method' | keyof FormComponentProps
 > &
-  FormParams<Route> & {
+  Omit<FormComponentProps<FormData>, 'action' | 'method'>
+
+/**
+ * Props for the Form component when using route-based navigation. The
+ * form-data shape is derived from the route's declared body type, so the
+ * default slot, the form-data aware props, and the template ref are all
+ * typed from the route without a manual generic.
+ */
+export type FormRouteProps<Route extends keyof Routes> = FormSharedProps<ExtractRouteBody<Route>> &
+  VueRouteParams<Route> & {
     action?: never
   }
 
-export type FormActionProps<FormData extends Record<string, any> = Record<string, any>> = Omit<
-  FormComponentProps<FormData>,
-  'route' | 'params'
-> & {
-  route?: never
-  params?: never
-}
+/**
+ * Props for the Form component when using direct action
+ */
+export type FormActionProps<FormData extends Record<string, any> = Record<string, any>> =
+  FormSharedProps<FormData> & {
+    action: NonNullable<InertiaFormVueProps['action']>
+    method?: InertiaFormVueProps['method']
+    route?: never
+    params?: never
+    qs?: never
+  }
 
 type FormComponentContext<FormData extends Record<string, any>, Props> = {
   props: PublicProps & Props
@@ -98,29 +120,16 @@ type FormComponent = {
 }
 
 /**
- * Type-safe Form component for Inertia.js form submissions.
- *
- * Supports both route-based form submission with automatic URL resolution
- * and direct action for maximum flexibility.
- *
- * @example
- * ```vue
- * <!-- Route-based form -->
- * <Form route="users.store" v-slot="{ processing }">
- *   <input type="text" name="name" />
- *   <button :disabled="processing">Create</button>
- * </Form>
- *
- * <!-- Direct action form -->
- * <Form :action="{ url: '/users', method: 'post' }" v-slot="{ processing }">
- *   <input type="text" name="name" />
- *   <button :disabled="processing">Create</button>
- * </Form>
- * ```
+ * Runtime component. Only the wrapper-owned props are declared so every
+ * upstream prop keeps flowing through attrs untouched; the exported
+ * FormComponent type above is what templates typecheck against.
  */
 const FormImplementation = defineComponent({
   name: 'TuyauForm',
   inheritAttrs: false,
+  slots: Object as SlotsType<{
+    default: InertiaFormSlotProps
+  }>,
   props: {
     route: {
       type: String as PropType<keyof Routes>,
@@ -194,4 +203,33 @@ const FormImplementation = defineComponent({
   },
 })
 
+/**
+ * Type-safe Form component for Inertia.js form submissions.
+ *
+ * Supports both route-based form submission with automatic URL resolution
+ * and direct action for maximum flexibility. The published type merges the
+ * upstream Form props (error-bag, transform, disable-while-processing, ...)
+ * with the wrapper's route bindings, so templates typecheck the full
+ * surface while the runtime keeps forwarding upstream props through attrs.
+ *
+ * In route mode the form-data shape is derived from the route's declared
+ * body, so the default slot (errors, getData, reset, ...) and the form-data
+ * aware props follow the route without a manual generic. In action mode the
+ * shape stays a free-form record.
+ *
+ * @example
+ * ```vue
+ * <!-- Route-based form -->
+ * <Form route="users.store" v-slot="{ processing }">
+ *   <input type="text" name="name" />
+ *   <button :disabled="processing">Create</button>
+ * </Form>
+ *
+ * <!-- Direct action form -->
+ * <Form :action="{ url: '/users', method: 'post' }" v-slot="{ processing }">
+ *   <input type="text" name="name" />
+ *   <button :disabled="processing">Create</button>
+ * </Form>
+ * ```
+ */
 export const Form = FormImplementation as unknown as FormComponent

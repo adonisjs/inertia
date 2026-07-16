@@ -100,3 +100,17 @@ export type RouteParams<Route extends keyof Routes> = {
   : AreAllOptional<ExtractParamsObject<Route>> extends true
     ? { routeParams?: RouteParamsFormats<Route> }
     : { routeParams: RouteParamsFormats<Route> })
+
+/**
+ * The vue flavor of {@link RouteParams}: the vue wrappers expose the route
+ * parameters under the `params` prop instead of `routeParams`.
+ */
+export type VueRouteParams<Route extends keyof Routes> = {
+  route: Route
+  qs?: RouteQs<Route>
+  method?: RouteMethod<Route>
+} & (RouteParamsFormats<Route> extends never
+  ? { params?: never }
+  : AreAllOptional<ExtractParamsObject<Route>> extends true
+    ? { params?: RouteParamsFormats<Route> }
+    : { params: RouteParamsFormats<Route> })

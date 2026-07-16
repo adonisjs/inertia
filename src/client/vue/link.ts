@@ -7,36 +7,80 @@
  * file that was distributed with this source code.
  */
 
-import type { PropType } from 'vue'
+import type { PropType, PublicProps, VNode } from 'vue'
 import { defineComponent, h } from 'vue'
 import { Link as InertiaLink } from '@inertiajs/vue3'
 
 import { useTuyau } from './context.ts'
-import { buildRouteUrl, type RouteParams, type RouteParamsFormats, type Routes } from '../common.ts'
+import {
+  buildRouteUrl,
+  type RouteParams,
+  type RouteParamsFormats,
+  type Routes,
+  type VueRouteParams,
+} from '../common.ts'
 
 /**
- * Parameters required for route navigation with proper type safety.
+ * Parameters required for route navigation with proper type safety. Kept on
+ * the `routeParams` naming used by useRouter().visit; the Link component
+ * itself binds the parameters under the `params` prop.
  */
 export type LinkParams<Route extends keyof Routes> = RouteParams<Route>
 
 /**
- * Type-safe Link component for Inertia.js navigation.
- *
- * Supports both route-based navigation with automatic URL resolution
- * and direct href navigation for maximum flexibility.
- *
- * @example
- * ```vue
- * <!-- Route-based navigation -->
- * <Link route="users.index">Users</Link>
- * <Link route="users.show" :params="{ id: 1 }">View User</Link>
- *
- * <!-- Direct href navigation -->
- * <Link href="/about">About</Link>
- * <Link href="/logout" method="post">Logout</Link>
- * ```
+ * Props of the bundled Inertia Link component, extracted from its public
+ * instance so the wrapper stays in sync with the installed client version.
  */
-export const Link = defineComponent({
+type InertiaLinkProps = InstanceType<typeof InertiaLink>['$props']
+
+/**
+ * Props for the Link component when using route-based navigation
+ */
+export type LinkRouteProps<Route extends keyof Routes> = Omit<InertiaLinkProps, 'href' | 'method'> &
+  VueRouteParams<Route> & {
+    href?: never
+  }
+
+/**
+ * Props for the Link component when using direct href
+ */
+export type LinkHrefProps = Omit<InertiaLinkProps, 'href' | 'method'> & {
+  href: NonNullable<InertiaLinkProps['href']>
+  method?: InertiaLinkProps['method']
+  route?: never
+  params?: never
+  qs?: never
+}
+
+type LinkComponentVNode<Props> = VNode & {
+  __ctx?: {
+    props: PublicProps & Props
+    expose: (exposed: {}) => void
+    attrs: any
+    slots: InstanceType<typeof InertiaLink>['$slots']
+    emit: {}
+  }
+}
+
+type LinkComponent = {
+  <Route extends keyof Routes>(
+    props: PublicProps & LinkRouteProps<Route>
+  ): LinkComponentVNode<LinkRouteProps<Route>>
+  (props: PublicProps & LinkHrefProps): LinkComponentVNode<LinkHrefProps>
+  /**
+   * Combined signature used by programmatic render helpers such as Vue's h().
+   */
+  <Route extends keyof Routes>(
+    props: PublicProps & (LinkRouteProps<Route> | LinkHrefProps)
+  ): LinkComponentVNode<LinkRouteProps<Route> | LinkHrefProps>
+}
+
+/**
+ * Runtime component. Only the wrapper-owned props are declared so every
+ * upstream prop keeps flowing through attrs untouched; the exported
+ * LinkComponent type above is what templates typecheck against.
+ */
+const LinkImplementation = defineComponent({
   name: 'TuyauLink',
   inheritAttrs: false,
   props: {
@@ -57,7 +101,7 @@ export const Link = defineComponent({
       required: false,
     },
     href: {
-      type: String,
+      type: [String, Object] as PropType<NonNullable<InertiaLinkProps['href']>>,
       required: false,
     },
   },
@@ -66,7 +110,7 @@ export const Link = defineComponent({
 
     return () => {
       // Check if using direct href
-      if (props.href) {
+      if (props.href !== undefined) {
         return h(
           InertiaLink as any,
           {
@@ -97,3 +141,26 @@ export const Link = defineComponent({
     }
   },
 })
+
+/**
+ * Type-safe Link component for Inertia.js navigation.
+ *
+ * Supports both route-based navigation with automatic URL resolution
+ * and direct href navigation for maximum flexibility. The published type
+ * merges the upstream Link props (preserve-scroll, prefetch, data, ...)
+ * with the wrapper's route bindings, so templates typecheck the full
+ * surface while the runtime keeps forwarding upstream props through attrs.
+ *
+ * @example
+ * ```vue
+ * <!-- Route-based navigation -->
+ * <Link route="users.index">Users</Link>
+ * <Link route="users.show" :params="{ id: 1 }">View User</Link>
+ * <Link route="users.index" :qs="{ page: 2 }" preserve-scroll>Next</Link>
+ *
+ * <!-- Direct href navigation -->
+ * <Link href="/about">About</Link>
+ * <Link href="/logout" method="post">Logout</Link>
+ * ```
+ */
+export const Link = LinkImplementation as unknown as LinkComponent

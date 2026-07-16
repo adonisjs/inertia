@@ -9,6 +9,7 @@
     "node_modules",
     "build",
     "tests/types/react_client.spec.ts",
+    "tests/types/vue_client.spec.ts",
     "tests/types/form.registry.d.ts",
     "tests/types/react_form.fixture.tsx",
     "tests/types/vue_form.fixture.vue"

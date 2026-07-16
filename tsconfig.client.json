@@ -12,6 +12,7 @@
     "src/client/**/*",
     "tests/types/react.spec.ts",
     "tests/types/react_client.spec.ts",
-    "tests/types/vue.spec.ts"
+    "tests/types/vue.spec.ts",
+    "tests/types/vue_client.spec.ts"
   ]
 }
