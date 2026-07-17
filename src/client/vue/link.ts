@@ -12,13 +12,8 @@ import { defineComponent, h } from 'vue'
 import { Link as InertiaLink } from '@inertiajs/vue3'
 
 import { useTuyau } from './context.ts'
-import {
-  buildRouteUrl,
-  type RouteParams,
-  type RouteParamsFormats,
-  type Routes,
-  type VueRouteParams,
-} from '../common.ts'
+import { buildRouteUrl } from '../common.ts'
+import type { RouteParams, RouteParamsFormats, Routes, VueRouteParams } from '../types.ts'
 
 /**
  * Parameters required for route navigation with proper type safety. Kept on
@@ -97,7 +92,7 @@ const LinkImplementation = defineComponent({
       required: false,
     },
     method: {
-      type: String as PropType<string>,
+      type: String,
       required: false,
     },
     href: {

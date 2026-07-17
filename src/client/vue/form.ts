@@ -15,13 +15,8 @@ import { Form as InertiaForm } from '@inertiajs/vue3'
 import type { FormComponentProps, FormComponentSlotProps } from '@inertiajs/core'
 
 import { useTuyau } from './context.ts'
-import {
-  buildRouteUrl,
-  type ExtractRouteBody,
-  type RouteParamsFormats,
-  type Routes,
-  type VueRouteParams,
-} from '../common.ts'
+import { buildRouteUrl } from '../common.ts'
+import type { ExtractRouteBody, RouteParamsFormats, Routes, VueRouteParams } from '../types.ts'
 
 /**
  * Inertia form slot aliases kept for backward compatibility.
@@ -144,7 +139,7 @@ const FormImplementation = defineComponent({
       required: false,
     },
     method: {
-      type: String as PropType<string>,
+      type: String,
       required: false,
     },
     action: {

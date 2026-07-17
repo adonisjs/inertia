@@ -8,25 +8,27 @@
  */
 
 import type { Tuyau } from '@tuyau/core/client'
-import type { UserRegistry, InferRoutes } from '@tuyau/core/types'
-import type { AreAllOptional } from '@poppinss/utils/types'
 
-export type Routes = InferRoutes<UserRegistry>
+import type {
+  MethodVisitParams,
+  RouteParams,
+  RouterLike,
+  Routes,
+  RoutesWithMethod,
+  VisitParams,
+} from './types.ts'
 
 /**
- * Get request body type for a route
+ * Call signature of the client's urlFor builder. The wrappers hold a
+ * generically erased client (Tuyau<any>), whose urlFor call signature
+ * collapses to never, so calls go through this alias instead.
  */
-export type ExtractRouteBody<Route extends keyof Routes> =
-  Routes[Route]['types']['body'] extends object
-    ? Routes[Route]['types']['body']
-    : Record<string, never>
+type UrlForFn = (name: string, params?: unknown, options?: { qs?: Record<string, any> }) => string
 
 /**
  * Builds the URL for a named route, serializing query string parameters
- * through the client's urlFor builder. The wrappers hold a generically
- * erased client (Tuyau<any>), whose urlFor call signature collapses to
- * never; this helper re-types the call once instead of casting at every
- * call site.
+ * through the client's urlFor builder so serialization matches urlFor
+ * everywhere.
  */
 export function buildRouteUrl(
   tuyau: Tuyau<any>,
@@ -34,92 +36,102 @@ export function buildRouteUrl(
   params: unknown,
   qs?: Record<string, any>
 ): string {
-  type UrlForFn = (name: string, params?: unknown, options?: { qs?: Record<string, any> }) => string
   return (tuyau.urlFor as unknown as UrlForFn)(route, params, { qs })
 }
 
 /**
- * Get parameter tuple type for a route
+ * Resolves the target URL for a visit: the href when given, otherwise the
+ * route URL with query string parameters serialized.
  */
-export type ExtractParamsTuple<Route extends keyof Routes> = Routes[Route]['types']['paramsTuple']
+function resolveUrl(
+  tuyau: Tuyau<any>,
+  props: { href?: unknown; route?: string; routeParams?: unknown; qs?: Record<string, any> }
+) {
+  if (props.href !== undefined) {
+    return props.href
+  }
+  return buildRouteUrl(tuyau, props.route!, props.routeParams, props.qs)
+}
 
 /**
- * Get parameter object type for a route
+ * Builds the route-aware router shared by the react and vue useRouter
+ * hooks. Both packages re-export the same core Inertia router, so the
+ * factory only needs the client for URL building and the router for the
+ * actual visits; data and options types are derived from the given router.
  */
-export type ExtractParamsObject<Route extends keyof Routes> = Routes[Route]['types']['params']
+export function createRouter<R extends RouterLike>(tuyau: Tuyau<any>, inertiaRouter: R) {
+  return {
+    /**
+     * Navigate to a route with type-safe parameters and options, or use
+     * direct href for navigation.
+     *
+     * When using route-based navigation, automatically resolves the route
+     * URL and HTTP method based on the route definition. When using direct
+     * href, passes through to Inertia's router.
+     *
+     * @example
+     * ```ts
+     * router.visit({ route: 'dashboard' })
+     * router.visit({ route: 'user.edit', routeParams: { id: userId } })
+     * router.visit({ href: '/logout' }, { method: 'post' })
+     * ```
+     */
+    visit: <Route extends keyof Routes>(
+      props: VisitParams<R, Route>,
+      options?: Parameters<R['visit']>[1]
+    ) => {
+      if (props.href !== undefined) {
+        return inertiaRouter.visit(props.href, options)
+      }
 
-/**
- * Get params format for a route
- */
-export type RouteParamsFormats<Route extends keyof Routes> =
-  ExtractParamsObject<Route> extends Record<string, never>
-    ? never
-    : ExtractParamsTuple<Route> | ExtractParamsObject<Route>
+      const { route, routeParams, qs, method } = props as RouteParams<Route>
+      const { methods } = tuyau.getRoute(route, { params: routeParams })
+      const url = buildRouteUrl(tuyau, route, routeParams, qs)
 
-/**
- * Query-string parameters accepted for a route. Uses the route's declared
- * query types when present, and falls back to a free-form record for routes
- * without them.
- */
-export type RouteQs<Route extends keyof Routes> =
-  keyof Routes[Route]['types']['query'] extends never
-    ? Record<string, any>
-    : Routes[Route]['types']['query']
+      return inertiaRouter.visit(url, {
+        ...options,
+        method: method ?? methods[0].toLowerCase(),
+      })
+    },
 
-/**
- * HTTP methods that Inertia can issue visits with.
- */
-type VisitableMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
+    /**
+     * Method sugar mirroring the upstream router: each verb accepts only
+     * routes registered for it, or a direct href.
+     *
+     * @example
+     * ```ts
+     * router.get({ route: 'users.index', qs: { page: 2 } })
+     * router.post({ route: 'users.store' }, { name: 'Virk' })
+     * router.delete({ route: 'users.destroy', routeParams: [1] })
+     * ```
+     */
+    get: <Route extends RoutesWithMethod<'get'>>(
+      props: MethodVisitParams<R, Route>,
+      data?: Parameters<R['get']>[1],
+      options?: Parameters<R['get']>[2]
+    ) => inertiaRouter.get(resolveUrl(tuyau, props), data, options),
 
-/**
- * HTTP methods registered for a route that Inertia can visit with, as
- * lowercase literals. HEAD and OPTIONS registrations are excluded since
- * Inertia never issues those visits.
- *
- * A collapsed (`never`) result widens back to every visitable method:
- * React.createElement and Vue's h() validate the combined Form call
- * signature with `Route` instantiated as a wildcard, where the
- * `Extract<Lowercase<...>>` chain collapses to `never` and would otherwise
- * reject every method.
- */
-export type RouteMethod<Route extends keyof Routes> =
-  | Extract<Lowercase<Routes[Route]['methods'][number]>, VisitableMethod>
-  | ([Extract<Lowercase<Routes[Route]['methods'][number]>, VisitableMethod>] extends [never]
-      ? VisitableMethod
-      : never)
+    post: <Route extends RoutesWithMethod<'post'>>(
+      props: MethodVisitParams<R, Route>,
+      data?: Parameters<R['post']>[1],
+      options?: Parameters<R['post']>[2]
+    ) => inertiaRouter.post(resolveUrl(tuyau, props), data, options),
 
-/**
- * Parameters required for route navigation with proper type safety.
- */
-export type RouteParams<Route extends keyof Routes> = {
-  route: Route
-  qs?: RouteQs<Route>
-  method?: RouteMethod<Route>
-} & (RouteParamsFormats<Route> extends never
-  ? { routeParams?: never }
-  : AreAllOptional<ExtractParamsObject<Route>> extends true
-    ? { routeParams?: RouteParamsFormats<Route> }
-    : { routeParams: RouteParamsFormats<Route> })
+    put: <Route extends RoutesWithMethod<'put'>>(
+      props: MethodVisitParams<R, Route>,
+      data?: Parameters<R['put']>[1],
+      options?: Parameters<R['put']>[2]
+    ) => inertiaRouter.put(resolveUrl(tuyau, props), data, options),
 
-/**
- * Names of the routes registered for a given HTTP method. Powers the
- * route-aware router sugar, where `router.post()` only accepts routes
- * that can actually be visited with POST.
- */
-export type RoutesWithMethod<Method extends string> = {
-  [K in keyof Routes]: Method extends RouteMethod<K> ? K : never
-}[keyof Routes]
+    patch: <Route extends RoutesWithMethod<'patch'>>(
+      props: MethodVisitParams<R, Route>,
+      data?: Parameters<R['patch']>[1],
+      options?: Parameters<R['patch']>[2]
+    ) => inertiaRouter.patch(resolveUrl(tuyau, props), data, options),
 
-/**
- * The vue flavor of {@link RouteParams}: the vue wrappers expose the route
- * parameters under the `params` prop instead of `routeParams`.
- */
-export type VueRouteParams<Route extends keyof Routes> = {
-  route: Route
-  qs?: RouteQs<Route>
-  method?: RouteMethod<Route>
-} & (RouteParamsFormats<Route> extends never
-  ? { params?: never }
-  : AreAllOptional<ExtractParamsObject<Route>> extends true
-    ? { params?: RouteParamsFormats<Route> }
-    : { params: RouteParamsFormats<Route> })
+    delete: <Route extends RoutesWithMethod<'delete'>>(
+      props: MethodVisitParams<R, Route>,
+      options?: Parameters<R['delete']>[1]
+    ) => inertiaRouter.delete(resolveUrl(tuyau, props), options),
+  }
+}

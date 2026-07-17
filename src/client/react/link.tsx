@@ -10,7 +10,8 @@
 import React from 'react'
 import { Link as InertiaLink } from '@inertiajs/react'
 import { useTuyau } from './context.tsx'
-import { buildRouteUrl, type RouteParams, type Routes } from '../common.ts'
+import { buildRouteUrl } from '../common.ts'
+import type { RouteParams, Routes } from '../types.ts'
 
 /**
  * Parameters required for route navigation with proper type safety.
@@ -33,6 +34,8 @@ export type LinkRouteProps<Route extends keyof Routes> = Omit<
  */
 export type LinkHrefProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaLink>, 'route'> & {
   route?: never
+  routeParams?: never
+  qs?: never
 }
 
 /**
@@ -57,7 +60,7 @@ function LinkInner<Route extends keyof Routes>(
   const tuyau = useTuyau()
 
   // Check if props has href (direct navigation)
-  if ('href' in props) {
+  if ('href' in props && props.href !== undefined) {
     return <InertiaLink {...props} ref={ref} />
   }
 

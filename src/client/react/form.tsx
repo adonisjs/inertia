@@ -11,7 +11,8 @@ import React from 'react'
 import { Form as InertiaForm } from '@inertiajs/react'
 
 import { useTuyau } from './context.tsx'
-import { buildRouteUrl, type ExtractRouteBody, type RouteParams, type Routes } from '../common.ts'
+import { buildRouteUrl } from '../common.ts'
+import type { ExtractRouteBody, RouteParams, Routes } from '../types.ts'
 
 /**
  * Parameters required for route navigation with proper type safety.
@@ -80,6 +81,8 @@ export type FormActionProps<FormData extends object = Record<string, any>> = Omi
   'route' | 'children'
 > & {
   route?: never
+  routeParams?: never
+  qs?: never
   children?: FormChildren<FormData>
 }
 
@@ -107,7 +110,7 @@ function FormInner<
   const tuyau = useTuyau()
 
   // Check if props has action (direct form submission)
-  if ('action' in props) {
+  if ('action' in props && props.action !== undefined) {
     /**
      * The spreads are untyped on purpose: the public FormProps surface
      * carries the type safety, while the upstream component would try to
