@@ -183,8 +183,7 @@ type PagePropsEagerDataTypes<T extends JSONDataTypes> =
  * @template T - The data type extending JSONDataTypes, defaults to JSONDataTypes
  */
 export type PagePropsDataTypes<T extends JSONDataTypes = JSONDataTypes> =
-  | PagePropsEagerDataTypes<T>
-  | PagePropsLazyDataTypes<T>
+  PagePropsEagerDataTypes<T> | PagePropsLazyDataTypes<T>
 
 /**
  * Record type representing all page props that can be passed to an Inertia page
@@ -298,15 +297,19 @@ export type ToComponentProps<Props extends PageProps> = Prettify<
  */
 export type AsPageProps<Props extends ComponentProps> = Prettify<
   {
-    [K in {
-      [O in keyof Props]: [undefined] extends [Props[O]] ? O : never
-    }[keyof Props]]?:
+    [
+      K in {
+        [O in keyof Props]: [undefined] extends [Props[O]] ? O : never
+      }[keyof Props]
+    ]?:
       | PagePropsDataTypes<Props[K]>
       | MergeableProp<UnPackedPageProps<Props[K]> | DeferProp<UnPackedPageProps<Props[K]>>>
   } & {
-    [K in {
-      [O in keyof Props]: [undefined] extends [Props[O]] ? never : O
-    }[keyof Props]]: PagePropsEagerDataTypes<Props[K]> | MergeableProp<UnPackedPageProps<Props[K]>>
+    [
+      K in {
+        [O in keyof Props]: [undefined] extends [Props[O]] ? never : O
+      }[keyof Props]
+    ]: PagePropsEagerDataTypes<Props[K]> | MergeableProp<UnPackedPageProps<Props[K]>>
   }
 >
 

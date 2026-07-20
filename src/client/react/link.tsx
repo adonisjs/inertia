@@ -39,8 +39,7 @@ export type LinkHrefProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaLi
  * Union type for Link component props - either route-based or direct href
  */
 export type LinkProps<Route extends keyof Routes = keyof Routes> =
-  | LinkRouteProps<Route>
-  | LinkHrefProps
+  LinkRouteProps<Route> | LinkHrefProps
 
 /**
  * Internal Link component implementation with forward ref support.
