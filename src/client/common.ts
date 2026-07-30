@@ -13,6 +13,14 @@ import type { AreAllOptional } from '@poppinss/utils/types'
 export type Routes = InferRoutes<UserRegistry>
 
 /**
+ * Get request body type for a route
+ */
+export type ExtractRouteBody<Route extends keyof Routes> =
+  Routes[Route]['types']['body'] extends object
+    ? Routes[Route]['types']['body']
+    : Record<string, never>
+
+/**
  * Get parameter tuple type for a route
  */
 export type ExtractParamsTuple<Route extends keyof Routes> = Routes[Route]['types']['paramsTuple']

@@ -26,7 +26,10 @@
   "scripts": {
     "pretest": "npm run lint",
     "test": "npm run quick:test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "npm run typecheck:node && npm run typecheck:react && npm run typecheck:vue",
+    "typecheck:node": "tsc --noEmit",
+    "typecheck:react": "tsc --noEmit -p tests/types/tsconfig.react.json",
+    "typecheck:vue": "vue-tsc --noEmit -p tests/types/tsconfig.vue.json",
     "clean": "del-cli build",
     "compile": "tsdown && tsc --emitDeclarationOnly --declaration",
     "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
@@ -83,7 +86,8 @@
     "tsdown": "^0.22.7",
     "typescript": "~6.0.3",
     "vite": "^8.1.4",
-    "vue": "^3.5.39"
+    "vue": "^3.5.39",
+    "vue-tsc": "~3.2.0"
   },
   "dependencies": {
     "@poppinss/utils": "^7.0.1",

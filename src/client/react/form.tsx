@@ -9,8 +9,21 @@
 
 import React from 'react'
 import { Form as InertiaForm } from '@inertiajs/react'
+// Inertia's declarations omit NodeNext-compatible extensions from internal type re-exports.
+// @ts-ignore TypeScript resolves these exports correctly in client projects using Bundler resolution.
+import type { FormComponentProps, FormComponentRef, FormComponentSlotProps } from '@inertiajs/core'
 import { useTuyau } from './context.tsx'
-import type { RouteParams, Routes } from '../common.ts'
+import type { ExtractRouteBody, RouteParams, Routes } from '../common.ts'
+
+const BaseForm = InertiaForm as any
+
+type InertiaFormProps<FormData extends object> = FormComponentProps<FormData> &
+  Omit<React.FormHTMLAttributes<HTMLFormElement>, keyof FormComponentProps | 'children'> &
+  Omit<React.AllHTMLAttributes<HTMLFormElement>, keyof FormComponentProps | 'children'> & {
+    children?: React.ReactNode | ((props: FormComponentSlotProps<FormData>) => React.ReactNode)
+  }
+
+export type FormRef<FormData extends object> = FormComponentRef<FormData>
 
 /**
  * Parameters required for route navigation with proper type safety.
@@ -21,7 +34,7 @@ export type FormParams<Route extends keyof Routes> = RouteParams<Route>
  * Props for the Form component when using route-based navigation
  */
 export type FormRouteProps<Route extends keyof Routes> = Omit<
-  React.ComponentPropsWithoutRef<typeof InertiaForm>,
+  InertiaFormProps<ExtractRouteBody<Route>>,
   'action' | 'method'
 > &
   FormParams<Route> & {
@@ -31,15 +44,20 @@ export type FormRouteProps<Route extends keyof Routes> = Omit<
 /**
  * Props for the Form component when using direct action
  */
-export type FormActionProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaForm>, 'route'> & {
+export type FormActionProps<FormData extends object = Record<string, any>> = Omit<
+  InertiaFormProps<FormData>,
+  'route'
+> & {
   route?: never
 }
 
 /**
  * Union type for Form component props - either route-based or direct action
  */
-export type FormProps<Route extends keyof Routes = keyof Routes> =
-  FormRouteProps<Route> | FormActionProps
+export type FormProps<
+  Route extends keyof Routes = keyof Routes,
+  FormData extends object = Record<string, any>,
+> = FormRouteProps<Route> | FormActionProps<FormData>
 
 /**
  * Internal Form component implementation with forward ref support.
@@ -47,15 +65,18 @@ export type FormProps<Route extends keyof Routes = keyof Routes> =
  * for Inertia form submission when using route-based navigation.
  * Falls back to standard InertiaForm when action is provided directly.
  */
-function FormInner<Route extends keyof Routes>(
-  props: FormProps<Route>,
-  ref?: React.ForwardedRef<React.ElementRef<typeof InertiaForm>>
+function FormInner<
+  Route extends keyof Routes = keyof Routes,
+  FormData extends object = Record<string, any>,
+>(
+  props: FormProps<Route, FormData>,
+  ref?: React.ForwardedRef<FormRef<ExtractRouteBody<Route>> | FormRef<FormData>>
 ) {
   const tuyau = useTuyau()
 
   // Check if props has action (direct form submission)
   if ('action' in props) {
-    return <InertiaForm {...props} ref={ref} />
+    return <BaseForm {...props} ref={ref} />
   }
 
   // Route-based navigation
@@ -63,7 +84,7 @@ function FormInner<Route extends keyof Routes>(
   const routeInfo = tuyau.getRoute((props as any).route, { params })
 
   return (
-    <InertiaForm
+    <BaseForm
       {...formProps}
       action={{ url: routeInfo.url, method: routeInfo.methods[0].toLowerCase() as any }}
       ref={ref}
@@ -113,8 +134,27 @@ function FormInner<Route extends keyof Routes>(
  * </Form>
  * ```
  */
-export const Form: <Route extends keyof Routes>(
-  props: FormProps<Route> & {
-    ref?: React.Ref<React.ElementRef<typeof InertiaForm>>
-  }
-) => ReturnType<typeof FormInner> = React.forwardRef(FormInner as any) as any
+export const Form: {
+  <Route extends keyof Routes>(
+    props: FormRouteProps<Route> & {
+      ref?: React.Ref<FormRef<ExtractRouteBody<Route>>>
+    }
+  ): ReturnType<typeof FormInner>
+  <FormData extends object = Record<string, any>>(
+    props: FormActionProps<FormData> & {
+      ref?: React.Ref<FormRef<FormData>>
+    }
+  ): ReturnType<typeof FormInner>
+  /**
+   * Combined signature used by component helpers such as React.createElement.
+   */
+  <Route extends keyof Routes, FormData extends object = Record<string, any>>(
+    props:
+      | (FormRouteProps<Route> & {
+          ref?: React.Ref<FormRef<ExtractRouteBody<Route>>>
+        })
+      | (FormActionProps<FormData> & {
+          ref?: React.Ref<FormRef<FormData>>
+        })
+  ): ReturnType<typeof FormInner>
+} = React.forwardRef(FormInner as any) as any
