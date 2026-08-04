@@ -1,0 +1,37 @@
+{
+  /**
+   * Client-resolution typecheck program, run with vue-tsc so the .vue
+   * fixture is checked alongside the .tsx one. Under the package NodeNext
+   * config the upstream Inertia declaration files do not resolve and
+   * degrade to `any`, so every assertion that depends on them lives in the
+   * files below and is checked here under Bundler resolution with the DOM
+   * lib. Living at tests/types/tsconfig.json, this is also the nearest
+   * config the editor's TS server discovers for these files.
+   *
+   * The `UserRegistry` augmentation comes from react.spec.ts and applies
+   * program-wide, including to the fixtures.
+   */
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "../../src/client/**/*",
+    "react.spec.ts",
+    "react_client.spec.ts",
+    "react_form.fixture.tsx",
+    "vue.spec.ts",
+    "vue_client.spec.ts",
+    "vue_form.fixture.vue"
+  ],
+  /**
+   * Reset the inherited exclude: the parent config excludes the fixture and
+   * client spec files from the NodeNext program, and an inherited exclude
+   * would silently filter them out of this program's include.
+   */
+  "exclude": []
+}

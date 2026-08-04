@@ -9,7 +9,7 @@
 
 /**
  * Side-effect import: brings the `ctx.assert` module augmentation into the
- * standalone client typecheck (tsconfig.client.json), where bin/test.ts is
+ * standalone client typecheck (tests/types/tsconfig.json), where bin/test.ts is
  * not part of the program.
  */
 import '@japa/assert'

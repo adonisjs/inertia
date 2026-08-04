@@ -291,7 +291,7 @@ test.group('React | Typings', () => {
     // Route mode derives the form-data shape from the route's declared
     // body, so the error keys come from the route itself. The negative
     // assertions (unknown keys are rejected) live in react_client.spec.ts,
-    // which is only checked by tsconfig.client.json where the upstream
+    // which is only checked by tests/types/tsconfig.json where the upstream
     // client types resolve.
     Form({
       route: 'users.store',

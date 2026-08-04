@@ -1,9 +1,0 @@
-{
-  "extends": "@adonisjs/tsconfig/tsconfig.client.json",
-  "compilerOptions": {
-    "module": "ESNext",
-    "allowImportingTsExtensions": true,
-    "noEmit": true
-  },
-  "include": ["./form.registry.d.ts", "./vue_form.fixture.vue"]
-}

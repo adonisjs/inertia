@@ -11,7 +11,7 @@
  * Type assertions that hold only when the upstream Inertia client types
  * resolve. This file is excluded from the package tsconfig (NodeNext, where
  * the upstream ESM declaration files do not resolve and degrade to `any`)
- * and checked exclusively by tsconfig.client.json. The `UserRegistry`
+ * and checked exclusively by tests/types/tsconfig.json. The `UserRegistry`
  * augmentation comes from react.spec.ts, which is part of the same program.
  */
 import { test } from '@japa/runner'

@@ -5,12 +5,17 @@
     "outDir": "./build",
     "jsx": "react-jsx"
   },
+  /**
+   * The client-resolution assertions only compile under Bundler resolution
+   * where the upstream Inertia declaration files resolve. They are excluded
+   * here and checked by the tests/types/tsconfig.json program, which the
+   * editor also discovers as the nearest config for those files.
+   */
   "exclude": [
     "node_modules",
     "build",
     "tests/types/react_client.spec.ts",
     "tests/types/vue_client.spec.ts",
-    "tests/types/form.registry.d.ts",
     "tests/types/react_form.fixture.tsx",
     "tests/types/vue_form.fixture.vue"
   ]
