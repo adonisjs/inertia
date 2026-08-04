@@ -875,8 +875,14 @@ export type RenderInertiaSsrApp = (
 ) => Promise<{ head: string[]; body: string }>
 
 /**
- * Type helper to infer the return type of InertiaMiddleware.share method
- * and augment the SharedProps interface automatically
+ * Type helper to infer the shared props shape from the `share()` method of an
+ * Inertia middleware. Bridge the result into both augmentation targets: the
+ * package's own {@link SharedProps} interface so `inertia.render` knows which
+ * keys arrive from the middleware, and the client's `@inertiajs/core`
+ * `sharedPageProps` config so `usePage().props`, `LayoutCallback`, and every
+ * other upstream prop-reading surface is typed globally. The client-side
+ * augmentation must live in the client source tree (e.g. `inertia/types.ts`),
+ * since the client tsconfig does not include server files.
  *
  * @template T - The middleware class type that extends BaseInertiaMiddleware
  *
@@ -891,8 +897,18 @@ export type RenderInertiaSsrApp = (
  *   }
  * }
  *
- * // Automatically infer and augment SharedProps
- * type InferredSharedProps = InferSharedProps<InertiaMiddleware>
+ * // Server side, next to the middleware
+ * declare module '@adonisjs/inertia/types' {
+ *   type MiddlewareSharedProps = InferSharedProps<InertiaMiddleware>
+ *   export interface SharedProps extends MiddlewareSharedProps {}
+ * }
+ *
+ * // Client side, in the client source tree (e.g. inertia/types.ts)
+ * declare module '@inertiajs/core' {
+ *   interface InertiaConfig {
+ *     sharedPageProps: InferSharedProps<InertiaMiddleware>
+ *   }
+ * }
  * ```
  */
 export type InferSharedProps<T> = T extends {
