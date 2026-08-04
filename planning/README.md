@@ -40,7 +40,7 @@ v3-gated features (04, 07, 08) can be slotted wherever their dependencies allow.
 3. [Keyed and directional merges](./05-keyed-and-directional-merges.md) — ✅ implemented ([ADR 0019](../docs/adr/0019-keyed-and-directional-merges.md)).
 4. [Infinite scroll](./06-infinite-scroll.md) — ✅ implemented ([ADR 0020](../docs/adr/0020-infinite-scroll.md)); depends on (3).
 5. [Flash messages](./09-flash-messages.md) — ✅ implemented ([ADR 0021](../docs/adr/0021-first-class-flash-messages.md)).
-6. [Prefetch awareness](./02-prefetch-awareness.md) — mostly a generic-HTTP flag; see banner.
+6. [Prefetch awareness](./02-prefetch-awareness.md) — ✅ implemented in `@adonisjs/http-server` (`request.prefetch()` checks `Sec-Purpose`, `Purpose`, and `X-Purpose`); nothing to add in this package.
 7. [Rescued deferred props](./04-rescued-deferred-props.md) — ✅ implemented ([ADR 0018](../docs/adr/0018-rescued-deferred-props.md)).
 8. [Fragment-preserving redirects](./07-fragment-preserving-redirects.md) — now unblocked.
 9. [Shared props tracking](./08-shared-props-tracking.md) — ✅ implemented ([ADR 0022](../docs/adr/0022-shared-props-tracking.md)).
