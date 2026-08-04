@@ -141,3 +141,16 @@ export type VisitParams<R extends RouterLike, Route extends keyof Routes> =
  */
 export type MethodVisitParams<R extends RouterLike, Route extends keyof Routes> =
   (Omit<RouteParams<Route>, 'method'> & { href?: never }) | VisitHrefParams<R>
+
+/**
+ * Request body accepted by the router's post, put, and patch methods. In
+ * route mode the body follows the route's declared body type, with FormData
+ * kept for file uploads. An href call carries no route to infer from, so the
+ * route parameter resolves to its declared `never` default and the body
+ * falls back to the upstream payload type.
+ */
+export type RouterRequestBody<
+  R extends RouterLike,
+  Method extends 'post' | 'put' | 'patch',
+  Route extends keyof Routes,
+> = [Route] extends [never] ? Parameters<R[Method]>[1] : ExtractRouteBody<Route> | FormData

@@ -260,6 +260,28 @@ test.group('React | Typings', () => {
     router.put({ route: 'posts.update', routeParams: ['1'], method: 'patch' })
   }).fails()
 
+  test('method sugar types the request body from the route', () => {
+    const router = useRouter()
+
+    // Route mode follows the route's declared body type
+    router.post({ route: 'users.store' }, { email: 'virk@adonisjs.com', remember: true })
+
+    // FormData stays accepted for file uploads
+    router.post({ route: 'users.store' }, new FormData())
+
+    // Routes without a declared body keep accepting free-form data
+    router.patch({ route: 'posts.update', routeParams: ['1'] }, { title: 'Hello' })
+
+    // Href mode has no route to derive a body from, so any payload works
+    router.post({ href: '/direct' }, { anything: 'goes' })
+
+    // @ts-expect-error unknown key for the route's declared body
+    router.post({ route: 'users.store' }, { email: 'virk@adonisjs.com', unknown: true })
+
+    // @ts-expect-error wrong value type for a declared body field
+    router.post({ route: 'users.store' }, { email: 42 })
+  }).fails()
+
   test('Form with route-based navigation', () => {
     // Form to a route without parameters
     Form({ route: 'users.index' })

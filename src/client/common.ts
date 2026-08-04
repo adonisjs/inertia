@@ -13,6 +13,7 @@ import type {
   MethodVisitParams,
   RouteParams,
   RouterLike,
+  RouterRequestBody,
   Routes,
   RoutesWithMethod,
   VisitParams,
@@ -96,7 +97,8 @@ export function createRouter<R extends RouterLike>(tuyau: Tuyau<any>, inertiaRou
 
     /**
      * Method sugar mirroring the upstream router: each verb accepts only
-     * routes registered for it, or a direct href.
+     * routes registered for it, or a direct href. The body-carrying verbs
+     * type their data from the route's declared body in route mode.
      *
      * @example
      * ```ts
@@ -111,21 +113,21 @@ export function createRouter<R extends RouterLike>(tuyau: Tuyau<any>, inertiaRou
       options?: Parameters<R['get']>[2]
     ) => inertiaRouter.get(resolveUrl(tuyau, props), data, options),
 
-    post: <Route extends RoutesWithMethod<'post'>>(
+    post: <Route extends RoutesWithMethod<'post'> = never>(
       props: MethodVisitParams<R, Route>,
-      data?: Parameters<R['post']>[1],
+      data?: RouterRequestBody<R, 'post', Route>,
       options?: Parameters<R['post']>[2]
     ) => inertiaRouter.post(resolveUrl(tuyau, props), data, options),
 
-    put: <Route extends RoutesWithMethod<'put'>>(
+    put: <Route extends RoutesWithMethod<'put'> = never>(
       props: MethodVisitParams<R, Route>,
-      data?: Parameters<R['put']>[1],
+      data?: RouterRequestBody<R, 'put', Route>,
       options?: Parameters<R['put']>[2]
     ) => inertiaRouter.put(resolveUrl(tuyau, props), data, options),
 
-    patch: <Route extends RoutesWithMethod<'patch'>>(
+    patch: <Route extends RoutesWithMethod<'patch'> = never>(
       props: MethodVisitParams<R, Route>,
-      data?: Parameters<R['patch']>[1],
+      data?: RouterRequestBody<R, 'patch', Route>,
       options?: Parameters<R['patch']>[2]
     ) => inertiaRouter.patch(resolveUrl(tuyau, props), data, options),
 
