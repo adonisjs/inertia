@@ -222,6 +222,11 @@ export default abstract class BaseInertiaMiddleware {
     /**
      * Handle version change
      *
+     * The current asset version is sent along with the location response so
+     * the client can tell an automatic version change apart from an explicit
+     * `inertia.location()` redirect and defer the forced reload on background
+     * requests (e.g. polling) until the next user-initiated visit.
+     *
      * See https://inertiajs.com/the-protocol#asset-versioning
      */
     const version = ctx.inertia.getVersion()
@@ -233,6 +238,7 @@ export default abstract class BaseInertiaMiddleware {
       }
       ctx.response.removeHeader(InertiaHeaders.Inertia)
       ctx.response.header(InertiaHeaders.Location, ctx.request.url(true))
+      ctx.response.header(InertiaHeaders.Version, version)
       ctx.response.status(409)
     }
   }

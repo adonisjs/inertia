@@ -272,6 +272,7 @@ test.group('Middleware', () => {
     assert.equal(response.status, 409)
     assert.isUndefined(response.headers[InertiaHeaders.Inertia])
     assert.equal(response.headers[InertiaHeaders.Location], '/')
+    assert.equal(response.headers[InertiaHeaders.Version], '1')
   })
 })
 
