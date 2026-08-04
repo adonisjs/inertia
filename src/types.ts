@@ -881,10 +881,11 @@ export type RenderInertiaSsrApp = (
  * keys arrive from the middleware, and the client's `@inertiajs/core`
  * `sharedPageProps` config so `usePage().props`, `LayoutCallback`, and every
  * other upstream prop-reading surface is typed globally. The client-side
- * augmentation must live in the client source tree (e.g. `inertia/types.ts`),
- * since the client tsconfig does not include server files. It is also
- * react-only: vue-tsc trips over the inference-heavy augmentation, so vue
- * applications pass the inferred type to `usePage` as a generic instead.
+ * augmentation must live in the client source tree (e.g. `inertia/types.ts`)
+ * and reference the generated `Data.SharedProps` alias rather than running
+ * the inference again: the client tsconfig does not include server files,
+ * and the alias keeps the middleware's server-side type graph out of the
+ * client program.
  *
  * @template T - The middleware class type that extends BaseInertiaMiddleware
  *
@@ -905,10 +906,11 @@ export type RenderInertiaSsrApp = (
  *   export interface SharedProps extends MiddlewareSharedProps {}
  * }
  *
- * // Client side, in the client source tree (e.g. inertia/types.ts)
+ * // Client side, in the client source tree (e.g. inertia/types.ts).
+ * // Data.SharedProps is the codegen alias for InferSharedProps<InertiaMiddleware>.
  * declare module '@inertiajs/core' {
  *   interface InertiaConfig {
- *     sharedPageProps: InferSharedProps<InertiaMiddleware>
+ *     sharedPageProps: Data.SharedProps
  *   }
  * }
  * ```
