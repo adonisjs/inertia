@@ -882,7 +882,9 @@ export type RenderInertiaSsrApp = (
  * `sharedPageProps` config so `usePage().props`, `LayoutCallback`, and every
  * other upstream prop-reading surface is typed globally. The client-side
  * augmentation must live in the client source tree (e.g. `inertia/types.ts`),
- * since the client tsconfig does not include server files.
+ * since the client tsconfig does not include server files. It is also
+ * react-only: vue-tsc trips over the inference-heavy augmentation, so vue
+ * applications pass the inferred type to `usePage` as a generic instead.
  *
  * @template T - The middleware class type that extends BaseInertiaMiddleware
  *
