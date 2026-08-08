@@ -708,7 +708,7 @@ export type InertiaConfig = {
 
     /**
      * The entrypoint file that boots the frontend application on the server.
-     * Must also be declared under `serverEntrypoints` on the AdonisJS Vite
+     * Must also be declared under `serverEntryPoints` on the AdonisJS Vite
      * plugin so it gets bundled for production. The value is passed to
      * `vite.loadServerModule()` to evaluate the module in dev and import
      * the bundle in production.

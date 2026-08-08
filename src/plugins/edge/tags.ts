@@ -15,8 +15,10 @@ import { isSubsetOf } from './utils.js'
 /**
  * Edge tag that generates the root element for Inertia.js applications
  *
- * The @inertia tag creates a container element with encoded page data that Inertia.js
- * uses to hydrate the client-side application. Supports customization through attributes.
+ * The @inertia tag emits the initial page payload as a JSON script element
+ * followed by the mount element Inertia.js hydrates on the client. The
+ * script's `data-page` attribute matches the mount element's id. Supports
+ * customization through attributes.
  *
  * @example
  * ```edge
@@ -27,7 +29,8 @@ import { isSubsetOf } from './utils.js'
  * @inertia({ as: 'main', id: 'app-root', class: 'min-h-screen' })
  *
  * {{-- Results in: --}}
- * {{-- <main id="app-root" class="min-h-screen" data-page="{...encoded page data...}"></main> --}}
+ * {{-- <script data-page="app-root" type="application/json">{...page data...}</script> --}}
+ * {{-- <main id="app-root" class="min-h-screen"></main> --}}
  * ```
  *
  * Supported attributes:

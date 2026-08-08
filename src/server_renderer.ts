@@ -17,7 +17,7 @@ import type { PageObject, RenderInertiaSsrApp, InertiaConfig } from './types.js'
  *
  * Resolves the SSR entrypoint through `vite.loadServerModule` so the same
  * code path works in dev (Vite module runner) and in production (pre-built
- * SSR bundle on disk). The entry must be declared under `serverEntrypoints`
+ * SSR bundle on disk). The entry must be declared under `serverEntryPoints`
  * on the AdonisJS Vite plugin so it gets bundled for production.
  *
  * @example
