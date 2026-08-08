@@ -172,6 +172,28 @@ test.group('Merges | reset', () => {
 
     assert.deepEqual(page.mergeProps, ['b'])
   })
+
+  test('reset drops the merge label of a deferred mergeable prop', async ({ assert }) => {
+    const inertia = new InertiaFactory<{
+      home: { users?: { id: number; name: string }[] }
+    }>()
+      .partialReload('home')
+      .only(['users'])
+      .reset(['users'])
+      .create()
+
+    const page = await inertia.page('home', {
+      users: defer(() => [{ id: 1, name: 'Jane' }]).deepMerge(),
+    })
+
+    /**
+     * The deferred value resolves on the partial reload, but the reset strips
+     * its deep-merge label so the client replaces the accumulated list.
+     */
+    assert.deepEqual(page.props.users, [{ id: 1, name: 'Jane' }])
+    assert.deepEqual(page.deepMergeProps, [])
+    assert.deepEqual(page.mergeProps, [])
+  })
 })
 
 test.group('Merges | partial reload', () => {
