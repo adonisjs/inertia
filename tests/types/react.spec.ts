@@ -122,7 +122,7 @@ const routes = {
       paramsTuple: []
       params: {}
       query: {}
-      response: unknown
+      response: { id: number; email: string }
     },
   },
   'posts.update': {

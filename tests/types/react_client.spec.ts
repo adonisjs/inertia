@@ -15,8 +15,10 @@
  * augmentation comes from react.spec.ts, which is part of the same program.
  */
 import { test } from '@japa/runner'
+import '@japa/expect-type'
 
 import { Form } from '../../src/client/react/form.tsx'
+import { useHttp } from '../../src/client/react/http.ts'
 import { Link } from '../../src/client/react/link.tsx'
 
 /**
@@ -89,5 +91,89 @@ test.group('React | Typings | Client resolution only', () => {
         return { ...sharedProps, user: { id: 1 } }
       },
     })
+  }).fails()
+
+  test('route-bound useHttp derives its state, request options, and response', ({
+    expectTypeOf,
+  }) => {
+    const request = useHttp(
+      { route: 'users.store' },
+      { email: 'virk@adonisjs.com', remember: true }
+    )
+
+    request.data.email.toUpperCase()
+    request.errors.email
+    request.response?.id.toFixed()
+
+    expectTypeOf(request.data).toEqualTypeOf<{
+      email: string
+      remember?: boolean
+    }>()
+    expectTypeOf(request.response).toEqualTypeOf<{
+      id: number
+      email: string
+    } | null>()
+    expectTypeOf(request.submit()).toEqualTypeOf<Promise<{ id: number; email: string }>>()
+    expectTypeOf(request.withAllErrors()).toEqualTypeOf(request)
+
+    request.submit({
+      onSuccess(response) {
+        response.id.toFixed()
+        response.email.toUpperCase()
+      },
+      optimistic(data) {
+        return { email: data.email.toUpperCase() }
+      },
+    })
+
+    request
+      .withAllErrors()
+      .optimistic((data) => ({ remember: !data.remember }))
+      .dontRemember('email')
+      .submit()
+
+    // @ts-expect-error unknown request field
+    request.dontRemember('unknown')
+    // @ts-expect-error route-bound instances cannot override their endpoint
+    request.post('/users')
+    // @ts-expect-error submit only accepts request options
+    request.submit('post', '/users')
+    // @ts-expect-error fluent methods must keep the endpoint bound
+    request.withAllErrors().post('/users')
+    // @ts-expect-error route-bound instances cannot replace their endpoint with Precognition
+    request.withPrecognition('post', '/users')
+  }).fails()
+
+  test('route-bound useHttp validates routes, params, methods, and initial data', () => {
+    useHttp({ route: 'users.store' })
+
+    // @ts-expect-error unknown route
+    useHttp({ route: 'unknown' })
+    // @ts-expect-error required route params are missing
+    useHttp({ route: 'users.comments.edit' })
+    // @ts-expect-error GET is not registered for this route
+    useHttp({ route: 'users.store', method: 'get' })
+    // @ts-expect-error unknown request field
+    useHttp({ route: 'users.store' }, { email: 'virk@adonisjs.com', unknown: true })
+    // @ts-expect-error wrong request field type
+    useHttp({ route: 'users.store' }, { email: 42 })
+  }).fails()
+
+  test('useHttp without a route preserves the native Inertia API', ({ expectTypeOf }) => {
+    const request = useHttp<{ query: string }, { users: { id: number }[] }>({ query: '' })
+
+    request.data.query
+    expectTypeOf(request.data).toEqualTypeOf<{ query: string }>()
+    expectTypeOf(request.get('/api/users')).toEqualTypeOf<Promise<{ users: { id: number }[] }>>()
+    request.get('/api/users').then((response) => response.users[0]?.id)
+    request.post('/api/users')
+    request.submit('get', '/api/users')
+
+    const endpoint = useHttp<{ email: string }, { id: number }>(
+      { url: '/api/users', method: 'post' },
+      { email: 'virk@adonisjs.com' }
+    )
+    endpoint.validate('email')
+    endpoint.submit().then((response) => response.id)
   }).fails()
 })
