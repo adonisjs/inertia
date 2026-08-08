@@ -197,6 +197,32 @@ export type PaginationMeta = {
 }
 
 /**
+ * Field of an array item usable as a keyed-merge match key. The client
+ * splits the wire entry (`"<path>.<field>"`) on its last dot, so an
+ * item-level key must be a single field name — a dotted key would move the
+ * merge path itself and silently mis-merge. Non-object items have no fields
+ * to match on.
+ *
+ * @template Item - The array item type being deduped
+ */
+export type ItemMatchKey<Item> = [Item] extends [object] ? keyof Item & string : never
+
+/**
+ * Match path accepted by a merge prop's `matchOn()`. A flat array value
+ * dedupes by an item field, so the key set comes from the items themselves.
+ * Any other (deep-merged) value keeps free-form dotted paths: the merged
+ * array may sit at any depth, with the final segment naming the match field.
+ *
+ * @template T - The merge prop's value type
+ */
+export type MergeMatchPath<T> =
+  T extends DeferProp<infer V>
+    ? MergeMatchPath<V>
+    : UnpackProp<T> extends readonly (infer Item)[]
+      ? ItemMatchKey<Item>
+      : string
+
+/**
  * Represents an infinite-scroll prop: a mergeable, paginated value carrying the
  * pagination cursor the client needs to keep loading pages as the user scrolls.
  * The cursor is auto-derived from a transformer paginator or supplied by a
@@ -220,8 +246,8 @@ export type ScrollProp<Item = any, Deferred extends boolean = false> = {
   group?: string
   /** Exclude the first page from the initial load; loaded on demand */
   deferred(group?: string): ScrollProp<Item, true>
-  /** Dedupe/replace incoming items by the given key, relative to `data` */
-  matchOn(key: string): ScrollProp<Item, Deferred>
+  /** Dedupe/replace incoming items by the given item field, relative to `data` */
+  matchOn(key: ItemMatchKey<Item>): ScrollProp<Item, Deferred>
   /** Brand symbol to identify this as a scroll prop */
   [SCROLL_PROP]: true
   /** Type-only flag: `true` once deferred. Never present at runtime. */
@@ -321,7 +347,7 @@ export type MergeableProp<T extends UnPackedPageProps | DeferProp<UnPackedPagePr
   /** Append incoming array items (the default; restores append after `prepend`) */
   append(): MergeableProp<T>
   /** Dedupe/replace incoming array items by the given match path */
-  matchOn(key: string): MergeableProp<T>
+  matchOn(key: MergeMatchPath<T>): MergeableProp<T>
   /** Remember this prop on the client across visits */
   once(options?: OnceOptions): OnceProp<MergeableProp<T>>
   /** Brand symbol to identify this prop for merging */

@@ -11,7 +11,7 @@ import { test } from '@japa/runner'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
 import { type Scroll, type AsPageProps } from '../../src/types.ts'
-import { once, always, defer, merge, scroll, optional } from '../../src/props.ts'
+import { once, always, defer, merge, deepMerge, scroll, optional } from '../../src/props.ts'
 import { type User, userRows } from '../helpers.js'
 
 function createRenderer<Input extends Record<string, any>>() {
@@ -990,5 +990,33 @@ test.group('To page props | scroll', () => {
       // @ts-expect-error a non-Scroll prop cannot be built with scroll()
       posts: scroll(() => ({ data: userRows }), cursor),
     })
+  })
+
+  test('matchOn keys follow the merged items', () => {
+    // Flat arrays dedupe by an item field
+    merge([{ id: 1, name: 'Jane' }]).matchOn('id')
+    merge([{ id: 1, name: 'Jane' }]).matchOn('name')
+
+    // @ts-expect-error not a field of the merged items
+    merge([{ id: 1, name: 'Jane' }]).matchOn('idd')
+
+    // Deferred merge props unwrap to their computed items
+    const deferredUsers = defer(() => [{ id: 1 }]).merge()
+    deferredUsers.matchOn('id')
+
+    // @ts-expect-error not a field of the deferred items
+    deferredUsers.matchOn('idd')
+
+    // Deep merges keep free-form dotted paths: the array may sit at any depth
+    deepMerge({ list: [{ id: 1 }] }).matchOn('list.id')
+
+    // Scroll props dedupe by an item field, relative to `data`
+    scroll(() => ({ data: [{ id: 1, title: 'Hello' }] }), cursor).matchOn('id')
+
+    // @ts-expect-error not a field of the scroll items
+    scroll(() => ({ data: [{ id: 1, title: 'Hello' }] }), cursor).matchOn('idd')
+
+    // @ts-expect-error dotted paths would move the merge path itself
+    scroll(() => ({ data: [{ id: 1, title: 'Hello' }] }), cursor).matchOn('nested.id')
   })
 })
