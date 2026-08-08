@@ -39,8 +39,7 @@ export type FormActionProps = Omit<React.ComponentPropsWithoutRef<typeof Inertia
  * Union type for Form component props - either route-based or direct action
  */
 export type FormProps<Route extends keyof Routes = keyof Routes> =
-  | FormRouteProps<Route>
-  | FormActionProps
+  FormRouteProps<Route> | FormActionProps
 
 /**
  * Internal Form component implementation with forward ref support.
