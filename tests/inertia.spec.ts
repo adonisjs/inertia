@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto'
 import { HttpContext } from '@adonisjs/core/http'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
+import { Inertia } from '../src/inertia.ts'
 import { InertiaHeaders } from '../src/headers.ts'
 import { setupViewMacroMock, setupVite } from './helpers.js'
 import { InertiaFactory } from '../factories/inertia_factory.js'
@@ -21,6 +22,19 @@ import { ServerRenderer } from '../src/server_renderer.js'
 import { defineConfig } from '../src/define_config.js'
 
 test.group('Inertia', () => {
+  test('is macroable so packages can extend it', ({ assert, cleanup }) => {
+    Inertia.macro('greet' as any, function (this: Inertia<any>) {
+      return `hello from ${this.constructor.name}`
+    })
+    cleanup(() => {
+      delete (Inertia.prototype as any).greet
+    })
+
+    const inertia = new InertiaFactory().create()
+
+    assert.equal((inertia as any).greet(), 'hello from Inertia')
+  })
+
   test('Set X-Inertia-Location header with 409 status code', async ({ assert }) => {
     const ctx = new HttpContextFactory().create()
     const inertia = new InertiaFactory().merge({ ctx }).create()

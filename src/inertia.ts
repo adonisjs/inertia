@@ -12,6 +12,7 @@
 
 import { createHash } from 'node:crypto'
 import { type Vite } from '@adonisjs/vite'
+import Macroable from '@poppinss/macroable'
 import type { HttpContext } from '@adonisjs/core/http'
 
 import { InertiaHeaders } from './headers.js'
@@ -61,7 +62,7 @@ import { type AsyncOrSync } from '@poppinss/utils/types'
  * inertia.location('/dashboard')
  * ```
  */
-export class Inertia<Pages> {
+export class Inertia<Pages> extends Macroable {
   /**
    * Listener invoked when a rescuable deferred prop's resolution throws. Shared
    * across all per-request instances; defaults to logging the error through the
@@ -236,6 +237,7 @@ export class Inertia<Pages> {
     vite?: Vite,
     serverRenderer?: ServerRenderer
   ) {
+    super()
     if (debug.enabled) {
       debug(
         'instantiating inertia instance for request "%s" using config %O',

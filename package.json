@@ -89,6 +89,7 @@
     "vue-tsc": "~3.2.0"
   },
   "dependencies": {
+    "@poppinss/macroable": "^1.1.2",
     "@poppinss/utils": "^7.0.1",
     "edge-error": "^4.0.2",
     "html-entities": "^2.6.0"

@@ -11,7 +11,7 @@
 
 import type { HttpContext } from '@adonisjs/core/http'
 
-import { type Inertia } from './inertia.js'
+import type { Inertia } from '../index.ts'
 import { InertiaHeaders } from './headers.js'
 import { InertiaManager } from './inertia_manager.ts'
 import type { ComponentProps, FlashData, InertiaPages, PageProps } from './types.js'
@@ -19,6 +19,15 @@ import debug from './debug.ts'
 
 declare module '@adonisjs/core/http' {
   export interface HttpContext {
+    /**
+     * The Inertia instance for the current HTTP request
+     *
+     * The type must be referenced from the package entrypoint, so that every
+     * program type-checking `ctx.inertia` also loads the entrypoint
+     * declarations. Otherwise, augmenting the class via
+     * `declare module '@adonisjs/inertia'` fails in programs that never
+     * import the entrypoint themselves.
+     */
     inertia: Inertia<InertiaPages>
   }
 }
