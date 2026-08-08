@@ -41,6 +41,46 @@ export function buildRouteUrl(
 }
 
 /**
+ * Normalizes AdonisJS validation errors to Inertia's field-keyed error format.
+ */
+export function normalizeValidationErrors(errors: unknown): unknown {
+  if (typeof errors !== 'object' || errors === null) {
+    return errors
+  }
+
+  const errorMessages = Object.values(errors)
+
+  if (
+    !errorMessages.every(
+      (error) =>
+        typeof error === 'object' &&
+        error !== null &&
+        'field' in error &&
+        'message' in error &&
+        typeof error.field === 'string' &&
+        typeof error.message === 'string'
+    )
+  ) {
+    return errors
+  }
+
+  const normalizedErrors: Record<string, string | string[]> = {}
+
+  for (const error of errorMessages) {
+    if (Array.isArray(errors)) {
+      const messages = normalizedErrors[error.field]
+      normalizedErrors[error.field] = Array.isArray(messages)
+        ? [...messages, error.message]
+        : [error.message]
+    } else {
+      normalizedErrors[error.field] ??= error.message
+    }
+  }
+
+  return normalizedErrors
+}
+
+/**
  * Resolves the target URL for a visit: the href when given, otherwise the
  * route URL with query string parameters serialized.
  */

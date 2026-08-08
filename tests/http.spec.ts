@@ -89,6 +89,36 @@ async function captureHttpRequest(callback: () => Promise<unknown>) {
   return capturedRequest
 }
 
+async function respondWithValidationErrors(callback: () => Promise<unknown>) {
+  const originalClient = http.getClient()
+
+  http.setClient({
+    async request() {
+      return {
+        status: 422,
+        data: JSON.stringify({
+          errors: [
+            { field: 'email', message: 'The email field is required', rule: 'required' },
+            { field: 'email', message: 'The email must be valid', rule: 'email' },
+            {
+              field: 'remember',
+              message: 'The remember field must be a boolean',
+              rule: 'boolean',
+            },
+          ],
+        }),
+        headers: {},
+      }
+    },
+  })
+
+  try {
+    await callback()
+  } finally {
+    http.setClient(originalClient)
+  }
+}
+
 test.group('React | useHttp Hook', () => {
   test('require TuyauProvider', ({ assert }) => {
     function TestComponent() {
@@ -173,6 +203,44 @@ test.group('React | useHttp Hook', () => {
 
     assert.equal(request.method, 'post')
     assert.equal(request.url, '/native/users')
+  })
+
+  test('normalize AdonisJS validation errors', async ({ assert }) => {
+    let validationErrors: unknown
+
+    await respondWithValidationErrors(async () => {
+      let nativeHttp:
+        | {
+            post(
+              url: string,
+              options: { onError(errors: Record<string, string>): void }
+            ): Promise<unknown>
+          }
+        | undefined
+
+      function TestComponent() {
+        nativeHttp = useReactHttp({ email: '' })
+        return null
+      }
+
+      renderToStaticMarkup(
+        React.createElement(ReactTuyauProvider, {
+          client,
+          children: React.createElement(TestComponent),
+        })
+      )
+
+      await nativeHttp!.post('/users', {
+        onError(errors) {
+          validationErrors = errors
+        },
+      })
+    })
+
+    assert.deepEqual(validationErrors, {
+      email: 'The email field is required',
+      remember: 'The remember field must be a boolean',
+    })
   })
 })
 
@@ -266,5 +334,44 @@ test.group('Vue | useHttp Composable', () => {
 
     assert.equal(request.method, 'post')
     assert.equal(request.url, '/native/users')
+  })
+
+  test('preserve all normalized validation errors with withAllErrors', async ({ assert }) => {
+    type HttpWithAllErrors = {
+      submit(options: {
+        onError(errors: Record<string, string | string[]>): void
+      }): Promise<unknown>
+      withAllErrors(): HttpWithAllErrors
+    }
+
+    let routeHttp: HttpWithAllErrors | undefined
+    let validationErrors: unknown
+
+    await respondWithValidationErrors(async () => {
+      const app = createSSRApp({
+        render: () =>
+          h(VueTuyauProvider, { client }, () =>
+            h({
+              setup() {
+                routeHttp = useVueHttp({ route: 'users.store' }, { email: '' })
+                return () => null
+              },
+            })
+          ),
+      })
+
+      await renderToString(app)
+      await routeHttp!.withAllErrors().submit({
+        onError(errors) {
+          validationErrors = errors
+        },
+      })
+    })
+
+    assert.deepEqual(validationErrors, {
+      email: ['The email field is required', 'The email must be valid'],
+      remember: ['The remember field must be a boolean'],
+    })
+    assert.deepEqual(Reflect.get(routeHttp!, 'errors'), validationErrors)
   })
 })

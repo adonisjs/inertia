@@ -14,7 +14,7 @@ import { useHttp as useInertiaHttp } from '@inertiajs/vue3'
 import type { ErrorValue, FormDataErrors, FormDataKeys, FormDataType, FormDataValues, Method, UrlMethodPair, UseFormTransformCallback, UseHttpSubmitOptions } from '@inertiajs/core'
 
 import { useTuyau } from './context.ts'
-import { buildRouteUrl } from '../common.ts'
+import { buildRouteUrl, normalizeValidationErrors } from '../common.ts'
 import type { ExtractRouteBody, RouteParams, Routes } from '../types.ts'
 
 /**
@@ -132,7 +132,39 @@ function useHttpImplementation(...args: any[]) {
     ]
   }
 
-  return (useInertiaHttp as (...httpArgs: any[]) => unknown)(...inertiaArgs)
+  const request = (useInertiaHttp as (...httpArgs: any[]) => any)(...inertiaArgs)
+
+  const withErrorNormalization = (options: any = {}) => {
+    return {
+      ...options,
+      onError(errors: unknown) {
+        const normalizedErrors = normalizeValidationErrors(errors)
+
+        if (normalizedErrors !== errors) {
+          request.clearErrors()
+          request.setError(normalizedErrors)
+        }
+
+        options.onError?.(normalizedErrors)
+      },
+    }
+  }
+
+  for (const method of ['get', 'post', 'put', 'patch', 'delete']) {
+    const send = request[method]
+    request[method] = (url: string, options?: any) => send(url, withErrorNormalization(options))
+  }
+
+  const submit = request.submit
+  request.submit = (...submitArgs: any[]) => {
+    const optionsIndex =
+      typeof submitArgs[0] === 'string' ? 2 : submitArgs[0]?.url !== undefined ? 1 : 0
+
+    submitArgs[optionsIndex] = withErrorNormalization(submitArgs[optionsIndex])
+    return submit(...submitArgs)
+  }
+
+  return request
 }
 
 /**
@@ -142,7 +174,9 @@ function useHttpImplementation(...args: any[]) {
  * registry and binds submissions to that endpoint. The returned form keeps
  * Inertia's state and form-management API, but exposes submit as its only
  * endpoint-issuing method. Calls without a route retain Inertia's native
- * useHttp signatures. The composable must be called inside a TuyauProvider.
+ * useHttp signatures. AdonisJS validation errors are normalized to Inertia's
+ * field-keyed error format for each request. The composable must be called
+ * inside a TuyauProvider.
  *
  * @example
  * ```ts
