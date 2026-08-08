@@ -404,8 +404,8 @@ export class Inertia<Pages> {
    * ```
    */
   #handleInertiaRequest<Page extends keyof Pages & string>(
-    pageObject: PageObject<Pages[Page]>
-  ): PageObject<Pages[Page]> {
+    pageObject: PageObject<Pages[Page], Page>
+  ): PageObject<Pages[Page], Page> {
     this.ctx.response.header(InertiaHeaders.Inertia, 'true')
     return pageObject
   }
@@ -418,7 +418,7 @@ export class Inertia<Pages> {
    * @returns Promise resolving to the rendered HTML string
    */
   async #renderWithSSR<Page extends keyof Pages & string>(
-    pageObject: PageObject<Pages[Page]>,
+    pageObject: PageObject<Pages[Page], Page>,
     viewProps?: Record<string, any>
   ): Promise<string> {
     if (!this.#serverRenderer) {
@@ -441,7 +441,7 @@ export class Inertia<Pages> {
    * @returns Promise resolving to the rendered HTML string
    */
   async #renderClientSide<Page extends keyof Pages & string>(
-    pageObject: PageObject<Pages[Page]>,
+    pageObject: PageObject<Pages[Page], Page>,
     viewProps?: Record<string, any>
   ): Promise<string> {
     debug('rendering shell for SPA %O', pageObject)
@@ -621,7 +621,7 @@ export class Inertia<Pages> {
     pageProps: Pages[Page] extends ComponentProps
       ? AsPageProps<Omit<Pages[Page], keyof SharedProps>>
       : never
-  ): Promise<PageObject<Pages[Page]>> {
+  ): Promise<PageObject<Pages[Page], Page>> {
     const requestInfo = this.requestInfo()
     const {
       props,
@@ -646,7 +646,7 @@ export class Inertia<Pages> {
       Inertia.#rescueListener(error, { prop, ctx: this.ctx })
     }
 
-    const pageObject: PageObject<Pages[Page]> = {
+    const pageObject: PageObject<Pages[Page], Page> = {
       component: page,
       url: this.ctx.request.url(true),
       version: this.getVersion(),
@@ -726,7 +726,7 @@ export class Inertia<Pages> {
       ? AsPageProps<Omit<Pages[Page], keyof SharedProps>>
       : never,
     viewProps?: Record<string, any>
-  ): Promise<string | PageObject<Pages[Page]>> {
+  ): Promise<string | PageObject<Pages[Page], Page>> {
     const requestInfo = this.requestInfo()
     const pageObject = await this.page(page, pageProps)
 

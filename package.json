@@ -98,6 +98,7 @@
     "@adonisjs/core": "^7.0.0-next.23 || ^7.0.0",
     "@adonisjs/session": "^8.0.0-next.2 || ^8.0.0",
     "@adonisjs/vite": "^6.0.0-next.0 || ^6.0.0",
+    "@inertiajs/core": "^3.4.0",
     "@inertiajs/react": "^3.4.0",
     "@inertiajs/vue3": "^3.4.0",
     "@japa/api-client": "^3.1.1",
@@ -124,6 +125,9 @@
       "optional": true
     },
     "@tuyau/core": {
+      "optional": true
+    },
+    "@inertiajs/core": {
       "optional": true
     },
     "@inertiajs/react": {

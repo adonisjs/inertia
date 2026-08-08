@@ -701,12 +701,17 @@ export type InertiaConfigInput = DeepPartial<InertiaConfig>
  * Represents a page object that is passed between server and client
  *
  * @template Props - The props type for the page component
+ * @template Component - The page name literal. `inertia.render()` fills it
+ * with the rendered page, so a controller's return type records which page
+ * (or union of pages, for conditional renders) its route responds with. The
+ * generated route registry carries that literal to the client, where the
+ * instant-visit props on `Link` correlate a route with its destination page.
  */
-export type PageObject<Props> = {
+export type PageObject<Props, Component extends string = string> = {
   /**
    * The name/path of the component to render
    */
-  component: string
+  component: Component
 
   /**
    * Version identifier sent to the client with every request. Inertia

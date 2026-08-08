@@ -11,7 +11,7 @@ import React from 'react'
 import { Link as InertiaLink } from '@inertiajs/react'
 import { useTuyau } from './context.tsx'
 import { buildRouteUrl } from '../common.ts'
-import type { RouteParams, Routes } from '../types.ts'
+import type { InstantVisitParams, KnownPages, RoutePages, RouteParams, Routes } from '../types.ts'
 
 /**
  * Parameters required for route navigation with proper type safety.
@@ -19,24 +19,32 @@ import type { RouteParams, Routes } from '../types.ts'
 export type LinkParams<Route extends keyof Routes> = RouteParams<Route>
 
 /**
- * Props for the Link component when using route-based navigation
+ * Props for the Link component when using route-based navigation. The
+ * instant-visit props are correlated with the route: `component` is limited
+ * to the pages the route's controller renders, and `pageProps` follows the
+ * chosen destination page's declared props.
  */
 export type LinkRouteProps<Route extends keyof Routes> = Omit<
   React.ComponentPropsWithoutRef<typeof InertiaLink>,
-  'href' | 'method'
+  'href' | 'method' | 'component' | 'pageProps'
 > &
   LinkParams<Route> & {
     href?: never
-  }
+  } & InstantVisitParams<RoutePages<Route>>
 
 /**
- * Props for the Link component when using direct href
+ * Props for the Link component when using direct href. There is no route to
+ * infer destination pages from, so `component` accepts any page in the page
+ * registry, with `pageProps` still correlated to the chosen page.
  */
-export type LinkHrefProps = Omit<React.ComponentPropsWithoutRef<typeof InertiaLink>, 'route'> & {
+export type LinkHrefProps = Omit<
+  React.ComponentPropsWithoutRef<typeof InertiaLink>,
+  'route' | 'component' | 'pageProps'
+> & {
   route?: never
   routeParams?: never
   qs?: never
-}
+} & InstantVisitParams<KnownPages>
 
 /**
  * Union type for Link component props - either route-based or direct href
@@ -61,7 +69,12 @@ function LinkInner<Route extends keyof Routes>(
 
   // Check if props has href (direct navigation)
   if ('href' in props && props.href !== undefined) {
-    return <InertiaLink {...props} ref={ref} />
+    return (
+      <InertiaLink
+        {...(props as React.ComponentPropsWithoutRef<typeof InertiaLink>)}
+        ref={ref}
+      />
+    )
   }
 
   // Route-based navigation. getRoute resolves the HTTP methods and urlFor
@@ -72,13 +85,12 @@ function LinkInner<Route extends keyof Routes>(
 
   return (
     <InertiaLink
-      {...linkProps}
+      {...(linkProps as React.ComponentPropsWithoutRef<typeof InertiaLink>)}
       href={href}
       method={method ?? (methods[0].toLowerCase() as any)}
       ref={ref}
     />
   )
-
 }
 
 /**
@@ -99,11 +111,22 @@ function LinkInner<Route extends keyof Routes>(
  *   View User
  * </Link>
  *
+ * // Instant visit: the destination page and its temporary props are
+ * // correlated with the pages the route's controller renders
+ * <Link
+ *   route="projects.show"
+ *   routeParams={{ slug: project.slug }}
+ *   instant
+ *   component="projects/show"
+ *   pageProps={() => ({ project })}
+ * >
+ *   {project.title}
+ * </Link>
+ *
  * // Link with direct href
  * <Link href="/about">About</Link>
  * ```
  */
-
 export const Link: <Route extends keyof Routes>(
   props: LinkProps<Route> & {
     ref?: React.Ref<React.ElementRef<typeof InertiaLink>>

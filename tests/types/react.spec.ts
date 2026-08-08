@@ -11,10 +11,30 @@ import { test } from '@japa/runner'
 import { createTuyau } from '@tuyau/core/client'
 import { type AdonisEndpoint } from '@tuyau/core/types'
 
+import type { PageObject } from '../../src/types.ts'
 import { Link } from '../../src/client/react/link.tsx'
 import { Form } from '../../src/client/react/form.tsx'
 import { useRouter } from '../../src/client/react/router.ts'
 import { TuyauProvider } from '../../src/client/react/context.tsx'
+
+/**
+ * Page registry fixture for the instant-visit assertions. Augmented here so
+ * both typecheck programs (the package NodeNext program and the client
+ * program at tests/types/tsconfig.json) see the same pages. The
+ * `users/profile` page carries a shared prop and is asserted exclusively in
+ * react_client.spec.ts, where the `@inertiajs/core` sharedPageProps bridge
+ * resolves.
+ */
+declare module '../../src/types.ts' {
+  interface InertiaPages {
+    'users/index': { users: { id: number }[] }
+    'users/show': { user: { id: number } }
+    'users/limited': { reason: string }
+    'users/profile': { appName: string; user: { id: number } }
+    'posts/index': { posts?: string[] }
+    'settings/show': { preference: string | undefined }
+  }
+}
 
 const routes = {
   'users.index': {
@@ -26,7 +46,41 @@ const routes = {
       paramsTuple: []
       params: {}
       query: {}
-      response: unknown
+      response: string | PageObject<{ users: { id: number }[] }, 'users/index'>
+    },
+  },
+  'users.show': {
+    methods: ['GET', 'HEAD'],
+    pattern: '/users/:id',
+    tokens: [
+      { old: '/users', type: 0, val: 'users', end: '/' },
+      { old: ':id', type: 1, val: 'id', end: '' },
+    ],
+    types: null as any as {
+      body: {}
+      paramsTuple: [string]
+      params: { id: string }
+      query: {}
+      response:
+        | string
+        | PageObject<{ user: { id: number } }, 'users/show'>
+        | PageObject<{ reason: string }, 'users/limited'>
+    },
+  },
+  'users.profile': {
+    methods: ['GET', 'HEAD'],
+    pattern: '/users/:id/profile',
+    tokens: [
+      { old: '/users', type: 0, val: 'users', end: '/' },
+      { old: ':id', type: 1, val: 'id', end: '/profile' },
+      { old: '/profile', type: 0, val: 'profile', end: '' },
+    ],
+    types: null as any as {
+      body: {}
+      paramsTuple: [string]
+      params: { id: string }
+      query: {}
+      response: string | PageObject<{ appName: string; user: { id: number } }, 'users/profile'>
     },
   },
   'users.comments.edit': {
@@ -56,7 +110,7 @@ const routes = {
       paramsTuple: []
       params: {}
       query: { page?: number; status?: string }
-      response: unknown
+      response: string | PageObject<{ posts?: string[] }, 'posts/index'>
     },
   },
   'users.store': {
@@ -333,6 +387,114 @@ test.group('React | Typings', () => {
         return null
       },
     })
+  }).fails()
+
+  test('instant visit component follows the pages rendered by the route', () => {
+    // Single render → the exact page
+    Link({ route: 'users.index', component: 'users/index', pageProps: { users: [{ id: 1 }] } })
+
+    // Conditional render → either page is accepted
+    Link({
+      route: 'users.show',
+      routeParams: ['1'],
+      component: 'users/show',
+      pageProps: { user: { id: 1 } },
+    })
+    Link({
+      route: 'users.show',
+      routeParams: ['1'],
+      component: 'users/limited',
+      pageProps: { reason: 'private project' },
+    })
+
+    // Routes without an inferred page fall back to the full page registry
+    Link({ route: 'users.store', component: 'posts/index' })
+
+    const destination = 'users/show' as 'users/show' | 'users/limited'
+
+    // A union-valued destination is not correlated with one branch's props
+    // @ts-expect-error pageProps do not cover every possible destination
+    Link({
+      route: 'users.show',
+      routeParams: ['1'],
+      component: destination,
+      pageProps: { reason: 'private project' },
+    })
+
+    // @ts-expect-error page not rendered by the route
+    Link({ route: 'users.index', component: 'users/show', pageProps: { user: { id: 1 } } })
+
+    // @ts-expect-error misspelled page name
+    Link({ route: 'users.index', component: 'users/indx', pageProps: { users: [] } })
+  }).fails()
+
+  test('instant visit pageProps follow the chosen destination page', () => {
+    // Callback form is typed the same as the object form, and may fold the
+    // received shared props into the temporary page props
+    Link({
+      route: 'users.index',
+      component: 'users/index',
+      pageProps: (_currentProps, sharedProps) => ({ ...sharedProps, users: [{ id: 1 }] }),
+    })
+
+    // @ts-expect-error unknown prop for the destination page
+    Link({ route: 'users.index', component: 'users/index', pageProps: { unknown: true } })
+
+    // @ts-expect-error wrong prop value for the destination page
+    Link({ route: 'users.index', component: 'users/index', pageProps: { users: 'nope' } })
+
+    // @ts-expect-error callback must return the destination page's props
+    Link({ route: 'users.index', component: 'users/index', pageProps: () => ({ users: 'nope' }) })
+  }).fails()
+
+  test('pageProps are required unless the destination declares every prop optional', () => {
+    // posts/index declares everything optional → pageProps can be omitted
+    Link({ route: 'posts.index', component: 'posts/index' })
+
+    // Plain links stay untouched: no component, nothing demanded
+    Link({ route: 'users.index' })
+
+    // @ts-expect-error pageProps missing for a destination with required props
+    Link({ route: 'users.index', component: 'users/index' })
+
+    // @ts-expect-error required prop missing from pageProps
+    Link({ route: 'users.index', component: 'users/index', pageProps: {} })
+
+    // A key whose value accepts undefined is still a required key
+    // @ts-expect-error pageProps missing for a destination with a required key
+    Link({ href: '/settings', component: 'settings/show' })
+
+    Link({
+      href: '/settings',
+      component: 'settings/show',
+      pageProps: { preference: undefined },
+    })
+  }).fails()
+
+  test('conditional instant links keep the component/pageProps pairing', () => {
+    const mode = 'instant' as 'instant' | 'standard'
+    const instant = mode === 'instant'
+
+    // The runtime correlates the two ternaries; the types enforce the
+    // pairing at the key level
+    Link({
+      route: 'users.index',
+      component: instant ? 'users/index' : undefined,
+      pageProps: instant ? { users: [{ id: 1 }] } : undefined,
+    })
+
+    // @ts-expect-error the pageProps key is still demanded alongside component
+    Link({ route: 'users.index', component: instant ? 'users/index' : undefined })
+  }).fails()
+
+  test('instant visit props in href mode accept any registered page', () => {
+    Link({ href: '/users', component: 'users/index', pageProps: { users: [] } })
+
+    // @ts-expect-error unknown page name
+    Link({ href: '/users', component: 'users/indx', pageProps: {} })
+
+    // @ts-expect-error unknown prop for the chosen page
+    Link({ href: '/users', component: 'users/index', pageProps: { unknown: true } })
   }).fails()
 
   test('Form action and route are mutually exclusive', () => {

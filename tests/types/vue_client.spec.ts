@@ -39,4 +39,26 @@ test.group('Vue | Typings | Client resolution only', () => {
     // @ts-expect-error unknown route
     Link({ route: 'unknown' })
   }).fails()
+
+  test('instant visit props are correlated with the route', () => {
+    // Single render → the exact page, pageProps follow it
+    Link({ route: 'users.index', component: 'users/index', pageProps: { users: [{ id: 1 }] } })
+
+    // Conditional render → either page is accepted
+    Link({
+      route: 'users.show',
+      params: ['1'],
+      component: 'users/limited',
+      pageProps: { reason: 'private project' },
+    })
+
+    // @ts-expect-error page not rendered by the route
+    Link({ route: 'users.index', component: 'users/show', pageProps: { user: { id: 1 } } })
+
+    // @ts-expect-error unknown prop for the destination page
+    Link({ route: 'users.index', component: 'users/index', pageProps: { unknown: true } })
+
+    // @ts-expect-error pageProps required for a destination with required props
+    Link({ route: 'users.index', component: 'users/index' })
+  }).fails()
 })

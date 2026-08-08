@@ -13,7 +13,15 @@ import { Link as InertiaLink } from '@inertiajs/vue3'
 
 import { useTuyau } from './context.ts'
 import { buildRouteUrl } from '../common.ts'
-import type { RouteParams, RouteParamsFormats, Routes, VueRouteParams } from '../types.ts'
+import type {
+  InstantVisitParams,
+  KnownPages,
+  RoutePages,
+  RouteParams,
+  RouteParamsFormats,
+  Routes,
+  VueRouteParams,
+} from '../types.ts'
 
 /**
  * Parameters required for route navigation with proper type safety. Kept on
@@ -29,23 +37,34 @@ export type LinkParams<Route extends keyof Routes> = RouteParams<Route>
 type InertiaLinkProps = InstanceType<typeof InertiaLink>['$props']
 
 /**
- * Props for the Link component when using route-based navigation
+ * Props for the Link component when using route-based navigation. The
+ * instant-visit props are correlated with the route: `component` is limited
+ * to the pages the route's controller renders, and `pageProps` follows the
+ * chosen destination page's declared props.
  */
-export type LinkRouteProps<Route extends keyof Routes> = Omit<InertiaLinkProps, 'href' | 'method'> &
+export type LinkRouteProps<Route extends keyof Routes> = Omit<
+  InertiaLinkProps,
+  'href' | 'method' | 'component' | 'pageProps'
+> &
   VueRouteParams<Route> & {
     href?: never
-  }
+  } & InstantVisitParams<RoutePages<Route>>
 
 /**
- * Props for the Link component when using direct href
+ * Props for the Link component when using direct href. There is no route to
+ * infer destination pages from, so `component` accepts any page in the page
+ * registry, with `pageProps` still correlated to the chosen page.
  */
-export type LinkHrefProps = Omit<InertiaLinkProps, 'href' | 'method'> & {
+export type LinkHrefProps = Omit<
+  InertiaLinkProps,
+  'href' | 'method' | 'component' | 'pageProps'
+> & {
   href: NonNullable<InertiaLinkProps['href']>
   method?: InertiaLinkProps['method']
   route?: never
   params?: never
   qs?: never
-}
+} & InstantVisitParams<KnownPages>
 
 type LinkComponentVNode<Props> = VNode & {
   __ctx?: {
@@ -152,6 +171,18 @@ const LinkImplementation = defineComponent({
  * <Link route="users.index">Users</Link>
  * <Link route="users.show" :params="{ id: 1 }">View User</Link>
  * <Link route="users.index" :qs="{ page: 2 }" preserve-scroll>Next</Link>
+ *
+ * <!-- Instant visit: the destination page and its temporary props are
+ *      correlated with the pages the route's controller renders -->
+ * <Link
+ *   route="projects.show"
+ *   :params="{ slug: project.slug }"
+ *   instant
+ *   component="projects/show"
+ *   :page-props="() => ({ project })"
+ * >
+ *   {{ project.title }}
+ * </Link>
  *
  * <!-- Direct href navigation -->
  * <Link href="/about">About</Link>
