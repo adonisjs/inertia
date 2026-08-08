@@ -12,7 +12,8 @@ import type { PropType, PublicProps, SlotsType, VNode } from 'vue'
 import { Form as InertiaForm } from '@inertiajs/vue3'
 // Inertia's declarations omit NodeNext-compatible extensions from internal type re-exports.
 // @ts-ignore TypeScript resolves these exports correctly in client projects using Bundler resolution.
-import type { FormComponentProps, FormComponentSlotProps } from '@inertiajs/core'
+import type { FormComponentProps, FormComponentSlotProps, FormDataErrors } from '@inertiajs/core'
+import type { Prettify } from '@poppinss/utils/types'
 
 import { useTuyau } from './context.ts'
 import { buildRouteUrl } from '../common.ts'
@@ -23,8 +24,12 @@ import type { ExtractRouteBody, RouteParamsFormats, Routes, VueRouteParams } fro
  */
 export type InertiaFormSlots = InstanceType<typeof InertiaForm>['$slots']
 export type InertiaFormDefaultSlot = InertiaFormSlots['default']
-export type InertiaFormSlotProps<FormData extends Record<string, any> = Record<string, any>> =
-  FormComponentSlotProps<FormData>
+export type InertiaFormSlotProps<FormData extends Record<string, any> = Record<string, any>> = Omit<
+  FormComponentSlotProps<FormData>,
+  'errors'
+> & {
+  errors: Prettify<FormDataErrors<FormData>>
+}
 
 /**
  * Instance exposed on the Form template ref: the upstream Inertia form API

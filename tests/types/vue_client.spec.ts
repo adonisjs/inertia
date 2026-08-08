@@ -18,7 +18,7 @@ import { test } from '@japa/runner'
 import '@japa/expect-type'
 
 import { Link } from '../../src/client/vue/link.ts'
-import { Form } from '../../src/client/vue/form.ts'
+import { Form, type InertiaFormSlotProps } from '../../src/client/vue/form.ts'
 import { useHttp } from '../../src/client/vue/http.ts'
 
 test.group('Vue | Typings | Client resolution only', () => {
@@ -41,6 +41,19 @@ test.group('Vue | Typings | Client resolution only', () => {
     // @ts-expect-error unknown route
     Link({ route: 'unknown' })
   }).fails()
+
+  test('prettify form errors independently from the request body', ({ expectTypeOf }) => {
+    type SlotProps = InertiaFormSlotProps<{
+      email: string
+      role: 'admin' | 'guest'
+    }>
+
+    expectTypeOf<SlotProps['errors']>().toEqualTypeOf<{
+      email?: string
+      role?: string
+    }>()
+    expectTypeOf<SlotProps['errors']['role']>().toEqualTypeOf<string | undefined>()
+  })
 
   test('instant visit props are correlated with the route', () => {
     // Single render → the exact page, pageProps follow it

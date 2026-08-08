@@ -49,13 +49,28 @@ test.group('React | Typings | Client resolution only', () => {
   }).fails()
 
   test('action mode rejects unknown error fields on a typed form', () => {
-    Form<{ email: string }>({
+    Form<{ email: string; role: 'admin' | 'guest' }>({
       action: { url: '/users', method: 'post' },
       children: (slot) => {
         slot.errors.email
+        slot.errors.role
 
         // @ts-expect-error unknown field on a typed form
         slot.errors.unknownField
+        return null
+      },
+    })
+  }).fails()
+
+  test('prettify form errors independently from the request body', ({ expectTypeOf }) => {
+    Form<{ email: string; role: 'admin' | 'guest' }>({
+      action: { url: '/users', method: 'post' },
+      children: ({ errors }) => {
+        expectTypeOf(errors).toEqualTypeOf<{
+          email?: string
+          role?: string
+        }>()
+        expectTypeOf(errors.role).toEqualTypeOf<string | undefined>()
         return null
       },
     })

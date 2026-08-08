@@ -9,6 +9,10 @@
 
 import React from 'react'
 import { Form as InertiaForm } from '@inertiajs/react'
+// Inertia's declarations omit NodeNext-compatible extensions from internal type re-exports.
+// @ts-ignore TypeScript resolves this export correctly in client projects using Bundler resolution.
+import type { FormDataErrors } from '@inertiajs/core'
+import type { Prettify } from '@poppinss/utils/types'
 
 import { useTuyau } from './context.tsx'
 import { buildRouteUrl } from '../common.ts'
@@ -37,9 +41,14 @@ type InertiaFormProps<FormData extends object = Record<string, any>> = Omit<
  * shape. In route mode the form-data shape is the route's declared body; in
  * action mode it is the explicit `Form` generic.
  */
-export type FormSlotProps<FormData extends object = Record<string, any>> = Parameters<
-  Extract<Parameters<typeof InertiaForm<FormData>>[0]['children'], (...args: any[]) => any>
->[0]
+export type FormSlotProps<FormData extends object = Record<string, any>> = Omit<
+  Parameters<
+    Extract<Parameters<typeof InertiaForm<FormData>>[0]['children'], (...args: any[]) => any>
+  >[0],
+  'errors'
+> & {
+  errors: Prettify<FormDataErrors<FormData>>
+}
 
 /**
  * Instance exposed on the Form ref.
