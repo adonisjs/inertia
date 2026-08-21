@@ -48,16 +48,16 @@
     "docs": "typedoc"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^8.4.0",
-    "@adonisjs/core": "^7.4.0",
+    "@adonisjs/assembler": "^8.5.0",
+    "@adonisjs/core": "^7.5.0",
     "@adonisjs/eslint-config": "^3.1.0",
     "@adonisjs/prettier-config": "^1.5.0",
     "@adonisjs/session": "^8.1.0",
     "@adonisjs/tsconfig": "^2.0.0",
-    "@adonisjs/vite": "^6.0.0",
+    "@adonisjs/vite": "^6.0.1",
     "@ast-grep/cli": "^0.45.1",
-    "@inertiajs/react": "^3.6.1",
-    "@inertiajs/vue3": "^3.6.1",
+    "@inertiajs/react": "^3.7.0",
+    "@inertiajs/vue3": "^3.7.0",
     "@japa/api-client": "^3.2.1",
     "@japa/assert": "4.2.0",
     "@japa/expect-type": "^2.0.4",
@@ -80,13 +80,13 @@
     "get-port": "^7.2.0",
     "prettier": "^3.9.6",
     "react": "^19.2.8",
-    "release-it": "^21.0.1",
+    "release-it": "^21.0.2",
     "supertest": "^7.2.2",
     "tsdown": "^0.22.14",
     "typescript": "~6.0.3",
-    "vite": "^8.2.1",
+    "vite": "^8.2.2",
     "vue": "^3.5.41",
-    "vue-tsc": "~3.3.9"
+    "vue-tsc": "~3.3.10"
   },
   "dependencies": {
     "@poppinss/macroable": "^1.1.2",
