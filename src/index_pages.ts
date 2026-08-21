@@ -16,6 +16,7 @@ import { type AllHooks } from '@adonisjs/assembler/types'
 const GLOB = {
   vue3: ['**/*.vue'],
   react: ['**/*.ts', '**/*.tsx'],
+  svelte: ['**/*.svelte'],
 }
 
 /**
@@ -45,6 +46,10 @@ type ExtractProps<T> =
     : T extends React.Component<infer Props>
       ? Prettify<Omit<Props, 'children'>>
       : never`,
+  svelte: `type ExtractProps<T> =
+  T extends (internals: never, props: infer Props) => any
+    ? Omit<Props, 'children' | '$$events' | '$$slots'>
+    : never`,
 }
 
 /**
@@ -55,7 +60,7 @@ type ExtractProps<T> =
  * type definitions that map page names to their component props.
  *
  * @param config - Configuration object specifying the frontend framework
- * @param config.framework - The frontend framework ('vue3' or 'react')
+ * @param config.framework - The frontend framework ('vue3', 'react', or 'svelte')
  * @param config.source - The path to Inertia pages (default: inertia/pages)
  * @returns Assembler hook object with run method for generating page types
  *
@@ -70,7 +75,7 @@ type ExtractProps<T> =
  * ```
  */
 export const indexPages = function (config: {
-  framework: 'vue3' | 'react'
+  framework: 'vue3' | 'react' | 'svelte'
   source?: string
 }): Extract<AllHooks['init'][number], { run: any }> {
   if (!SUPPORTED_FRAMEWORKS.includes(config.framework)) {
