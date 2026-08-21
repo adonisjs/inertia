@@ -1,0 +1,29 @@
+{
+  /**
+   * Client-resolution typecheck program for the svelte adapter, run with
+   * svelte-check so the `.svelte` wrappers are checked alongside the fixtures
+   * that consume them.
+   *
+   * The svelte adapter cannot live in the package's NodeNext program: it
+   * imports `.svelte` modules, and `@inertiajs/svelte` publishes its runtime
+   * only under the `svelte` export condition. Both resolve here, under
+   * Bundler resolution with the DOM lib. Living at
+   * tests/types/svelte/tsconfig.json, this is also the nearest config the
+   * editor's TS server discovers for these files.
+   */
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": []
+  },
+  "include": ["../../../src/client/svelte/**/*", "./**/*"],
+  /**
+   * Reset the inherited exclude so the svelte sources, which the package
+   * program deliberately skips, are not filtered back out of this program.
+   */
+  "exclude": []
+}
