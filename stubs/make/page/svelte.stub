@@ -1,0 +1,16 @@
+{{#var pageName = generators.inertiaPageName(entity.name)}}
+{{#var pageFileName = generators.inertiaPageFileName(entity.name, '.svelte')}}
+{{{
+  exports({
+    to: app.makePath(pagesDir, entity.path, pageFileName)
+  })
+}}}
+<script lang="ts">
+  import { type Data } from '@generated/data'
+
+  let {}: {} = $props()
+</script>
+
+<div>
+  <h1>{{ pageName }}</h1>
+</div>

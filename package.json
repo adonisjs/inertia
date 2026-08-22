@@ -20,21 +20,25 @@
     "./helpers": "./build/src/client/helpers.js",
     "./react": "./build/src/client/react/index.js",
     "./vue": "./build/src/client/vue/index.js",
+    "./svelte": "./build/src/client/svelte/index.js",
     "./factories": "./build/factories/main.js",
     "./commands": "./build/commands/main.js"
   },
   "scripts": {
     "pretest": "npm run lint",
     "test": "npm run quick:test",
-    "typecheck": "npm run typecheck:node && npm run typecheck:client",
+    "typecheck": "npm run typecheck:node && npm run typecheck:client && npm run typecheck:svelte",
     "typecheck:node": "tsc --noEmit",
     "typecheck:client": "vue-tsc --noEmit -p tests/types/tsconfig.json",
+    "typecheck:svelte": "svelte-check --tsconfig tests/types/svelte/tsconfig.json",
     "clean": "del-cli build",
     "compile": "tsdown && tsc --emitDeclarationOnly --declaration",
     "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
+    "copy:svelte": "copyfiles \"src/client/svelte/**/*.svelte\" build",
+    "emit:svelte-dts": "node scripts/emit_svelte_dts.mjs",
     "prebuild": "npm run lint && npm run clean",
     "build": "npm run compile",
-    "postcompile": "npm run copy:templates && npm run index:commands",
+    "postcompile": "npm run copy:templates && npm run copy:svelte && npm run emit:svelte-dts && npm run index:commands",
     "prebenchmark": "npm run build",
     "benchmark": "node benchmarks/index.js",
     "release": "release-it",
@@ -44,7 +48,7 @@
     "lint": "eslint",
     "lint:ast": "ast-grep scan",
     "index:commands": "adonis-kit index build/commands",
-    "quick:test": "cross-env NODE_DEBUG=adonisjs:inertia node --import=@poppinss/ts-exec --enable-source-maps bin/test.ts",
+    "quick:test": "cross-env NODE_DEBUG=adonisjs:inertia node --conditions=svelte --import=@poppinss/ts-exec --import=./tests/support/register_svelte_loader.mjs --enable-source-maps bin/test.ts",
     "docs": "typedoc"
   },
   "devDependencies": {
@@ -58,6 +62,7 @@
     "@ast-grep/cli": "^0.45.1",
     "@inertiajs/react": "^3.7.0",
     "@inertiajs/vue3": "^3.7.0",
+    "@inertiajs/svelte": "^3.7.0",
     "@japa/api-client": "^3.2.1",
     "@japa/assert": "4.2.0",
     "@japa/expect-type": "^2.0.4",
@@ -82,6 +87,9 @@
     "react": "^19.2.8",
     "release-it": "^21.0.2",
     "supertest": "^7.2.2",
+    "svelte": "^5.56.9",
+    "svelte-check": "^4.7.6",
+    "svelte2tsx": "^0.7.61",
     "tsdown": "^0.22.14",
     "typescript": "~6.0.3",
     "vite": "^8.2.2",
@@ -102,12 +110,14 @@
     "@inertiajs/core": "^3.4.0",
     "@inertiajs/react": "^3.4.0",
     "@inertiajs/vue3": "^3.4.0",
+    "@inertiajs/svelte": "^3.4.0",
     "@japa/api-client": "^3.1.1",
     "@japa/plugin-adonisjs": "^5.1.0-next.1 || ^5.1.0",
     "@tuyau/core": "^1.0.0-beta.10 || ^1.0.0",
     "edge.js": "^6.4.0",
     "react": "^19.2.3",
-    "vue": "^3.5.17"
+    "vue": "^3.5.17",
+    "svelte": "^5.0.0"
   },
   "peerDependenciesMeta": {
     "@adonisjs/assembler": {
@@ -125,6 +135,9 @@
     "vue": {
       "optional": true
     },
+    "svelte": {
+      "optional": true
+    },
     "@tuyau/core": {
       "optional": true
     },
@@ -135,6 +148,9 @@
       "optional": true
     },
     "@inertiajs/vue3": {
+      "optional": true
+    },
+    "@inertiajs/svelte": {
       "optional": true
     }
   },

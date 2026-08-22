@@ -30,6 +30,9 @@ export default class MakePage extends BaseCommand {
   @flags.boolean({ description: 'Create a React page component' })
   declare react: boolean
 
+  @flags.boolean({ description: 'Create a Svelte page component' })
+  declare svelte: boolean
+
   /**
    * Read the contents from this file (if the flag exists) and use
    * it as the raw contents
@@ -52,19 +55,23 @@ export default class MakePage extends BaseCommand {
    * Detect the framework by scanning existing files in the
    * inertia/pages directory.
    */
-  async #detectFramework(): Promise<'vue' | 'react' | null> {
+  async #detectFramework(): Promise<'vue' | 'react' | 'svelte' | null> {
     try {
       const pagesDir = this.app.makePath(this.pagesDir)
       const files = await readdir(pagesDir, { recursive: true })
 
       const hasVue = files.some((file) => file.endsWith('.vue'))
       const hasReact = files.some((file) => file.endsWith('.tsx') || file.endsWith('.jsx'))
+      const hasSvelte = files.some((file) => file.endsWith('.svelte'))
 
-      if (hasVue && !hasReact) {
+      if (hasVue && !hasReact && !hasSvelte) {
         return 'vue'
       }
-      if (hasReact && !hasVue) {
+      if (hasReact && !hasVue && !hasSvelte) {
         return 'react'
+      }
+      if (hasSvelte && !hasVue && !hasReact) {
+        return 'svelte'
       }
 
       return null
@@ -77,12 +84,15 @@ export default class MakePage extends BaseCommand {
    * Resolve which framework to use. Flags take priority,
    * then auto-detection, and finally prompt the user.
    */
-  async #resolveFramework(): Promise<'vue' | 'react'> {
+  async #resolveFramework(): Promise<'vue' | 'react' | 'svelte'> {
     if (this.vue) {
       return 'vue'
     }
     if (this.react) {
       return 'react'
+    }
+    if (this.svelte) {
+      return 'svelte'
     }
 
     const detected = await this.#detectFramework()
@@ -90,7 +100,7 @@ export default class MakePage extends BaseCommand {
       return detected
     }
 
-    return this.prompt.choice('Select the frontend framework', ['vue', 'react'])
+    return this.prompt.choice('Select the frontend framework', ['vue', 'react', 'svelte'])
   }
 
   async run() {

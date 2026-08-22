@@ -14,7 +14,7 @@
  *
  * @param path - The page path(s) to resolve. Can be a single string or array of strings
  * @param pages - Registry of page components where keys are paths and values are either promises or functions returning promises
- * @param layout - Optional layout component to assign to the resolved page
+ * @param layout - Optional layout component to assign to the resolved page. React and Vue only — see the note below
  * @returns Promise resolving to the page component
  *
  * @example
@@ -32,6 +32,26 @@
  * ```
  *
  * @throws Error When none of the provided paths can be resolved in the pages registry
+ *
+ * @remarks
+ * The `layout` argument is for React and Vue, which read a page's layout off
+ * the component (`component.layout`). Svelte reads it off the *module* — its
+ * `ResolvedComponent` is `{ default, layout? }` — so assigning it to the
+ * component here would never be seen, and the module namespace an eagerly
+ * globbed page resolves to is frozen anyway. A Svelte app declares its
+ * application-wide layout through `createInertiaApp`'s own `layout` option,
+ * and a page overrides it by exporting `layout` from a `<script module>`
+ * block; call this helper with two arguments and let those handle it.
+ *
+ * @example
+ * ```ts
+ * // Svelte
+ * createInertiaApp({
+ *   resolve: (name) =>
+ *     resolvePageComponent(`./pages/${name}.svelte`, import.meta.glob('./pages/**\/*.svelte')),
+ *   layout: () => DefaultLayout,
+ * })
+ * ```
  */
 export async function resolvePageComponent<T>(
   path: string | string[],
