@@ -102,7 +102,11 @@ export function tuyauContext<Registry extends TuyauRegistry>(client: Tuyau<Regis
  */
 export function useTuyau() {
   const context = getContext<Tuyau<any> | null>(TUYAU_CONTEXT)
-  if (!context) throw new Error('You must wrap your app in a TuyauProvider')
+  if (!context) {
+    throw new Error(
+      'No Tuyau client found in Svelte context. Register one via <TuyauProvider>, provideTuyau(withAppContext, client), or tuyauContext(client).'
+    )
+  }
 
   return context
 }
