@@ -13,6 +13,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 
 import type { Inertia } from '../index.ts'
 import { InertiaHeaders } from './headers.js'
+import { shouldReloadForAssetVersion } from './asset_version.js'
 import { InertiaManager } from './inertia_manager.ts'
 import type { ComponentProps, FlashData, InertiaPages, PageProps } from './types.js'
 import debug from './debug.ts'
@@ -239,8 +240,7 @@ export default abstract class BaseInertiaMiddleware {
      * See https://inertiajs.com/the-protocol#asset-versioning
      */
     const version = ctx.inertia.getVersion()
-    const clientVersion = requestInfo.version ?? ''
-    if (method === 'GET' && clientVersion !== version) {
+    if (shouldReloadForAssetVersion(requestInfo, method, version)) {
       debug('version mis-match. Reloading page')
       if (ctx.session) {
         ctx.session.reflash()
