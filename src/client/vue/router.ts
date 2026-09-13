@@ -20,6 +20,6 @@ import { createRouter } from '../common.ts'
  * and query strings from your application's route definitions.
  * Alternatively, you can use direct href for navigation.
  */
-export function useRouter() {
+export function useRouter(): ReturnType<typeof createRouter<typeof InertiaRouter>> {
   return createRouter(useTuyau(), InertiaRouter)
 }

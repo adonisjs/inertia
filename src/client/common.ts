@@ -120,7 +120,7 @@ export function createRouter<R extends RouterLike>(tuyau: Tuyau<any>, inertiaRou
     visit: <Route extends keyof Routes>(
       props: VisitParams<R, Route>,
       options?: Parameters<R['visit']>[1]
-    ) => {
+    ): ReturnType<R['visit']> => {
       if (props.href !== undefined) {
         return inertiaRouter.visit(props.href, options)
       }
@@ -151,29 +151,29 @@ export function createRouter<R extends RouterLike>(tuyau: Tuyau<any>, inertiaRou
       props: MethodVisitParams<R, Route>,
       data?: Parameters<R['get']>[1],
       options?: Parameters<R['get']>[2]
-    ) => inertiaRouter.get(resolveUrl(tuyau, props), data, options),
+    ): ReturnType<R['get']> => inertiaRouter.get(resolveUrl(tuyau, props), data, options),
 
     post: <Route extends RoutesWithMethod<'post'> = never>(
       props: MethodVisitParams<R, Route>,
       data?: RouterRequestBody<R, 'post', Route>,
       options?: Parameters<R['post']>[2]
-    ) => inertiaRouter.post(resolveUrl(tuyau, props), data, options),
+    ): ReturnType<R['post']> => inertiaRouter.post(resolveUrl(tuyau, props), data, options),
 
     put: <Route extends RoutesWithMethod<'put'> = never>(
       props: MethodVisitParams<R, Route>,
       data?: RouterRequestBody<R, 'put', Route>,
       options?: Parameters<R['put']>[2]
-    ) => inertiaRouter.put(resolveUrl(tuyau, props), data, options),
+    ): ReturnType<R['put']> => inertiaRouter.put(resolveUrl(tuyau, props), data, options),
 
     patch: <Route extends RoutesWithMethod<'patch'> = never>(
       props: MethodVisitParams<R, Route>,
       data?: RouterRequestBody<R, 'patch', Route>,
       options?: Parameters<R['patch']>[2]
-    ) => inertiaRouter.patch(resolveUrl(tuyau, props), data, options),
+    ): ReturnType<R['patch']> => inertiaRouter.patch(resolveUrl(tuyau, props), data, options),
 
     delete: <Route extends RoutesWithMethod<'delete'>>(
       props: MethodVisitParams<R, Route>,
       options?: Parameters<R['delete']>[1]
-    ) => inertiaRouter.delete(resolveUrl(tuyau, props), options),
+    ): ReturnType<R['delete']> => inertiaRouter.delete(resolveUrl(tuyau, props), options),
   }
 }
