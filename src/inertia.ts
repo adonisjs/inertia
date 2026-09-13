@@ -14,10 +14,11 @@ import { createHash } from 'node:crypto'
 import { type Vite } from '@adonisjs/vite'
 import Macroable from '@poppinss/macroable'
 import type { HttpContext } from '@adonisjs/core/http'
+import { type AsyncOrSync } from '@poppinss/utils/types'
 
 import { InertiaHeaders } from './headers.js'
-import { shouldReloadForAssetVersion } from './asset_version.js'
 import { type ServerRenderer } from './server_renderer.js'
+import { shouldReloadForAssetVersion } from './asset_version.js'
 import type {
   PageProps,
   FlashData,
@@ -41,7 +42,6 @@ import {
   buildPartialRequestProps,
 } from './props.ts'
 import debug from './debug.ts'
-import { type AsyncOrSync } from '@poppinss/utils/types'
 
 const CLEAR_HISTORY_SESSION_KEY = 'inertia.clear_history'
 
@@ -686,9 +686,11 @@ export class Inertia<Pages> extends Macroable {
       this.ctx.request.method(),
       this.getVersion()
     )
-    const shouldClearHistoryFromSession = willReloadForAssetVersion
-      ? false
-      : this.ctx.session?.pull(CLEAR_HISTORY_SESSION_KEY, false) === true
+
+    const shouldClearHistoryFromSession =
+      !willReloadForAssetVersion &&
+      this.ctx.session?.has(CLEAR_HISTORY_SESSION_KEY) &&
+      this.ctx.session.pull(CLEAR_HISTORY_SESSION_KEY, false) === true
     if (this.#shouldClearHistory || shouldClearHistoryFromSession) {
       pageObject.clearHistory = true
     }

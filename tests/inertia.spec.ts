@@ -12,6 +12,7 @@ import { test } from '@japa/runner'
 import { Vite } from '@adonisjs/vite'
 import { createHash } from 'node:crypto'
 import { HttpContext } from '@adonisjs/core/http'
+import { SessionMiddlewareFactory } from '@adonisjs/session/factories'
 import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/http'
 
 import { Inertia } from '../src/inertia.ts'
@@ -649,6 +650,24 @@ test.group('Inertia', () => {
     const result: any = await inertia.render('foo', {})
 
     assert.isTrue(result.encryptHistory)
+  })
+
+  test('do not modify the session when rendering without a clear history marker', async ({
+    assert,
+  }) => {
+    const ctx = new HttpContextFactory().create()
+    ctx.request.request.headers[InertiaHeaders.Version] = '1'
+    const inertia = new InertiaFactory().merge({ ctx }).create()
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+
+    await sessionMiddleware.handle(ctx, async () => {
+      assert.isFalse(ctx.session.hasBeenModified)
+
+      const result = await inertia.render('foo', {})
+
+      assert.notProperty(result, 'clearHistory')
+      assert.isFalse(ctx.session.hasBeenModified)
+    })
   })
 
   test('clear history on the same response without session middleware', async ({ assert }) => {

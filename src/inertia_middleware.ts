@@ -11,12 +11,12 @@
 
 import type { HttpContext } from '@adonisjs/core/http'
 
+import debug from './debug.ts'
 import type { Inertia } from '../index.ts'
 import { InertiaHeaders } from './headers.js'
-import { shouldReloadForAssetVersion } from './asset_version.js'
 import { InertiaManager } from './inertia_manager.ts'
+import { shouldReloadForAssetVersion } from './asset_version.js'
 import type { ComponentProps, FlashData, InertiaPages, PageProps } from './types.js'
-import debug from './debug.ts'
 
 declare module '@adonisjs/core/http' {
   export interface HttpContext {
