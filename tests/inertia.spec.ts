@@ -46,6 +46,23 @@ test.group('Inertia', () => {
     assert.equal(ctx.response.getHeader(InertiaHeaders.Location), 'https://adonisjs.com')
   })
 
+  test('cannot carry clear history through a location response without a session', async ({
+    assert,
+  }) => {
+    const logoutContext = new HttpContextFactory().create()
+    const logoutInertia = new InertiaFactory().merge({ ctx: logoutContext }).create()
+
+    logoutInertia.clearHistory()
+    logoutInertia.location('/login')
+
+    assert.equal(logoutContext.response.getStatus(), 409)
+    assert.equal(logoutContext.response.getHeader(InertiaHeaders.Location), '/login')
+
+    const loginInertia = new InertiaFactory().create()
+    const loginPage: any = await loginInertia.render('login', {})
+    assert.notProperty(loginPage, 'clearHistory')
+  })
+
   test('calling inertia.render should set the X-Inertia header', async ({ assert }) => {
     setupViewMacroMock()
 
@@ -634,7 +651,7 @@ test.group('Inertia', () => {
     assert.isTrue(result.encryptHistory)
   })
 
-  test('clear history per request', async ({ assert }) => {
+  test('clear history on the same response without session middleware', async ({ assert }) => {
     const inertia = new InertiaFactory().create()
 
     inertia.clearHistory()

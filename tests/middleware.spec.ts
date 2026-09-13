@@ -9,6 +9,7 @@
 
 import supertest from 'supertest'
 import { test } from '@japa/runner'
+import { createServer } from 'node:http'
 import { type HttpContext } from '@adonisjs/core/http'
 import { type NextFn } from '@adonisjs/core/types/http'
 import { SessionMiddlewareFactory } from '@adonisjs/session/factories'
@@ -30,6 +31,75 @@ class InertiaMiddleware extends BaseInertiaMiddleware {
     this.dispose(ctx)
   }
 }
+
+const AUTH_SESSION_KEY = 'test.auth.user_id'
+
+const clearHistoryServer = test.macro(async ($test) => {
+  const { app } = await setupApp([
+    {
+      file: () => import('../providers/inertia_provider.ts'),
+      environment: ['web', 'test'],
+    },
+  ])
+  $test.cleanup(() => app.terminate())
+
+  const sessionMiddleware = await new SessionMiddlewareFactory().create()
+  const server = createServer(async (req, res) => {
+    const request = new RequestFactory().merge({ req, res }).create()
+    const response = new ResponseFactory().merge({ req, res }).create()
+    const ctx = new HttpContextFactory().merge({ request, response }).create()
+    ctx.containerResolver = app.container.createResolver()
+
+    await sessionMiddleware.handle(ctx, async () => {
+      const middleware = new InertiaMiddleware()
+      await middleware.handle(ctx, async () => {
+        if (ctx.request.url() === '/account') {
+          ctx.session.put(AUTH_SESSION_KEY, 1)
+          ctx.inertia.encryptHistory()
+          ctx.response.send(
+            await ctx.inertia.render('settings/show', { preference: 'authenticated' })
+          )
+          return
+        }
+
+        if (ctx.request.url() === '/logout-location') {
+          /**
+           * The adapter does not depend on @adonisjs/auth. From its boundary,
+           * session-guard logout means removing the authentication state from
+           * this session before issuing the clear-history location response.
+           */
+          ctx.session.forget(AUTH_SESSION_KEY)
+          ctx.inertia.clearHistory()
+          ctx.inertia.location('/login')
+          return
+        }
+
+        if (ctx.request.url() === '/logout-redirect') {
+          ctx.inertia.clearHistory()
+          ctx.response.redirect('/login')
+          return
+        }
+
+        if (ctx.request.url() === '/health') {
+          ctx.response.send('ok')
+          return
+        }
+
+        ctx.response.send(
+          await ctx.inertia.render('settings/show', {
+            preference: ctx.session.has(AUTH_SESSION_KEY) ? 'authenticated' : 'guest',
+          })
+        )
+      })
+    })
+
+    ctx.response.finish()
+  })
+  $test.cleanup(async () => {
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+  })
+  return server
+})
 
 test.group('Middleware', () => {
   test('add inertia to HTTP context', async ({ assert, cleanup }) => {
@@ -273,6 +343,123 @@ test.group('Middleware', () => {
     assert.isUndefined(response.headers[InertiaHeaders.Inertia])
     assert.equal(response.headers[InertiaHeaders.Location], '/')
     assert.equal(response.headers[InertiaHeaders.Version], '1')
+  })
+
+  test('carry clear history through a location response after session-backed logout and consume it once', async ({
+    assert,
+  }) => {
+    const server = await clearHistoryServer()
+
+    const client = supertest.agent(server)
+    const accountResponse = await client
+      .get('/account')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.isTrue(accountResponse.body.encryptHistory)
+    assert.equal(accountResponse.body.props.preference, 'authenticated')
+
+    const logoutResponse = await client
+      .post('/logout-location')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.equal(logoutResponse.status, 409)
+    assert.equal(logoutResponse.headers[InertiaHeaders.Location], '/login')
+
+    const loginResponse = await client
+      .get('/login')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.isTrue(loginResponse.body.clearHistory)
+    assert.equal(loginResponse.body.props.preference, 'guest')
+
+    const nextLoginResponse = await client
+      .get('/login')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.notProperty(nextLoginResponse.body, 'clearHistory')
+  })
+
+  test('carry clear history through an ordinary redirect', async ({ assert }) => {
+    const server = await clearHistoryServer()
+    const client = supertest.agent(server)
+
+    const logoutResponse = await client
+      .delete('/logout-redirect')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.equal(logoutResponse.status, 303)
+    assert.equal(logoutResponse.headers.location, '/login')
+
+    const loginResponse = await client
+      .get('/login')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.isTrue(loginResponse.body.clearHistory)
+  })
+
+  test('do not consume clear history on a non-Inertia response', async ({ assert }) => {
+    const server = await clearHistoryServer()
+    const client = supertest.agent(server)
+
+    await client
+      .post('/logout-location')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+
+    const healthResponse = await client.get('/health')
+    assert.equal(healthResponse.text, 'ok')
+
+    const loginResponse = await client
+      .get('/login')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.isTrue(loginResponse.body.clearHistory)
+  })
+
+  test('preserve clear history through an asset version reload', async ({ assert }) => {
+    const server = await clearHistoryServer()
+    const client = supertest.agent(server)
+
+    await client
+      .post('/logout-location')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+
+    const staleVersionResponse = await client
+      .get('/login')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '2')
+    assert.equal(staleVersionResponse.status, 409)
+    assert.equal(staleVersionResponse.headers[InertiaHeaders.Location], '/login')
+
+    const loginResponse = await client
+      .get('/login')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.isTrue(loginResponse.body.clearHistory)
+  })
+
+  test('isolate clear history between sessions', async ({ assert }) => {
+    const server = await clearHistoryServer()
+    const firstClient = supertest.agent(server)
+    const secondClient = supertest.agent(server)
+
+    await firstClient
+      .post('/logout-location')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+
+    const secondLoginResponse = await secondClient
+      .get('/login')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.notProperty(secondLoginResponse.body, 'clearHistory')
+
+    const firstLoginResponse = await firstClient
+      .get('/login')
+      .set(InertiaHeaders.Inertia, 'true')
+      .set(InertiaHeaders.Version, '1')
+    assert.isTrue(firstLoginResponse.body.clearHistory)
   })
 })
 

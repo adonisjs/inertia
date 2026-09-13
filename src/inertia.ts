@@ -16,6 +16,7 @@ import Macroable from '@poppinss/macroable'
 import type { HttpContext } from '@adonisjs/core/http'
 
 import { InertiaHeaders } from './headers.js'
+import { shouldReloadForAssetVersion } from './asset_version.js'
 import { type ServerRenderer } from './server_renderer.js'
 import type {
   PageProps,
@@ -41,6 +42,8 @@ import {
 } from './props.ts'
 import debug from './debug.ts'
 import { type AsyncOrSync } from '@poppinss/utils/types'
+
+const CLEAR_HISTORY_SESSION_KEY = 'inertia.clear_history'
 
 /**
  * Main class used to interact with Inertia
@@ -678,7 +681,15 @@ export class Inertia<Pages> extends Macroable {
      * unless they are `true` (the client defaults both to `false` when absent).
      * We only emit them when enabled to match the v3 wire format.
      */
-    if (this.#shouldClearHistory) {
+    const willReloadForAssetVersion = shouldReloadForAssetVersion(
+      requestInfo,
+      this.ctx.request.method(),
+      this.getVersion()
+    )
+    const shouldClearHistoryFromSession = willReloadForAssetVersion
+      ? false
+      : this.ctx.session?.pull(CLEAR_HISTORY_SESSION_KEY, false) === true
+    if (this.#shouldClearHistory || shouldClearHistoryFromSession) {
       pageObject.clearHistory = true
     }
     if (this.#shouldEncryptHistory) {
@@ -757,16 +768,19 @@ export class Inertia<Pages> extends Macroable {
   /**
    * Clear the browser history on the next navigation
    *
-   * Instructs the client to clear the browser history stack when navigating.
+   * Instructs the client to clear the browser history stack when navigating. When
+   * session middleware is in use, the instruction survives redirects and is
+   * consumed by the next Inertia page response.
    *
    * @example
    * ```js
    * inertia.clearHistory()
-   * return inertia.render('Dashboard', props)
+   * return inertia.location('/login')
    * ```
    */
   clearHistory() {
     this.#shouldClearHistory = true
+    this.ctx.session?.put(CLEAR_HISTORY_SESSION_KEY, true)
   }
 
   /**
