@@ -10,7 +10,6 @@
 /// <reference types="@adonisjs/core/providers/app_provider" />
 /// <reference types="@adonisjs/core/providers/edge_provider" />
 
-import { createHash } from 'node:crypto'
 import { type Vite } from '@adonisjs/vite'
 import Macroable from '@poppinss/macroable'
 import type { HttpContext } from '@adonisjs/core/http'
@@ -18,7 +17,7 @@ import { type AsyncOrSync } from '@poppinss/utils/types'
 
 import { InertiaHeaders } from './headers.js'
 import { type ServerRenderer } from './server_renderer.js'
-import { shouldReloadForAssetVersion } from './asset_version.js'
+import { createAssetsVersionResolver, shouldReloadForAssetVersion } from './asset_version.js'
 import type {
   PageProps,
   FlashData,
@@ -111,11 +110,6 @@ export class Inertia<Pages> extends Macroable {
   #serverRenderer?: ServerRenderer
 
   /**
-   * Vite instance for asset management and manifest handling
-   */
-  #vite?: Vite
-
-  /**
    * Flag to control whether the next navigation should clear browser history
    */
   #shouldClearHistory
@@ -126,9 +120,10 @@ export class Inertia<Pages> extends Macroable {
   #shouldEncryptHistory
 
   /**
-   * Cached version string/number for asset versioning
+   * Returns the assets version. Shared across requests when provided by
+   * the InertiaManager, so the manifest hash is computed only once
    */
-  #cachedVersion?: string
+  #resolveVersion: () => string
 
   /**
    * Defer prop evaluation until client-side rendering
@@ -225,6 +220,8 @@ export class Inertia<Pages> extends Macroable {
    * @param config - Inertia configuration object
    * @param vite - Vite instance for asset management
    * @param serverRenderer - Optional server renderer for SSR
+   * @param resolveVersion - Optional function returning the assets version.
+   *   Defaults to a resolver bound to this instance's config and Vite
    *
    * @example
    * ```js
@@ -238,7 +235,8 @@ export class Inertia<Pages> extends Macroable {
     protected ctx: HttpContext,
     protected config: InertiaConfig,
     vite?: Vite,
-    serverRenderer?: ServerRenderer
+    serverRenderer?: ServerRenderer,
+    resolveVersion?: () => string
   ) {
     super()
     if (debug.enabled) {
@@ -249,10 +247,9 @@ export class Inertia<Pages> extends Macroable {
       )
     }
     this.#shouldClearHistory = false
-    this.#vite = vite
     this.#serverRenderer = serverRenderer
     this.#shouldEncryptHistory = config.encryptHistory ?? false
-    this.#cachedVersion = this.config.assetsVersion ? String(this.config.assetsVersion) : undefined
+    this.#resolveVersion = resolveVersion ?? createAssetsVersionResolver(config, vite)
   }
 
   /**
@@ -494,29 +491,15 @@ export class Inertia<Pages> extends Macroable {
   }
 
   /**
-   * Compute and cache the assets version
+   * Get the assets version
    *
-   * Uses Vite manifest hash when available, otherwise defaults to '1'. The
-   * manifest is only read outside dev mode: the dev server serves transformed
-   * assets directly, so a manifest left behind by a previous build describes
-   * a stale build and `vite.manifest()` refuses to read it.
+   * Uses the configured `assetsVersion` when set, otherwise the Vite manifest
+   * hash outside dev mode, otherwise '1'.
    *
-   * @returns The computed version string for asset versioning
+   * @returns The version string for asset versioning
    */
   getVersion() {
-    if (this.#cachedVersion) {
-      return this.#cachedVersion
-    }
-
-    if (this.#vite && !this.#vite.useDevServer && this.#vite.hasManifestFile) {
-      this.#cachedVersion = createHash('md5')
-        .update(JSON.stringify(this.#vite.manifest()))
-        .digest('hex')
-    } else {
-      this.#cachedVersion = '1'
-    }
-
-    return this.#cachedVersion
+    return this.#resolveVersion()
   }
 
   /**

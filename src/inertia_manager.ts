@@ -12,6 +12,7 @@ import { type HttpContext } from '@adonisjs/core/http'
 
 import { Inertia } from './inertia.ts'
 import { ServerRenderer } from './server_renderer.ts'
+import { createAssetsVersionResolver } from './asset_version.ts'
 import { type ComponentProps, type InertiaConfig } from './types.ts'
 
 /**
@@ -39,6 +40,12 @@ export class InertiaManager {
   #serverRenderer?: ServerRenderer
 
   /**
+   * Assets version resolver shared by every request, so the Vite
+   * manifest hash is computed once per process instead of per request
+   */
+  #resolveVersion: () => string
+
+  /**
    * Creates a new InertiaManager instance
    *
    * @param config - Inertia configuration object
@@ -56,6 +63,7 @@ export class InertiaManager {
     this.#config = config
     this.#vite = vite
     this.#serverRenderer = this.#vite ? new ServerRenderer(this.#config, this.#vite) : undefined
+    this.#resolveVersion = createAssetsVersionResolver(this.#config, this.#vite)
   }
 
   /**
@@ -71,6 +79,12 @@ export class InertiaManager {
    * ```
    */
   createForRequest<Pages extends Record<string, ComponentProps>>(ctx: HttpContext) {
-    return new Inertia<Pages>(ctx, this.#config, this.#vite, this.#serverRenderer)
+    return new Inertia<Pages>(
+      ctx,
+      this.#config,
+      this.#vite,
+      this.#serverRenderer,
+      this.#resolveVersion
+    )
   }
 }
