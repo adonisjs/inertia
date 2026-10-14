@@ -17,6 +17,7 @@ import { HttpContextFactory, RequestFactory } from '@adonisjs/core/factories/htt
 
 import { Inertia } from '../src/inertia.ts'
 import { InertiaHeaders } from '../src/headers.ts'
+import { InertiaManager } from '../src/inertia_manager.ts'
 import { setupViewMacroMock, setupVite } from './helpers.js'
 import { InertiaFactory } from '../factories/inertia_factory.js'
 import { ServerRenderer } from '../src/server_renderer.js'
@@ -898,5 +899,52 @@ test.group('Inertia | Assets version', () => {
       inertia.getVersion(),
       createHash('md5').update(JSON.stringify(manifest)).digest('hex')
     )
+  })
+
+  test('compute the manifest hash only once across requests', async ({ assert, fs }) => {
+    const manifest = { 'app.ts': { file: 'assets/app-abc123.js' } }
+    await fs.createJson('manifest.json', manifest)
+
+    const vite = new Vite({
+      buildDirectory: fs.basePath,
+      manifestFile: join(fs.basePath, 'manifest.json'),
+    })
+
+    /**
+     * The manifest is only read to compute the hash, so counting reads
+     * counts hash computations
+     */
+    let manifestReads = 0
+    const readManifest = vite.manifest.bind(vite)
+    vite.manifest = () => {
+      manifestReads++
+      return readManifest()
+    }
+
+    const manager = new InertiaManager(defineConfig({}), vite)
+    const expectedVersion = createHash('md5').update(JSON.stringify(manifest)).digest('hex')
+
+    for (let i = 0; i < 3; i++) {
+      const inertia = manager.createForRequest(new HttpContextFactory().create())
+      assert.equal(inertia.getVersion(), expectedVersion)
+      assert.equal(inertia.getVersion(), expectedVersion)
+    }
+
+    assert.equal(manifestReads, 1)
+  })
+
+  test('use the configured assets version across requests', async ({ assert, fs }) => {
+    await fs.createJson('manifest.json', { 'app.ts': { file: 'assets/app-abc123.js' } })
+
+    const vite = new Vite({
+      buildDirectory: fs.basePath,
+      manifestFile: join(fs.basePath, 'manifest.json'),
+    })
+
+    const manager = new InertiaManager(defineConfig({ assetsVersion: 42 }), vite)
+
+    for (let i = 0; i < 2; i++) {
+      assert.equal(manager.createForRequest(new HttpContextFactory().create()).getVersion(), '42')
+    }
   })
 })
