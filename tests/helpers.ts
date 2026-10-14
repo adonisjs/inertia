@@ -195,7 +195,7 @@ export async function setupApp(providers?: ProviderNode[]) {
  * It parses every `<script>...</script>` block out of the markup and matches
  * the `script[attr="value"]...` selector the v3 client builds. The regex stops
  * at the first *unescaped* `</script>`, which is exactly the boundary the
- * browser's HTML parser uses — so an escaped `<\/script>` inside the JSON
+ * browser's HTML parser uses — so an escaped `\u003c\/script>` inside the JSON
  * payload does not terminate the element early.
  */
 export function createDocumentFrom(html: string) {
