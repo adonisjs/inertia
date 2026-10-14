@@ -55,8 +55,23 @@ test.group('Edge plugin', () => {
     })
 
     assert.notInclude(html, '</script><script>alert(1)')
-    assert.include(html, '<\\/script><script>alert(1)<\\/script>')
+    assert.include(html, '\\u003c\\/script>\\u003cscript>alert(1)\\u003c\\/script>')
     assert.include(html, '"url":"\\/users"')
+  })
+
+  test('escape < so a <!-- sequence cannot keep the script tag open', async ({ assert }) => {
+    const edge = Edge.create().use(edgePluginInertia())
+    const page = { name: '<!--<script>' }
+
+    const html = await edge.renderRaw(`@inertia()`, { page })
+
+    assert.equal(
+      html,
+      '<script data-page="app" type="application/json">{"name":"\\u003c!--\\u003cscript>"}</script>' +
+        '<div id="app"></div>'
+    )
+    const payload = html.slice(html.indexOf('>') + 1, html.indexOf('</script>'))
+    assert.deepEqual(JSON.parse(payload), page)
   })
 
   test('use the custom id for both the script data-page and the mount element', async ({

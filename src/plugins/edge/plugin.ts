@@ -67,12 +67,13 @@ export const edgePluginInertia: () => PluginFn<undefined> = () => {
          * supported). The mount element is a separate node located by `id`.
          *
          * The payload is escaped the same way the Inertia client does it
-         * (`/` -> `\/`) so a `</script>` sequence inside the data cannot close
-         * the tag early. HTML-entity encoding is intentionally NOT used here:
-         * the browser does not decode entities inside a script element's text
-         * content, so `JSON.parse` would fail on encoded output.
+         * (`/` -> `\/` and `<` -> `\u003c`), so neither `</script>` nor `<!--`
+         * inside the data can close the tag early or switch the HTML parser
+         * into its escaped script state. HTML-entity encoding is intentionally
+         * NOT used here: the browser does not decode entities inside a script
+         * element's text content, so `JSON.parse` would fail on encoded output.
          */
-        const dataPage = JSON.stringify(page).replace(/\//g, '\\/')
+        const dataPage = JSON.stringify(page).replace(/\//g, '\\/').replace(/</g, '\\u003c')
 
         return (
           `<script data-page="${id}" type="application/json">${dataPage}</script>` +
