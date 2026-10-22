@@ -519,6 +519,25 @@ test.group('Middleware | Errors', () => {
     })
   })
 
+  test('do not create an error bag when there are no errors', async ({ assert, cleanup }) => {
+    const { app } = await setupApp([
+      {
+        file: () => import('../providers/inertia_provider.ts'),
+        environment: ['web', 'test'],
+      },
+    ])
+    cleanup(() => app.terminate())
+
+    const ctx = new HttpContextFactory().create()
+    ctx.request.request.headers[InertiaHeaders.ErrorBag] = 'user'
+
+    const sessionMiddleware = await new SessionMiddlewareFactory().create()
+    await sessionMiddleware.handle(ctx, () => {})
+
+    const middleware = new InertiaMiddleware()
+    assert.deepEqual(middleware.getValidationErrors(ctx), {})
+  })
+
   test('return empty object when not using session middleware', async ({ assert, cleanup }) => {
     const { app } = await setupApp([
       {
