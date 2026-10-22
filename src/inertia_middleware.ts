@@ -116,8 +116,12 @@ export default abstract class BaseInertiaMiddleware {
       {} as Record<string, string | string[]>
     )
 
+    /**
+     * Inertia treats any key in `errors` as a failed submission, so an empty
+     * error bag must not be emitted.
+     */
     const errorBag = ctx.request.header(InertiaHeaders.ErrorBag)
-    if (errorBag) {
+    if (errorBag && Object.keys(errors).length > 0) {
       return { [errorBag]: errors }
     }
     return errors
