@@ -20,6 +20,11 @@ import { TuyauProvider as ReactTuyauProvider } from '../src/client/react/context
 import { useHttp as useVueHttp } from '../src/client/vue/http.ts'
 import { TuyauProvider as VueTuyauProvider } from '../src/client/vue/context.ts'
 
+let renderSvelte: any
+let useSvelteHttp: any
+let tuyauContext: any
+let SvelteHttpProbe: any
+
 const require = createRequire(import.meta.url)
 const renderToStaticMarkup: (node: React.ReactNode) => string =
   require('react-dom/server').renderToStaticMarkup
@@ -361,6 +366,178 @@ test.group('Vue | useHttp Composable', () => {
       })
 
       await renderToString(app)
+      await routeHttp!.withAllErrors().submit({
+        onError(errors) {
+          validationErrors = errors
+        },
+      })
+    })
+
+    assert.deepEqual(validationErrors, {
+      email: ['The email field is required', 'The email must be valid'],
+      remember: ['The remember field must be a boolean'],
+    })
+    assert.deepEqual(Reflect.get(routeHttp!, 'errors'), validationErrors)
+  })
+})
+
+test.group('Svelte | useHttp Hook', (group) => {
+  group.setup(async () => {
+    const svelteServer = await import('svelte/server')
+    const svelteHttpModule = '../src/client/svelte/http.ts'
+    const svelteContextModule = '../src/client/svelte/context.ts'
+    const svelteProbeModule = './support/http_probe.svelte'
+
+    renderSvelte = svelteServer.render
+    const httpMod = await import(svelteHttpModule)
+    const ctxMod = await import(svelteContextModule)
+    const probeMod = await import(svelteProbeModule)
+
+    useSvelteHttp = httpMod.useHttp
+    tuyauContext = ctxMod.tuyauContext
+    SvelteHttpProbe = probeMod.default
+  })
+  test('require TuyauProvider', ({ assert }) => {
+    assert.throws(() => {
+      const { body } = renderSvelte(SvelteHttpProbe as any, {
+        props: {
+          onReady(useHttp: typeof useSvelteHttp) {
+            useHttp({ email: '' })
+          },
+        },
+      })
+      void body
+    }, 'No Tuyau client found in Svelte context')
+  })
+
+  test('bind route URL, default method, and initial data', async ({ assert }) => {
+    const request = await captureHttpRequest(async () => {
+      let routeHttp: { submit(): Promise<unknown> } | undefined
+
+      const { body } = renderSvelte(SvelteHttpProbe as any, {
+        props: {
+          onReady(useHttp: typeof useSvelteHttp) {
+            routeHttp = useHttp(
+              { route: 'users.store' },
+              { email: 'virk@adonisjs.com', remember: true }
+            )
+          },
+        },
+        context: tuyauContext(client),
+      })
+      void body
+
+      await routeHttp!.submit()
+    })
+
+    assert.equal(request.method, 'post')
+    assert.equal(request.url, '/users')
+    assert.equal(request.data, JSON.stringify({ email: 'virk@adonisjs.com', remember: true }))
+  })
+
+  test('resolve route params and a method override', async ({ assert }) => {
+    const request = await captureHttpRequest(async () => {
+      let routeHttp: { submit(): Promise<unknown> } | undefined
+
+      const { body } = renderSvelte(SvelteHttpProbe as any, {
+        props: {
+          onReady(useHttp: typeof useSvelteHttp) {
+            routeHttp = useHttp({ route: 'posts.update', routeParams: ['1'], method: 'patch' }, {})
+          },
+        },
+        context: tuyauContext(client),
+      })
+      void body
+
+      await routeHttp!.submit()
+    })
+
+    assert.equal(request.method, 'patch')
+    assert.equal(request.url, '/posts/1')
+  })
+
+  test('preserve native useHttp calls without a route', async ({ assert }) => {
+    const request = await captureHttpRequest(async () => {
+      let nativeHttp: { post(url: string): Promise<unknown> } | undefined
+
+      const { body } = renderSvelte(SvelteHttpProbe as any, {
+        props: {
+          onReady(useHttp: typeof useSvelteHttp) {
+            nativeHttp = useHttp({ email: 'virk@adonisjs.com' })
+          },
+        },
+        context: tuyauContext(client),
+      })
+      void body
+
+      await nativeHttp!.post('/native/users')
+    })
+
+    assert.equal(request.method, 'post')
+    assert.equal(request.url, '/native/users')
+  })
+
+  test('normalize AdonisJS validation errors', async ({ assert }) => {
+    let validationErrors: unknown
+
+    await respondWithValidationErrors(async () => {
+      let nativeHttp:
+        | {
+            post(
+              url: string,
+              options: { onError(errors: Record<string, string>): void }
+            ): Promise<unknown>
+          }
+        | undefined
+
+      const { body } = renderSvelte(SvelteHttpProbe as any, {
+        props: {
+          onReady(useHttp: typeof useSvelteHttp) {
+            nativeHttp = useHttp({ email: '' })
+          },
+        },
+        context: tuyauContext(client),
+      })
+      void body
+
+      await nativeHttp!.post('/users', {
+        onError(errors) {
+          validationErrors = errors
+        },
+      })
+    })
+
+    assert.deepEqual(validationErrors, {
+      email: 'The email field is required',
+      remember: 'The remember field must be a boolean',
+    })
+  })
+
+  test('preserve all normalized validation errors with withAllErrors', async ({ assert }) => {
+    type HttpWithAllErrors = {
+      submit(options: {
+        onError(errors: Record<string, string | string[]>): void
+      }): Promise<unknown>
+      withAllErrors(): HttpWithAllErrors
+    }
+
+    let routeHttp: HttpWithAllErrors | undefined
+    let validationErrors: unknown
+
+    await respondWithValidationErrors(async () => {
+      const { body } = renderSvelte(SvelteHttpProbe as any, {
+        props: {
+          onReady(useHttp: typeof useSvelteHttp) {
+            routeHttp = useHttp(
+              { route: 'users.store' },
+              { email: '' }
+            ) as unknown as HttpWithAllErrors
+          },
+        },
+        context: tuyauContext(client),
+      })
+      void body
+
       await routeHttp!.withAllErrors().submit({
         onError(errors) {
           validationErrors = errors

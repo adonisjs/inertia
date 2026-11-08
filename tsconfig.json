@@ -10,6 +10,19 @@
    * where the upstream Inertia declaration files resolve. They are excluded
    * here and checked by the tests/types/tsconfig.json program, which the
    * editor also discovers as the nearest config for those files.
+   *
+   * The svelte adapter is excluded wholesale (source and its type-test
+   * program), not just its fixtures: `@inertiajs/svelte` publishes its
+   * runtime only under the `svelte` export condition (no `import`/`default`
+   * fallback), which this package's NodeNext program cannot match. Unlike
+   * the react/vue wrappers (plain `.ts`, `h()`-based), the svelte wrappers
+   * are also genuine `.svelte` SFCs with no render-function escape hatch, so
+   * the whole `src/client/svelte` tree lives exclusively under Bundler
+   * resolution at tests/types/svelte/tsconfig.json, run with svelte-check.
+   * `tests/types/svelte/**` is excluded here for the same reason
+   * `react_client.spec.ts`/`vue_client.spec.ts` are: it's checked by that
+   * program, and its `registry.ts` augmentation would otherwise collide with
+   * react.spec.ts's identically-named local `Registry` type in this program.
    */
   "exclude": [
     "node_modules",
@@ -17,6 +30,8 @@
     "tests/types/react_client.spec.ts",
     "tests/types/vue_client.spec.ts",
     "tests/types/react_form.fixture.tsx",
-    "tests/types/vue_form.fixture.vue"
+    "tests/types/vue_form.fixture.vue",
+    "src/client/svelte/**/*",
+    "tests/types/svelte/**/*"
   ]
 }

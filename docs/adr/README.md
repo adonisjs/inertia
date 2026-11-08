@@ -51,6 +51,7 @@ We use the [MADR](https://adr.github.io/madr/) format. See
 | 0022 | [Shared props tracking](0022-shared-props-tracking.md)                             | Accepted |
 | 0023 | [Top-level-only prop resolution is permanent](0023-top-level-only-prop-resolution-permanent.md) | Accepted |
 | 0024 | [No Precognition support](0024-no-precognition-support.md)                         | Accepted |
+| 0025 | [Bundle Svelte 5 client adapter with Inertia v3](0025-svelte-5-client-adapter.md) | Accepted |
 
 ## Proposed (planned protocol features)
 
