@@ -11,7 +11,7 @@ import { test } from '@japa/runner'
 import { type HttpContext } from '@adonisjs/core/http'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
-import { type InferFlashData, type InferSharedProps } from '../../src/types.ts'
+import { type AsPageProps, type InferFlashData, type InferSharedProps } from '../../src/types.ts'
 import BaseInertiaMiddleware from '../../src/inertia_middleware.ts'
 
 test.group('Infer shared props', () => {
@@ -75,6 +75,46 @@ test.group('Infer shared props', () => {
           }
       user?: { id: number; timestamps: boolean }
     }>()
+  })
+
+  test('infer shared props with an optional key', ({ expectTypeOf }) => {
+    class InertiaMiddleware extends BaseInertiaMiddleware {
+      share() {
+        const userId = Math.random() > 0.5 ? 1 : undefined
+
+        return {
+          appName: 'demo',
+          ...(userId === undefined ? {} : { userId }),
+        }
+      }
+    }
+
+    type SharedProps = InferSharedProps<InertiaMiddleware>
+    expectTypeOf<keyof SharedProps>().toEqualTypeOf<'appName' | 'userId'>()
+  })
+
+  test('keep page props checked when shared props have an optional key', () => {
+    class InertiaMiddleware extends BaseInertiaMiddleware {
+      share() {
+        const userId = Math.random() > 0.5 ? 1 : undefined
+
+        return {
+          appName: 'demo',
+          ...(userId === undefined ? {} : { userId }),
+        }
+      }
+    }
+
+    interface SharedProps extends InferSharedProps<InertiaMiddleware> {}
+    type HomePageProps = InferSharedProps<InertiaMiddleware> & { title: string }
+
+    function render(_props: AsPageProps<Omit<HomePageProps, keyof SharedProps>>): void {}
+
+    render({ title: 'Hello' })
+    // @ts-expect-error missing required page prop
+    render({})
+    // @ts-expect-error unknown page prop
+    render({ unexpected: true })
   })
 })
 
