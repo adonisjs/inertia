@@ -560,7 +560,7 @@ export type IsOptionalPropValue<Value> = [Value] extends [OptionalProp<any>]
  * @template Props - The page props object type to analyze
  */
 export type GetOptionalProps<Props> = {
-  [K in keyof Props]: IsOptionalPropValue<Props[K]> extends true ? K : never
+  [K in keyof Props]-?: IsOptionalPropValue<Props[K]> extends true ? K : never
 }[keyof Props]
 
 /**
@@ -570,7 +570,7 @@ export type GetOptionalProps<Props> = {
  * @template Props - The page props object type to analyze
  */
 export type GetRequiredProps<Props> = {
-  [K in keyof Props]: IsOptionalPropValue<Props[K]> extends true ? never : K
+  [K in keyof Props]-?: IsOptionalPropValue<Props[K]> extends true ? never : K
 }[keyof Props]
 
 /**
