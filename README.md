@@ -12,6 +12,15 @@ Official [Inertia.js](https://inertiajs.com/) adapter for AdonisJS.
 
 The documentation is available on the [AdonisJS website](https://docs.adonisjs.com/guides/views-and-templates/inertia).
 
+## Client Adapters
+
+This package bundles client-side helpers and components under framework-specific export subpaths:
+- `@adonisjs/inertia/react` (React)
+- `@adonisjs/inertia/vue` (Vue 3)
+- `@adonisjs/inertia/svelte` (Svelte 5)
+
+See [ADR 0025](docs/adr/0025-svelte-5-client-adapter.md) for Svelte 5 architecture and consumer Vite/SSR configuration details.
+
 ## Starter Kit
 
 The AdonisJS team maintains an Inertia starter kit. This starter kit provides a configurable base application using AdonisJS with Inertia and your favorite frontend framework (e.g. React, Vue.js, Svelte).

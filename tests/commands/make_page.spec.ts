@@ -42,6 +42,20 @@ test.group('MakePage', () => {
     )
   })
 
+  test('create a svelte page using --svelte flag', async ({ assert, fs }) => {
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.ui.switchMode('raw')
+
+    const command = await ace.create(MakePage, ['home', '--svelte'])
+    await command.exec()
+
+    command.assertSucceeded()
+    command.assertLog('green(DONE:)    create inertia/pages/home.svelte')
+    await assert.fileContains('inertia/pages/home.svelte', '<script lang="ts">')
+    await assert.fileContains('inertia/pages/home.svelte', 'Home')
+  })
+
   test('create a page inside a nested directory', async ({ assert, fs }) => {
     const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
     await ace.app.init()
@@ -81,6 +95,20 @@ test.group('MakePage', () => {
 
     command.assertSucceeded()
     command.assertLog('green(DONE:)    create inertia/pages/home.tsx')
+  })
+
+  test('auto-detect svelte from existing pages', async ({ fs }) => {
+    await fs.create('inertia/pages/dashboard.svelte', '<h1>Dashboard</h1>')
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.ui.switchMode('raw')
+
+    const command = await ace.create(MakePage, ['home'])
+    await command.exec()
+
+    command.assertSucceeded()
+    command.assertLog('green(DONE:)    create inertia/pages/home.svelte')
   })
 
   test('prompt when framework cannot be detected', async ({ fs }) => {
@@ -124,5 +152,19 @@ test.group('MakePage', () => {
 
     command.assertSucceeded()
     command.assertLog('green(DONE:)    create inertia/pages/home.tsx')
+  })
+
+  test('flags take priority over auto-detection for svelte', async ({ fs }) => {
+    await fs.create('inertia/pages/dashboard.vue', '<template></template>')
+
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.ui.switchMode('raw')
+
+    const command = await ace.create(MakePage, ['home', '--svelte'])
+    await command.exec()
+
+    command.assertSucceeded()
+    command.assertLog('green(DONE:)    create inertia/pages/home.svelte')
   })
 })
